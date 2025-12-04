@@ -41,6 +41,3 @@ Thumbs.db
 # Local Files
 .cache/
 *.local
-
-# Core Dumps
-core
