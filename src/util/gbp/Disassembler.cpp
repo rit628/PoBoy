@@ -38,8 +38,8 @@ void Disassembler::readLogo(std::istream& rom) {
         auto byte = logoEncoding.at(i);
         auto columnIdx = 2 * (i % 2); // every two bytes encode 8 pixels in the current column
         columnIdx += (i >= NINTENDO_LOGO_SIZE / 2) ? 4 : 0; // logo encoding is split into upper and lower half
-        pixelGrid.at(columnIdx).at(i/2 % ROW_SIZE) = (byte & 0b11110000) >> 4; // 4 pixels for top row
-        pixelGrid.at(columnIdx + 1).at(i/2 % ROW_SIZE) = byte & 0b00001111; // 4 pixels for bottom row
+        pixelGrid.at(columnIdx).at(i/2 % ROW_SIZE) = (byte & 0xF0) >> 4; // 4 pixels for top row
+        pixelGrid.at(columnIdx + 1).at(i/2 % ROW_SIZE) = byte & 0x0F; // 4 pixels for bottom row
     }
 
     for (auto&& row : pixelGrid) {
@@ -112,51 +112,43 @@ void Disassembler::readHeader(std::istream& rom) {
     std::println();
 }
 
-#define PRINT_OPERAND(name, bytecount, immediate) \
-    if constexpr (immediate) { \
-        if constexpr (bytecount == 1) { \
-            uint8_t op_##name = rom.get(); \
-            std::print(" ${:02x}", op_##name); \
-        } \
-        else if constexpr (bytecount == 2) { \
-            uint16_t op_##name; \
-            readInto(rom, op_##name); \
-            std::print(" ${:04x}", op_##name); \
-        } \
-        else { \
-            std::print(" {}", #name); \
-        } \
-    } \
-    else { \
-        if constexpr (bytecount == 1) { \
-            uint8_t op_##name = rom.get(); \
-            std::print(" [${:02x}]", op_##name); \
-        } \
-        else if constexpr (bytecount == 2) { \
-            uint16_t op_##name; \
-            readInto(rom, op_##name); \
-            std::print(" [${:04x}]", op_##name); \
-        } \
-        else { \
-            std::print(" [{}]", #name); \
-        } \
-    }
+#define BRACKET_PRINT(plain, fmt, value...) \
+if constexpr (plain) { \
+    std::print(" " fmt, value); \
+} \
+else { \
+    std::print(" [" fmt "]", value); \
+}
+
+#define PRINT_OPERAND(name, bytecount, immediate, postop) \
+if constexpr (bytecount == 1) { \
+    uint8_t op_##name = rom.get(); \
+    BRACKET_PRINT(immediate, "${:02x}{}", op_##name, #postop); \
+} \
+else if constexpr (bytecount == 2) { \
+    uint16_t op_##name; \
+    readInto(rom, op_##name); \
+    BRACKET_PRINT(immediate, "${:04x}{}", op_##name, #postop); \
+} \
+else { \
+    BRACKET_PRINT(immediate, "{}{}", #name, #postop); \
+}
 
 void Disassembler::readInstruction(std::istream& rom) {
     std::print("0x{:04X}: ", static_cast<uint16_t>(rom.tellg()));
     auto opcode = static_cast<OPCODE_UNPREFIXED>(rom.get());
     switch (opcode) {
         #define OPCODE_BEGIN(code, name, bytecount, ...) \
-        case OPCODE_UNPREFIXED::name##__##code: \
+        case OPCODE_UNPREFIXED::name##_##code: \
             std::print("{}", #name); \
-            if constexpr (OPCODE_UNPREFIXED::name##__##code == OPCODE_UNPREFIXED::PREFIX__0xCB) { \
+            if constexpr (OPCODE_UNPREFIXED::name##_##code == OPCODE_UNPREFIXED::PREFIX_0xCB) { \
                 readPrefixedInstruction(rom); \
             }
             #define CYCLES_TAKEN(...)
             #define CYCLES_SKIPPED(...)
             #define FLAG_VALUE(...)
-            #define OPERAND(name, bytecount, immediate) \
-            PRINT_OPERAND(name, bytecount, immediate)
+            #define OPERAND(name, type, bytecount, immediate, postop, ...) \
+            PRINT_OPERAND(name, bytecount, immediate, postop)
             #define OPCODE_END(...) \
             std::println(); \
         break;
@@ -175,13 +167,13 @@ void Disassembler::readPrefixedInstruction(std::istream& rom) {
     auto opcode = static_cast<OPCODE_CBPREFIXED>(rom.get());
     switch (opcode) {
         #define OPCODE_BEGIN(code, name, bytecount, ...) \
-        case OPCODE_CBPREFIXED::name##__##code: \
+        case OPCODE_CBPREFIXED::name##_##code: \
             std::print("{}", #name);
             #define CYCLES_TAKEN(...)
             #define CYCLES_SKIPPED(...)
             #define FLAG_VALUE(...)
-            #define OPERAND(name, bytecount, immediate) \
-            PRINT_OPERAND(name, bytecount, immediate)
+            #define OPERAND(name, type, bytecount, immediate, postop, ...) \
+            PRINT_OPERAND(name, bytecount, immediate, postop)
             #define OPCODE_END(...) \
         break;
         #include "cbprefixed.inc"

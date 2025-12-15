@@ -4,7 +4,7 @@
 
 enum class OPCODE_UNPREFIXED : uint8_t {
     #define OPCODE_BEGIN(code, name, ...) \
-    name##__##code = code,
+    name##_##code = code,
     #define CYCLES_TAKEN(...)
     #define CYCLES_SKIPPED(...)
     #define FLAG_VALUE(...)
@@ -21,7 +21,7 @@ enum class OPCODE_UNPREFIXED : uint8_t {
 
 enum class OPCODE_CBPREFIXED : uint8_t {
     #define OPCODE_BEGIN(code, name, ...) \
-    name##__##code = code,
+    name##_##code = code,
     #define CYCLES_TAKEN(...)
     #define CYCLES_SKIPPED(...)
     #define FLAG_VALUE(...)
@@ -39,7 +39,7 @@ enum class OPCODE_CBPREFIXED : uint8_t {
 constexpr std::string getMnemonic(OPCODE_UNPREFIXED opcode) {
     switch (opcode) {
         #define OPCODE_BEGIN(code, name, ...) \
-        case OPCODE_UNPREFIXED::name##__##code: \
+        case OPCODE_UNPREFIXED::name##_##code: \
             return #name; \
         break;
         #define CYCLES_TAKEN(...)
@@ -60,7 +60,7 @@ constexpr std::string getMnemonic(OPCODE_UNPREFIXED opcode) {
 constexpr std::string getMnemonic(OPCODE_CBPREFIXED opcode) {
     switch (opcode) {
         #define OPCODE_BEGIN(code, name, ...) \
-        case OPCODE_CBPREFIXED::name##__##code: \
+        case OPCODE_CBPREFIXED::name##_##code: \
             return #name; \
         break;
         #define CYCLES_TAKEN(...)
