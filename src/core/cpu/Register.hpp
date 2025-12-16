@@ -1,6 +1,8 @@
 #pragma once
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
+#include <type_traits>
 #include <utility>
 
 enum class REGISTER_FLAG : uint8_t {
@@ -26,27 +28,44 @@ inline uint8_t operator~(REGISTER_FLAG a) {
     return ~std::to_underlying(a);
 }
 
-template<size_t Bits, bool Owned = false> requires (Bits == 8 || Bits == 16)
-class Register;
+template<size_t Bits> requires (Bits == 8 || Bits == 16)
+class RegisterTag {};
 
-template<>
-class Register<16> {
+template<size_t Bits> requires (Bits == 8 || Bits == 16)
+class RegisterBase : public RegisterTag<Bits> {
     public:
-        Register(uint16_t val) : reg(val) {}
+        using value_t = std::conditional_t<Bits == 8, uint8_t, uint16_t>;
+        RegisterBase(value_t val) : reg(val) {}
 
-        Register<16>& operator=(uint16_t rhs) { reg = rhs; return *this; }
-        Register<16>& operator&=(uint16_t rhs) { reg &= rhs; return *this; }
-        Register<16>& operator|=(uint16_t rhs) { reg |= rhs; return *this; }
-        
-        Register<16>& operator++() { ++reg; return *this; }
-        Register<16> operator++(int) { auto temp = *this; reg++; return temp; }
-        Register<16>& operator--() { --reg; return *this; }
-        Register<16> operator--(int) { auto temp = *this; reg--; return temp; }
+        RegisterBase<Bits>& operator=(value_t val) { reg = val; return *this; }
+        RegisterBase<Bits>& operator&=(value_t rhs) { reg &= rhs; return *this; }
+        RegisterBase<Bits>& operator|=(value_t rhs) { reg |= rhs; return *this; }
 
-        operator uint16_t() { return reg; }
-        
-        constexpr Register<8, true> hi();
-        constexpr Register<8, true> lo();
+        RegisterBase<Bits>& operator++() { ++reg; return *this; }
+        RegisterBase<Bits> operator++(int) { auto temp = *this; reg++; return temp; }
+        RegisterBase<Bits>& operator--() { --reg; return *this; }
+        RegisterBase<Bits> operator--(int) { auto temp = *this; reg--; return temp; }
+
+        operator value_t() { return reg; }
+
+    protected:
+        value_t reg = 0;
+};
+
+class RegisterView;
+
+template<typename T, size_t Bits>
+concept Register = std::derived_from<T, RegisterTag<Bits>>;
+
+template<size_t Bits>
+using RegisterValue = std::conditional_t<Bits == 8, uint8_t, uint16_t>;
+
+using Register8 = RegisterBase<8>;
+
+class Register16 : public RegisterBase<16> {
+    public:        
+        constexpr RegisterView hi();
+        constexpr RegisterView lo();
         void setHi(uint8_t val) {
             reg &= 0x00FF; // mask hi
             reg |= (static_cast<uint16_t>(val) << 8);
@@ -55,98 +74,72 @@ class Register<16> {
             reg &= 0xFF00; // mask lo
             reg |= static_cast<uint16_t>(val);
         }
-
-    private:
-        uint16_t reg = 0;
 };
 
-template<>
-class Register<8> {
-    public:
-        Register(uint8_t val) : reg(val) {}
-
-        Register<8>& operator=(uint8_t val) { reg = val; return *this; }
-        Register<8>& operator&=(uint8_t rhs) { reg &= rhs; return *this; }
-        Register<8>& operator|=(uint8_t rhs) { reg |= rhs; return *this; }
-
-        Register<8>& operator++() { ++reg; return *this; }
-        Register<8> operator++(int) { auto temp = *this; reg++; return temp; }
-        Register<8>& operator--() { --reg; return *this; }
-        Register<8> operator--(int) { auto temp = *this; reg--; return temp; }
-
-        operator uint8_t() { return reg; }
-
-    private:
-        uint8_t reg = 0;
-};
-
-template<>
-class Register<8, true> {
+class RegisterView : public RegisterTag<8> {
     public:
         enum class ORDER : bool {
             HI,
             LO
         };
 
-        constexpr Register(Register<16>& reg, ORDER order) : reg(reg), order(order) {}
+        constexpr RegisterView(Register16& reg, ORDER order) : reg(reg), order(order) {}
 
-        Register<8, true>& operator=(uint8_t rhs) {
+        RegisterView& operator=(uint8_t rhs) {
             (order == ORDER::HI) ? reg.setHi(rhs) : reg.setLo(rhs);
             return *this;
         }
-        Register<8, true>& operator&=(uint8_t rhs) {
-            uint8_t result = (*this & rhs);
-            (order == ORDER::HI) ? reg.setHi(result) : reg.setLo(result);
+        RegisterView& operator&=(uint8_t rhs) {
+            *this = (*this & rhs);
             return *this;
         }
-        Register<8, true>& operator|=(uint8_t rhs) {
-            uint8_t result = (*this | rhs);
-            (order == ORDER::HI) ? reg.setHi(result) : reg.setLo(result);
+        RegisterView& operator|=(uint8_t rhs) {
+            *this = (*this | rhs);
             return *this;
         }
 
         // only implementing for ops with F register
-        Register<8, true>& operator&=(REGISTER_FLAG rhs) { return (*this &= std::to_underlying(rhs)); }
-        Register<8, true>& operator|=(REGISTER_FLAG rhs) { return (*this |= std::to_underlying(rhs)); }
+        RegisterView& operator&=(REGISTER_FLAG rhs) { return (*this &= std::to_underlying(rhs)); }
+        RegisterView& operator|=(REGISTER_FLAG rhs) { return (*this |= std::to_underlying(rhs)); }
         uint8_t operator&(REGISTER_FLAG rhs) { return (*this & std::to_underlying(rhs)); }
         uint8_t operator|(REGISTER_FLAG rhs) { return (*this | std::to_underlying(rhs)); }
 
-        Register<8, true>& operator++() { ++reg; return *this; }
-        Register<8> operator++(int) { Register<8> temp = uint8_t(*this); reg++; return temp; } // return anonymous reg8
-        Register<8, true>& operator--() { --reg; return *this; }
-        Register<8> operator--(int) { Register<8> temp = uint8_t(*this); reg--; return temp; } // return anonymous reg8
+        // cant use r16++ due to hi/lo byte difference
+        RegisterView& operator++() { *this = *this + 1; return *this; }
+        Register8 operator++(int) { Register8 temp = uint8_t(*this); *this = *this + 1; return temp; } // return anonymous reg8
+        RegisterView& operator--() { *this = *this - 1; return *this; }
+        Register8 operator--(int) { Register8 temp = uint8_t(*this); *this = *this - 1; return temp; } // return anonymous reg8
 
         operator uint8_t() { return (order == ORDER::HI) ? ((reg & 0xFF00) >> 8) : (reg & 0x00FF); }
 
     private:
-        Register<16>& reg;
+        Register16& reg;
         const ORDER order;
 };
 
-// defined outside due to template instantiation
-constexpr Register<8, true> Register<16>::hi() {
-    using ORDER = Register<8, true>::ORDER;
-    return Register<8, true>(*this, ORDER::HI);
+constexpr RegisterView Register16::hi() {
+    using ORDER = RegisterView::ORDER;
+    return RegisterView(*this, ORDER::HI);
 }
 
-constexpr Register<8, true> Register<16>::lo() {
-    using ORDER = Register<8, true>::ORDER;
-    return Register<8, true>(*this, ORDER::LO);
+constexpr RegisterView Register16::lo() {
+    using ORDER = RegisterView::ORDER;
+    return RegisterView(*this, ORDER::LO);
 }
 
 struct RegisterFile {
-    Register<16> PC; // program counter
-    Register<16> SP; // stack pointer
+    Register16 PC; // program counter
+    Register16 SP; // stack pointer
 
-    Register<8> IR; // instruction
-    Register<8> IE; // interrupt enable
+    Register8 IR; // instruction
+    Register8 IE; // interrupt enable
 
-    Register<16> AF, BC, DE, HL; // general purpose 16bit
+    Register16 AF, BC, DE, HL; // general purpose 16bit
 
-    Register<8, true> A{AF.hi()}; // accumulator
-    Register<8, true> F{AF.lo()}; // flags
+    RegisterView A{AF.hi()}; // accumulator
+    RegisterView F{AF.lo()}; // flags
 
-    Register<8, true> B{BC.hi()}, C{BC.lo()}; // general purpose 8bit BC
-    Register<8, true> D{DE.hi()}, E{DE.lo()}; // general purpose 8bit DE
-    Register<8, true> H{HL.hi()}, L{HL.lo()}; // general purpose 8bit HL
+    RegisterView B{BC.hi()}, C{BC.lo()}; // general purpose 8bit BC
+    RegisterView D{DE.hi()}, E{DE.lo()}; // general purpose 8bit DE
+    RegisterView H{HL.hi()}, L{HL.lo()}; // general purpose 8bit HL
 };
