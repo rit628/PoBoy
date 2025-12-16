@@ -185,3 +185,6 @@ void Disassembler::readPrefixedInstruction(std::istream& rom) {
         #undef OPCODE_END
     }
 }
+
+#undef PRINT_OPERAND
+#undef BRACKET_PRINT

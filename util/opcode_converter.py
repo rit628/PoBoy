@@ -12,18 +12,16 @@ def extract_operand(opcode, operand):
         post_operation = "-"
 
     if (name in ("Z", "NZ", "C", "NZ")) and (opcode in ("CALL", "JP", "JR", "RET")): # only opcodes that can take conditions as operands
-        operand_type = "Register<8>"
+        operand_type = "RegisterView&"
         flag = True
-    elif name in ("A", "B", "C", "D", "E", "H", "L"):
-        operand_type = "Register<8>"
+    elif name in ("A", "F", "B", "C", "D", "E", "H", "L"):
+        operand_type = "RegisterView&"
     elif name in ("AF", "BC", "DE", "HL", "SP", "PC"):
-        operand_type = "Register<16>"
+        operand_type = "Register16&"
     elif name == "e8":
         operand_type = "int8_t"
     elif name in ("n16", "a16"):
         operand_type = "uint16_t"
-    elif name.isnumeric():
-        name = f"imm{name}"
 
     bytecount = operand["bytes"] if "bytes" in operand else 0
     immediate = str(operand["immediate"]).lower()
