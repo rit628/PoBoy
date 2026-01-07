@@ -6,27 +6,18 @@
 #include <utility>
 
 enum class REGISTER_FLAG : uint8_t {
-    Z = 0b0001,
-    N = 0b0010,
-    H = 0b0100,
-    C = 0b1000
+    Z = 0b10000000,
+    N = 0b01000000,
+    H = 0b00100000,
+    C = 0b00010000
 };
 
-inline uint8_t operator|(REGISTER_FLAG a, REGISTER_FLAG b) {
-    return std::to_underlying(a) | std::to_underlying(b);
-}
-
-inline uint8_t operator&(REGISTER_FLAG a, REGISTER_FLAG b) {
-    return std::to_underlying(a) & std::to_underlying(b);
-}
-
-inline uint8_t operator^(REGISTER_FLAG a, REGISTER_FLAG b) {
-    return std::to_underlying(a) ^ std::to_underlying(b);
-}
-
-inline uint8_t operator~(REGISTER_FLAG a) {
-    return ~std::to_underlying(a);
-}
+enum class INTERRUPT_MASTER_FLAG : uint8_t {
+    ENABLED,
+    ENABLE_REQUESTED,
+    ENABLE_PENDING,
+    DISABLED
+};
 
 template<size_t Bits> requires (Bits == 8 || Bits == 16)
 class RegisterTag {};
@@ -38,6 +29,10 @@ class RegisterBase : public RegisterTag<Bits> {
         RegisterBase(value_t val) : reg(val) {}
 
         RegisterBase<Bits>& operator=(value_t val) { reg = val; return *this; }
+        RegisterBase<Bits>& operator+=(value_t val) { reg += val; return *this; }
+        RegisterBase<Bits>& operator+=(int8_t val) { reg += val; return *this; }
+        RegisterBase<Bits>& operator-=(value_t val) { reg -= val; return *this; }
+        RegisterBase<Bits>& operator-=(int8_t val) { reg -= val; return *this; }
         RegisterBase<Bits>& operator&=(value_t rhs) { reg &= rhs; return *this; }
         RegisterBase<Bits>& operator|=(value_t rhs) { reg |= rhs; return *this; }
 
@@ -60,10 +55,19 @@ concept Register = std::derived_from<T, RegisterTag<Bits>>;
 template<size_t Bits>
 using RegisterValue = std::conditional_t<Bits == 8, uint8_t, uint16_t>;
 
+/*
+    stand in for when function can take Register<N> or RegisterValue<N> 
+    typically where implicit conversion from Register<N> to RegisterValue<N>
+    is not possible (such as reference contexts)
+*/
+template<typename T, size_t Bits>
+concept Integer = Register<T, Bits> || std::same_as<T, RegisterValue<Bits>>; 
+
 using Register8 = RegisterBase<8>;
 
 class Register16 : public RegisterBase<16> {
-    public:        
+    public:
+        Register16(value_t value) : RegisterBase<16>(value) { }
         constexpr RegisterView hi();
         constexpr RegisterView lo();
         void setHi(uint8_t val) {
@@ -89,6 +93,14 @@ class RegisterView : public RegisterTag<8> {
             (order == ORDER::HI) ? reg.setHi(rhs) : reg.setLo(rhs);
             return *this;
         }
+        RegisterView& operator+=(uint8_t rhs) {
+            *this = *this + rhs;
+            return *this;
+        }
+        RegisterView& operator-=(uint8_t rhs) {
+            *this = *this - rhs;
+            return *this;
+        }
         RegisterView& operator&=(uint8_t rhs) {
             *this = (*this & rhs);
             return *this;
@@ -99,10 +111,9 @@ class RegisterView : public RegisterTag<8> {
         }
 
         // only implementing for ops with F register
-        RegisterView& operator&=(REGISTER_FLAG rhs) { return (*this &= std::to_underlying(rhs)); }
-        RegisterView& operator|=(REGISTER_FLAG rhs) { return (*this |= std::to_underlying(rhs)); }
-        uint8_t operator&(REGISTER_FLAG rhs) { return (*this & std::to_underlying(rhs)); }
-        uint8_t operator|(REGISTER_FLAG rhs) { return (*this | std::to_underlying(rhs)); }
+        void set(REGISTER_FLAG bitFlag) {*this |= std::to_underlying(bitFlag);}
+        void clear(REGISTER_FLAG bitFlag) {*this &= ~std::to_underlying(bitFlag);}
+        bool test(REGISTER_FLAG bitFlag) {return *this & std::to_underlying(bitFlag);}
 
         // cant use r16++ due to hi/lo byte difference
         RegisterView& operator++() { *this = *this + 1; return *this; }
@@ -131,9 +142,6 @@ struct RegisterFile {
     Register16 PC; // program counter
     Register16 SP; // stack pointer
 
-    Register8 IR; // instruction
-    Register8 IE; // interrupt enable
-
     Register16 AF, BC, DE, HL; // general purpose 16bit
 
     RegisterView A{AF.hi()}; // accumulator
@@ -142,4 +150,6 @@ struct RegisterFile {
     RegisterView B{BC.hi()}, C{BC.lo()}; // general purpose 8bit BC
     RegisterView D{DE.hi()}, E{DE.lo()}; // general purpose 8bit DE
     RegisterView H{HL.hi()}, L{HL.lo()}; // general purpose 8bit HL
+
+    INTERRUPT_MASTER_FLAG IME; // interrupt master enable flag
 };
