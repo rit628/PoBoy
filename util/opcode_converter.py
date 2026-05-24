@@ -11,7 +11,7 @@ def extract_operand(opcode, operand):
     elif "decrement" in operand:
         post_operation = "-"
 
-    if (name in ("Z", "NZ", "C", "NZ")) and (opcode in ("CALL", "JP", "JR", "RET")): # only opcodes that can take conditions as operands
+    if (name in ("Z", "NZ", "C", "NC")) and (opcode in ("CALL", "JP", "JR", "RET")): # only opcodes that can take conditions as operands
         operand_type = "RegisterView&"
         flag = True
     elif name in ("A", "F", "B", "C", "D", "E", "H", "L"):
@@ -55,7 +55,7 @@ def json_to_xmacro(opcodes, filename):
             operand_names = ", " + operand_names if operand_names else "" # dont add seperator if instruction has no operands
             outfile.write(f"OPCODE_END({mnemonic}{operand_names})\n\n")
 
-with urllib.request.urlopen("https://gbdev.io/gb-opcodes/Opcodes.json") as opcode_json:
+with open("https://gbdev.io/gb-opcodes/Opcodes.json") as opcode_json:
     opcodes = json.load(opcode_json)
     json_to_xmacro(opcodes["unprefixed"], "unprefixed.inc")
     json_to_xmacro(opcodes["cbprefixed"], "cbprefixed.inc")
