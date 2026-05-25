@@ -60,7 +60,7 @@ void Disassembler::readLogo(std::istream& rom) {
 }
 
 void Disassembler::readHeader(std::istream& rom) {
-    rom.seekg(HEADER_START); // skip bootrom mapping
+    rom.seekg(HEADER_START);
 
     readEntrypoint(rom);
     
@@ -140,9 +140,11 @@ void Disassembler::readInstruction(std::istream& rom) {
     switch (opcode) {
         #define OPCODE_BEGIN(code, name, bytecount, ...) \
         case OPCODE_UNPREFIXED::name##_##code: \
-            std::print("{}", #name); \
             if constexpr (OPCODE_UNPREFIXED::name##_##code == OPCODE_UNPREFIXED::PREFIX_0xCB) { \
                 readPrefixedInstruction(rom); \
+            } \
+            else { \
+                std::print("{}", #name); \
             }
             #define CYCLES_TAKEN(...)
             #define CYCLES_SKIPPED(...)
@@ -163,7 +165,6 @@ void Disassembler::readInstruction(std::istream& rom) {
 }
 
 void Disassembler::readPrefixedInstruction(std::istream& rom) {
-    std::print(" ");
     auto opcode = static_cast<OPCODE_CBPREFIXED>(rom.get());
     switch (opcode) {
         #define OPCODE_BEGIN(code, name, bytecount, ...) \
