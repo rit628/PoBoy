@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.30)
 
+set(CMAKE_C_COMPILER clang)
+set(CMAKE_CXX_COMPILER clang++)
+
 project(DMG++)
 
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -17,12 +20,12 @@ FetchContent_Declare(
     URL https://github.com/boostorg/boost/releases/download/boost-1.89.0/boost-1.89.0-cmake.zip
 )
 set(BOOST_INCLUDE_LIBRARIES static_string)
-link_libraries(Boost::static_string)
 
 set(CMAKE_CXX_FLAGS "-w") # Disable warnings for fetched content
 FetchContent_MakeAvailable(Boost)
+link_libraries(Boost::static_string)
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-c23-extensions --embed-dir=bin")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -glldb -gfull")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_MINSIZEREL "-Os -DNDEBUG")
