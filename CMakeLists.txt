@@ -25,7 +25,7 @@ set(CMAKE_CXX_FLAGS "-w") # Disable warnings for fetched content
 FetchContent_MakeAvailable(Boost)
 link_libraries(Boost::static_string)
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-c23-extensions --embed-dir=bin")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-c23-extensions --embed-dir=${CMAKE_SOURCE_DIR}/bin")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -glldb -gfull")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_MINSIZEREL "-Os -DNDEBUG")
