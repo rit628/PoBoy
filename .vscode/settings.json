@@ -1,0 +1,6 @@
+{
+    "lldb.showDisassembly": "never",
+    "lldb.verboseLogging": true,
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "clangd.enable": true
+}
