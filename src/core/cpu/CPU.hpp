@@ -166,3 +166,5 @@ class CPU {
 
         INTERRUPT_MASTER_FLAG IME; // interrupt master enable flag
 };
+
+#include "CPU.tpp"

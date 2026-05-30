@@ -1,5 +1,8 @@
+#include "GameBoy.hpp"
 #include <print>
 
 int main() {
-    std::println("Engine goes here.");
+    GameBoy gb;
+    std::println("Running Bootrom Test");
+    gb.runBootRomTest();
 }

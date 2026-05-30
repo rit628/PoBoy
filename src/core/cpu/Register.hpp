@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <type_traits>
 #include <utility>
+#include <format>
 
 enum class REGISTER_FLAG : uint8_t {
     Z = 0b10000000,
@@ -35,13 +36,14 @@ class RegisterBase : public RegisterTag<Bits> {
         RegisterBase<Bits>& operator-=(int8_t val) { reg -= val; return *this; }
         RegisterBase<Bits>& operator&=(value_t rhs) { reg &= rhs; return *this; }
         RegisterBase<Bits>& operator|=(value_t rhs) { reg |= rhs; return *this; }
+        RegisterBase<Bits>& operator^=(value_t rhs) { reg ^= rhs; return *this; }
 
         RegisterBase<Bits>& operator++() { ++reg; return *this; }
         RegisterBase<Bits> operator++(int) { auto temp = *this; reg++; return temp; }
         RegisterBase<Bits>& operator--() { --reg; return *this; }
         RegisterBase<Bits> operator--(int) { auto temp = *this; reg--; return temp; }
 
-        operator value_t() { return reg; }
+        operator value_t() const { return reg; }
 
     protected:
         value_t reg = 0;
@@ -109,6 +111,10 @@ class RegisterView : public RegisterTag<8> {
             *this = (*this | rhs);
             return *this;
         }
+        RegisterView& operator^=(uint8_t rhs) {
+            *this = (*this ^ rhs);
+            return *this;
+        }
 
         // only implementing for ops with F register
         void set(REGISTER_FLAG bitFlag) {*this |= std::to_underlying(bitFlag);}
@@ -121,7 +127,7 @@ class RegisterView : public RegisterTag<8> {
         RegisterView& operator--() { *this = *this - 1; return *this; }
         Register8 operator--(int) { Register8 temp = uint8_t(*this); *this = *this - 1; return temp; } // return anonymous reg8
 
-        operator uint8_t() { return (order == ORDER::HI) ? ((reg & 0xFF00) >> 8) : (reg & 0x00FF); }
+        operator uint8_t() const { return (order == ORDER::HI) ? ((reg & 0xFF00) >> 8) : (reg & 0x00FF); }
 
     private:
         Register16& reg;
@@ -137,3 +143,17 @@ constexpr RegisterView Register16::lo() {
     using ORDER = RegisterView::ORDER;
     return RegisterView(*this, ORDER::LO);
 }
+
+template <Register<8> T>
+struct std::formatter<T> : std::formatter<uint8_t> {
+    auto format(const T& reg, std::format_context& ctx) const {
+        return std::formatter<uint8_t>::format(reg, ctx);
+    }
+};
+
+template <Register<16> T>
+struct std::formatter<T> : std::formatter<uint16_t> {
+    auto format(const T& reg, std::format_context& ctx) const {
+        return std::formatter<uint16_t>::format(reg, ctx);
+    }
+};
