@@ -5,9 +5,13 @@
 #include <cstdint>
 
 
-class ALU {
+class CPU {
     public:
-        ALU(RegisterFile& rf, MMU& mmu) : rf(rf), mmu(mmu) {}
+        CPU(MMU& mmu) : mmu(mmu) {}
+
+        void tick();
+        
+    private:
 
         #define OPCODE_BEGIN(code, name, ...) \
         bool name##_##code(
@@ -27,23 +31,22 @@ class ALU {
         #undef OPERAND
         #undef OPCODE_END
 
-    private:
         uint8_t getCarry();
         uint8_t getHalfCarry();
         void setZero(uint8_t result);
         uint8_t addAndSetFlags(uint8_t a, uint8_t b, uint8_t carry = 0);
         uint16_t addAndSetFlags(uint16_t a, uint16_t b);
         uint8_t subtractAndSetFlags(uint8_t a, uint8_t b, uint8_t carry = 0);
-
+        
         /* load instructions */
         template<size_t N>
         void load(Register<N> auto& target, RegisterValue<N> value);
         void loadIndirect(uint16_t address, uint8_t value);
         void loadIndirect(Register<8> auto& target, uint16_t address);
-
+        
         void loadHiIndirect(Register<8> auto& target, uint8_t address);
         void loadHiIndirect(uint16_t address, uint8_t value);
-
+        
         void loadIncrement(Register<8> auto& target, Register<16> auto& address);
         void loadIncrement(Register<16> auto& address, uint8_t value);
         void loadDecrement(Register<8> auto& target, Register<16> auto& address);
@@ -144,6 +147,22 @@ class ALU {
         void decimalAdjustAccumulator();
         void stop();
 
-        RegisterFile& rf;
         MMU& mmu;
+
+        bool readPrefixed = false;
+        
+        /* Register File */
+        Register16 PC; // program counter
+        Register16 SP; // stack pointer
+
+        Register16 AF, BC, DE, HL; // general purpose 16bit
+
+        RegisterView A{AF.hi()}; // accumulator
+        RegisterView F{AF.lo()}; // flags
+
+        RegisterView B{BC.hi()}, C{BC.lo()}; // general purpose 8bit BC
+        RegisterView D{DE.hi()}, E{DE.lo()}; // general purpose 8bit DE
+        RegisterView H{HL.hi()}, L{HL.lo()}; // general purpose 8bit HL
+
+        INTERRUPT_MASTER_FLAG IME; // interrupt master enable flag
 };

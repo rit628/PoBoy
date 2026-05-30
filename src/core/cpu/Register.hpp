@@ -26,7 +26,7 @@ template<size_t Bits> requires (Bits == 8 || Bits == 16)
 class RegisterBase : public RegisterTag<Bits> {
     public:
         using value_t = std::conditional_t<Bits == 8, uint8_t, uint16_t>;
-        RegisterBase(value_t val) : reg(val) {}
+        RegisterBase(value_t val = 0) : reg(val) {}
 
         RegisterBase<Bits>& operator=(value_t val) { reg = val; return *this; }
         RegisterBase<Bits>& operator+=(value_t val) { reg += val; return *this; }
@@ -67,7 +67,7 @@ using Register8 = RegisterBase<8>;
 
 class Register16 : public RegisterBase<16> {
     public:
-        Register16(value_t value) : RegisterBase<16>(value) { }
+        Register16(value_t value = 0) : RegisterBase<16>(value) { }
         constexpr RegisterView hi();
         constexpr RegisterView lo();
         void setHi(uint8_t val) {
@@ -137,19 +137,3 @@ constexpr RegisterView Register16::lo() {
     using ORDER = RegisterView::ORDER;
     return RegisterView(*this, ORDER::LO);
 }
-
-struct RegisterFile {
-    Register16 PC; // program counter
-    Register16 SP; // stack pointer
-
-    Register16 AF, BC, DE, HL; // general purpose 16bit
-
-    RegisterView A{AF.hi()}; // accumulator
-    RegisterView F{AF.lo()}; // flags
-
-    RegisterView B{BC.hi()}, C{BC.lo()}; // general purpose 8bit BC
-    RegisterView D{DE.hi()}, E{DE.lo()}; // general purpose 8bit DE
-    RegisterView H{HL.hi()}, L{HL.lo()}; // general purpose 8bit HL
-
-    INTERRUPT_MASTER_FLAG IME; // interrupt master enable flag
-};

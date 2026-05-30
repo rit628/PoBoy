@@ -53,7 +53,7 @@ def json_to_xmacro(opcodes, filename):
             
             operand_names = ", ".join(operand_names)
             operand_names = ", " + operand_names if operand_names else "" # dont add seperator if instruction has no operands
-            outfile.write(f"OPCODE_END({mnemonic}{operand_names})\n\n")
+            outfile.write(f"OPCODE_END({opcode}, {mnemonic}{operand_names})\n\n")
 
 with open("https://gbdev.io/gb-opcodes/Opcodes.json") as opcode_json:
     opcodes = json.load(opcode_json)
