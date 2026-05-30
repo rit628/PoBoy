@@ -18,7 +18,7 @@ class CPU {
         #define CYCLES_TAKEN(...)
         #define CYCLES_SKIPPED(...)
         #define FLAG_VALUE(...)
-        #define OPERAND(name, type, bytes, immediate, postop, flag, index) \
+        #define OPERAND(name, type, bytes, immediate, postop, index) \
         type _##name##_##index,
         #define OPCODE_END(...) \
         int = 0);

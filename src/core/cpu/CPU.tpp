@@ -1,6 +1,7 @@
 #pragma once
 #include "CPU.hpp"
 #include <cstddef>
+#include <cstdint>
 #include <utility>
 
 inline uint8_t CPU::getCarry() {
@@ -271,9 +272,10 @@ inline void CPU::bitXorIndirect(Register<8> auto& lhs, uint16_t address) {
     bitXor(lhs, rhs);
 }
 
-inline void CPU::bitTest(uint8_t test, uint8_t target) {
+inline void CPU::bitTest(uint8_t bitIndex, uint8_t target) {
     using enum REGISTER_FLAG;
     auto& flags = F;
+    uint8_t test = 1 << bitIndex;
     if (!(test & target)) {
         flags.set(Z);
     }
@@ -281,27 +283,29 @@ inline void CPU::bitTest(uint8_t test, uint8_t target) {
     flags.set(H);
 }
 
-inline void CPU::bitTestIndirect(uint8_t test, uint16_t address) {
+inline void CPU::bitTestIndirect(uint8_t bitIndex, uint16_t address) {
     auto& target = mmu[address];
-    bitTest(test, target);
+    bitTest(bitIndex, target);
 }
 
-inline void CPU::bitReset(uint8_t test, Integer<8> auto& target) {
+inline void CPU::bitReset(uint8_t bitIndex, Integer<8> auto& target) {
+    uint8_t test = 1 << bitIndex;
     target &= ~test; // set bit "test" to 0 in target
 }
 
-inline void CPU::bitResetIndirect(uint8_t test, uint16_t address) {
+inline void CPU::bitResetIndirect(uint8_t bitIndex, uint16_t address) {
     auto& target = mmu[address];
-    bitReset(test, target);
+    bitReset(bitIndex, target);
 }
 
-inline void CPU::bitSet(uint8_t test, Integer<8> auto& target) {
+inline void CPU::bitSet(uint8_t bitIndex, Integer<8> auto& target) {
+    uint8_t test = 1 << bitIndex;
     target |= test; // set bit "test" to 1 in target
 }
 
-inline void CPU::bitSetIndirect(uint8_t test, uint16_t address) {
+inline void CPU::bitSetIndirect(uint8_t bitIndex, uint16_t address) {
     auto& target = mmu[address];
-    bitReset(test, target);
+    bitReset(bitIndex, target);
 }
 
 inline void CPU::rotateLeft(Integer<8> auto& target) {

@@ -13,7 +13,7 @@ def extract_operand(opcode, operand):
 
     if (name in ("Z", "NZ", "C", "NC")) and (opcode in ("CALL", "JP", "JR", "RET")): # only opcodes that can take conditions as operands
         operand_type = "RegisterView&"
-        flag = True
+        name = f"F_{name}"
     elif name in ("A", "F", "B", "C", "D", "E", "H", "L"):
         operand_type = "RegisterView&"
     elif name in ("AF", "BC", "DE", "HL", "SP", "PC"):
@@ -25,9 +25,8 @@ def extract_operand(opcode, operand):
 
     bytecount = operand["bytes"] if "bytes" in operand else 0
     immediate = str(operand["immediate"]).lower()
-    flag = str(flag).lower()
 
-    return name, operand_type, bytecount, immediate, post_operation, flag
+    return name, operand_type, bytecount, immediate, post_operation
 
 
 def json_to_xmacro(opcodes, filename):
@@ -47,9 +46,9 @@ def json_to_xmacro(opcodes, filename):
             operand_names = []
 
             for i, operand in enumerate(operands):
-                name, operand_type, operand_bytes, immediate, post_operation, flag = extract_operand(mnemonic, operand)
+                name, operand_type, operand_bytes, immediate, post_operation = extract_operand(mnemonic, operand)
                 operand_names.append(name)
-                outfile.write(f"{tab}OPERAND({name}, {operand_type}, {operand_bytes}, {immediate}, {post_operation}, {flag}, {i+1})\n")
+                outfile.write(f"{tab}OPERAND({name}, {operand_type}, {operand_bytes}, {immediate}, {post_operation}, {i+1})\n")
             
             operand_names = ", ".join(operand_names)
             operand_names = ", " + operand_names if operand_names else "" # dont add seperator if instruction has no operands

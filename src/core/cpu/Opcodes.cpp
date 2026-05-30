@@ -90,7 +90,7 @@ bool CPU::RRCA_0x0F(int) {
     return true;
 }
 
-bool CPU::STOP_0x10(uint8_t n8, int) {
+bool CPU::STOP_0x10(uint8_t n8 [[ maybe_unused ]], int) {
     stop();
     return true;
 }
@@ -178,8 +178,8 @@ bool CPU::RRA_0x1F(int) {
     return true;
 }
 
-bool CPU::JR_0x20(RegisterView& NZ, int8_t e8, int) {
-    if (!NZ.test(REGISTER_FLAG::Z)) {
+bool CPU::JR_0x20(RegisterView& F_NZ, int8_t e8, int) {
+    if (!F_NZ.test(REGISTER_FLAG::Z)) {
         jumpRelative(e8);
     }
     return true;
@@ -220,8 +220,8 @@ bool CPU::DAA_0x27(int) {
     return true;
 }
 
-bool CPU::JR_0x28(RegisterView& Z, int8_t e8, int) {
-    if (Z.test(REGISTER_FLAG::Z)) {
+bool CPU::JR_0x28(RegisterView& F_Z, int8_t e8, int) {
+    if (F_Z.test(REGISTER_FLAG::Z)) {
         jumpRelative(e8);
     }
     return true;
@@ -262,8 +262,8 @@ bool CPU::CPL_0x2F(int) {
     return true;
 }
 
-bool CPU::JR_0x30(RegisterView& NC, int8_t e8, int) {
-    if (!NC.test(REGISTER_FLAG::C)) {
+bool CPU::JR_0x30(RegisterView& F_NC, int8_t e8, int) {
+    if (!F_NC.test(REGISTER_FLAG::C)) {
         jumpRelative(e8);
     }
     return true;
@@ -304,8 +304,8 @@ bool CPU::SCF_0x37(int) {
     return true;
 }
 
-bool CPU::JR_0x38(RegisterView& C, int8_t e8, int) {
-    if (C.test(REGISTER_FLAG::C)) {
+bool CPU::JR_0x38(RegisterView& F_C, int8_t e8, int) {
+    if (F_C.test(REGISTER_FLAG::C)) {
         jumpRelative(e8);
     }
     return true;
@@ -992,8 +992,8 @@ bool CPU::CP_0xBF(RegisterView& A, RegisterView& A2, int) {
     return true;
 }
 
-bool CPU::RET_0xC0(RegisterView& NZ, int) {
-    if (!NZ.test(REGISTER_FLAG::Z)) {
+bool CPU::RET_0xC0(RegisterView& F_NZ, int) {
+    if (!F_NZ.test(REGISTER_FLAG::Z)) {
         ret();
     }
     return true;
@@ -1004,8 +1004,8 @@ bool CPU::POP_0xC1(Register16& BC, int) {
     return true;
 }
 
-bool CPU::JP_0xC2(RegisterView& NZ, uint16_t a16, int) {
-    if (!NZ.test(REGISTER_FLAG::Z)) {
+bool CPU::JP_0xC2(RegisterView& F_NZ, uint16_t a16, int) {
+    if (!F_NZ.test(REGISTER_FLAG::Z)) {
         jump(a16);
     }
     return true;
@@ -1016,8 +1016,8 @@ bool CPU::JP_0xC3(uint16_t a16, int) {
     return true;
 }
 
-bool CPU::CALL_0xC4(RegisterView& NZ, uint16_t a16, int) {
-    if (!NZ.test(REGISTER_FLAG::Z)) {
+bool CPU::CALL_0xC4(RegisterView& F_NZ, uint16_t a16, int) {
+    if (!F_NZ.test(REGISTER_FLAG::Z)) {
         call(a16);
     }
     return true;
@@ -1038,8 +1038,8 @@ bool CPU::RST_0xC7(uint8_t $0x00, int) {
     return true;
 }
 
-bool CPU::RET_0xC8(RegisterView& Z, int) {
-    if (Z.test(REGISTER_FLAG::Z)) {
+bool CPU::RET_0xC8(RegisterView& F_Z, int) {
+    if (F_Z.test(REGISTER_FLAG::Z)) {
         ret();
     }
     return true;
@@ -1050,8 +1050,8 @@ bool CPU::RET_0xC9(int) {
     return true;
 }
 
-bool CPU::JP_0xCA(RegisterView& Z, uint16_t a16, int) {
-    if (Z.test(REGISTER_FLAG::Z)) {
+bool CPU::JP_0xCA(RegisterView& F_Z, uint16_t a16, int) {
+    if (F_Z.test(REGISTER_FLAG::Z)) {
         jump(a16);
     }
     return true;
@@ -1062,8 +1062,8 @@ bool CPU::PREFIX_0xCB(int) {
     return true;
 }
 
-bool CPU::CALL_0xCC(RegisterView& Z, uint16_t a16, int) {
-    if (Z.test(REGISTER_FLAG::Z)) {
+bool CPU::CALL_0xCC(RegisterView& F_Z, uint16_t a16, int) {
+    if (F_Z.test(REGISTER_FLAG::Z)) {
         call(a16);
     }
     return true;
@@ -1084,8 +1084,8 @@ bool CPU::RST_0xCF(uint8_t $0x08, int) {
     return true;
 }
 
-bool CPU::RET_0xD0(RegisterView& NC, int) {
-    if (!NC.test(REGISTER_FLAG::C)) {
+bool CPU::RET_0xD0(RegisterView& F_NC, int) {
+    if (!F_NC.test(REGISTER_FLAG::C)) {
         ret();
     }
     return true;
@@ -1096,8 +1096,8 @@ bool CPU::POP_0xD1(Register16& DE, int) {
     return true;
 }
 
-bool CPU::JP_0xD2(RegisterView& NC, uint16_t a16, int) {
-    if (!NC.test(REGISTER_FLAG::C)) {
+bool CPU::JP_0xD2(RegisterView& F_NC, uint16_t a16, int) {
+    if (!F_NC.test(REGISTER_FLAG::C)) {
         jump(a16);
     }
     return true;
@@ -1107,8 +1107,8 @@ bool CPU::ILLEGAL_D3_0xD3(int) {
     throw std::runtime_error("ILLEGAL OPCODE D3");
 }
 
-bool CPU::CALL_0xD4(RegisterView& NC, uint16_t a16, int) {
-    if (!NC.test(REGISTER_FLAG::C)) {
+bool CPU::CALL_0xD4(RegisterView& F_NC, uint16_t a16, int) {
+    if (!F_NC.test(REGISTER_FLAG::C)) {
         call(a16);
     }
     return true;
@@ -1129,8 +1129,8 @@ bool CPU::RST_0xD7(uint8_t $0x10, int) {
     return true;
 }
 
-bool CPU::RET_0xD8(RegisterView& C, int) {
-    if (C.test(REGISTER_FLAG::C)) {
+bool CPU::RET_0xD8(RegisterView& F_C, int) {
+    if (F_C.test(REGISTER_FLAG::C)) {
         ret();
     }
     return true;
@@ -1141,8 +1141,8 @@ bool CPU::RETI_0xD9(int) {
     return true;
 }
 
-bool CPU::JP_0xDA(RegisterView& C, uint16_t a16, int) {
-    if (C.test(REGISTER_FLAG::C)) {
+bool CPU::JP_0xDA(RegisterView& F_C, uint16_t a16, int) {
+    if (F_C.test(REGISTER_FLAG::C)) {
         jump(a16);
     }
     return true;
@@ -1152,8 +1152,8 @@ bool CPU::ILLEGAL_DB_0xDB(int) {
     throw std::runtime_error("ILLEGAL OPCODE DB");
 }
 
-bool CPU::CALL_0xDC(RegisterView& C, uint16_t a16, int) {
-    if (C.test(REGISTER_FLAG::C)) {
+bool CPU::CALL_0xDC(RegisterView& F_C, uint16_t a16, int) {
+    if (F_C.test(REGISTER_FLAG::C)) {
         call(a16);
     }
     return true;

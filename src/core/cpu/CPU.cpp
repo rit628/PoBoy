@@ -12,14 +12,14 @@ void CPU::tick() {
     uint16_t a16 = 0, n16 = 0;
     uint8_t n8 = 0, a8 = 0;
     int8_t e8 = 0;
-    RegisterView& Z = F, NZ = F, C = F, NC = F;
+    RegisterView& F_Z = F, F_NZ = F, F_C = F, F_NC = F;
 
     if (readPrefixed) {
         auto opcode = static_cast<OPCODE_CBPREFIXED>(mmu[PC++]);
         switch (opcode) {
             case OPCODE_CBPREFIXED::BIT_0x7C: {
                 std::println("{}: {} {} {} {}", PC, "0x7C", "BIT", "7", "B");
-                BIT_0x7C(0b01000000, H);
+                BIT_0x7C(7, H);
             }
             break;
 
@@ -59,7 +59,7 @@ void CPU::tick() {
                         byte = mmu[PC++]; \
                     } \
                     std::memcpy(&name, bytes.data(), bytecount); \
-                    std::print(" ${:X}", name); \
+                    std::print(" {:#06X}", name); \
                 } \
                 else { \
                     std::print(" {}", #name); \
