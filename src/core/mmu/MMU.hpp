@@ -8,7 +8,8 @@
 class MMU {
     public:
         const RomMetadata& loadRom(const std::filesystem::path& romFile);
-        uint8_t& operator[](uint16_t address);
+        const uint8_t& read(uint16_t address);
+        void write(uint16_t address, uint8_t value);
         
         /* some important addresses and constants */
         static constexpr uint16_t MEMORY_SIZE = 0xFFFF;

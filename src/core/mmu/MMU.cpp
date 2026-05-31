@@ -1,11 +1,15 @@
 #include "MMU.hpp"
 #include <cstdint>
 
-uint8_t& MMU::operator[](uint16_t address) {
+const uint8_t& MMU::read(uint16_t address) {
     if (readFromBootRom && address < BOOTROM_SIZE) {
-        return const_cast<uint8_t&>(bootrom.at(address));
+        return bootrom.at(address);
     }
     return memory.at(address);
+}
+
+void MMU::write(uint16_t address, uint8_t value) {
+    memory.at(address) = value;
 }
 
 const RomMetadata& MMU::loadRom(const std::filesystem::path& romFile) {

@@ -19,7 +19,7 @@ uint8_t CPU::tick() {
     /* these are just here to keep xmacro happy when no cycle count is given */
     constexpr uint8_t cyclesTaken [[ maybe_unused ]] = 0, cyclesSkipped [[ maybe_unused ]] = 0;
 
-    auto opcode = mmu[PC++];
+    auto opcode = mmu.read(PC++);
     switch (static_cast<OPCODE_UNPREFIXED>(opcode)) {
         #define OPCODE_BEGIN(code, name, bytecount, ...) \
         case OPCODE_UNPREFIXED::name##_##code: { \
@@ -34,7 +34,7 @@ uint8_t CPU::tick() {
             if constexpr (bytecount > 0) { \
                 std::array<uint8_t, bytecount> bytes; \
                 for (auto&& byte : bytes) { \
-                    byte = mmu[PC++]; \
+                    byte = mmu.read(PC++); \
                 } \
                 std::memcpy(&name, bytes.data(), bytecount); \
                 if constexpr (debug) { std::print(" {:#06x}", name); } \
@@ -59,7 +59,7 @@ uint8_t CPU::tick() {
     /* 0xCB Prefixed Opcode Argument Constants */
     constexpr uint8_t prefixCycles = 1;
 
-    opcode = mmu[PC++];
+    opcode = mmu.read(PC++);
     switch (static_cast<OPCODE_CBPREFIXED>(opcode)) {
         #define OPCODE_BEGIN(code, name, bytecount, ...) \
         case OPCODE_CBPREFIXED::name##_##code: { \

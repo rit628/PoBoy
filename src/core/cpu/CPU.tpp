@@ -106,35 +106,35 @@ inline void CPU::load(Register<N> auto& target, RegisterValue<N> value) {
 }
 
 inline void CPU::loadIndirect(uint16_t address, uint8_t value) {
-    mmu[address] = value;
+    mmu.write(address, value);
 }
 
 inline void CPU::loadIndirect(Register<8> auto& target, uint16_t address) {
-    target = mmu[address];
+    target = mmu.read(address);
 }
 
 inline void CPU::loadHiIndirect(Register<8> auto& target, uint8_t address) {
-    target = mmu[static_cast<uint16_t>(address) + 0xFF00];
+    target = mmu.read(static_cast<uint16_t>(address) + 0xFF00);
 }
 
 inline void CPU::loadHiIndirect(uint16_t address, uint8_t value) {
-    mmu[static_cast<uint16_t>(address) + 0xFF00] = value;
+    mmu.write(static_cast<uint16_t>(address) + 0xFF00, value);
 }
 
 inline void CPU::loadIncrement(Register<8> auto& target, Register<16> auto& address) {
-    target = mmu[address++];
+    target = mmu.read(address++);
 }
 
 inline void CPU::loadIncrement(Register<16> auto& address, uint8_t value) {
-    mmu[address++] = value;
+    mmu.write(address++, value);
 }
 
 inline void CPU::loadDecrement(Register<8> auto& target, Register<16> auto& address) {
-    target = mmu[address--];
+    target = mmu.read(address--);
 }
 
 inline void CPU::loadDecrement(Register<16> auto& address, uint8_t value) {
-    mmu[address--] = value;
+    mmu.write(address--, value);
 }
 
 template<size_t N>
@@ -143,7 +143,7 @@ inline void CPU::add(Register<N> auto& target, RegisterValue<N> value) {
 }
 
 inline void CPU::addIndirect(Register<8> auto& target, uint16_t address) {
-    auto& value = mmu[address];
+    auto& value = mmu.read(address);
     add<8>(target, value);
 }
 
@@ -153,7 +153,7 @@ inline void CPU::adc(Register<8> auto& target, uint8_t value) {
 }
 
 inline void CPU::adcIndirect(Register<8> auto& target, uint16_t address) {
-    auto& value = mmu[address];
+    auto& value = mmu.read(address);
     adc(target, value);
 }
 
@@ -162,7 +162,7 @@ inline void CPU::sub(Register<8> auto& target, uint8_t value) {
 }
 
 inline void CPU::subIndirect(Register<8> auto& target, uint16_t address) {
-    auto& value = mmu[address];
+    auto& value = mmu.read(address);
     sub(target, value);
 }
 
@@ -172,7 +172,7 @@ inline void CPU::sbc(Register<8> auto& target, uint8_t value) {
 }
 
 inline void CPU::sbcIndirect(Register<8> auto& target, uint16_t address) {
-    auto& value = mmu[address];
+    auto& value = mmu.read(address);
     sbc(target, value);
 }
 
@@ -181,7 +181,7 @@ inline void CPU::compare(uint8_t lhs, uint8_t rhs) {
 }
 
 inline void CPU::compareIndirect(uint8_t lhs, uint16_t address) {
-    auto& rhs = mmu[address];
+    auto& rhs = mmu.read(address);
     compare(lhs, rhs);
 }
 
@@ -198,8 +198,9 @@ inline void CPU::decrement(Register<16> auto& target) {
 }
 
 inline void CPU::decrementIndirect(uint16_t address) {
-    auto& target = mmu[address];
-    decrement(target);
+    auto value = mmu.read(address);
+    decrement(value);
+    mmu.write(address, value);
 }
 
 inline void CPU::increment(Integer<8> auto& target) {
@@ -215,8 +216,9 @@ inline void CPU::increment(Register<16> auto& target) {
 }
 
 inline void CPU::incrementIndirect(uint16_t address) {
-    auto& target = mmu[address];
-    increment(target);
+    auto value = mmu.read(address);
+    increment(value);
+    mmu.write(address, value);
 }
 
 inline void CPU::bitAnd(Register<8> auto& lhs, uint8_t rhs) {
@@ -230,7 +232,7 @@ inline void CPU::bitAnd(Register<8> auto& lhs, uint8_t rhs) {
 }
 
 inline void CPU::bitAndIndirect(Register<8> auto& lhs, uint16_t address) {
-    auto& rhs = mmu[address];
+    auto& rhs = mmu.read(address);
     bitAnd(lhs, rhs);
 }
 
@@ -253,7 +255,7 @@ inline void CPU::bitOr(Register<8> auto& lhs, uint8_t rhs) {
 }
 
 inline void CPU::bitOrIndirect(Register<8> auto& lhs, uint16_t address) {
-    auto& rhs = mmu[address];
+    auto& rhs = mmu.read(address);
     bitOr(lhs, rhs);
 }
 
@@ -268,7 +270,7 @@ inline void CPU::bitXor(Register<8> auto& lhs, uint8_t rhs) {
 }
 
 inline void CPU::bitXorIndirect(Register<8> auto& lhs, uint16_t address) {
-    auto& rhs = mmu[address];
+    auto& rhs = mmu.read(address);
     bitXor(lhs, rhs);
 }
 
@@ -284,7 +286,7 @@ inline void CPU::bitTest(uint8_t bitIndex, uint8_t target) {
 }
 
 inline void CPU::bitTestIndirect(uint8_t bitIndex, uint16_t address) {
-    auto& target = mmu[address];
+    auto& target = mmu.read(address);
     bitTest(bitIndex, target);
 }
 
@@ -294,8 +296,9 @@ inline void CPU::bitReset(uint8_t bitIndex, Integer<8> auto& target) {
 }
 
 inline void CPU::bitResetIndirect(uint8_t bitIndex, uint16_t address) {
-    auto& target = mmu[address];
-    bitReset(bitIndex, target);
+    auto value = mmu.read(address);
+    bitReset(bitIndex, value);
+    mmu.write(address, value);
 }
 
 inline void CPU::bitSet(uint8_t bitIndex, Integer<8> auto& target) {
@@ -304,8 +307,9 @@ inline void CPU::bitSet(uint8_t bitIndex, Integer<8> auto& target) {
 }
 
 inline void CPU::bitSetIndirect(uint8_t bitIndex, uint16_t address) {
-    auto& target = mmu[address];
-    bitReset(bitIndex, target);
+    auto value = mmu.read(address);
+    bitSet(bitIndex, value);
+    mmu.write(address, value);
 }
 
 inline void CPU::rotateLeft(Integer<8> auto& target) {
@@ -322,8 +326,9 @@ inline void CPU::rotateLeft(Integer<8> auto& target) {
 }
 
 inline void CPU::rotateLeftIndirect(uint16_t address) {
-    auto& target = mmu[address];
-    rotateLeft(target);
+    auto value = mmu.read(address);
+    rotateLeft(value);
+    mmu.write(address, value);
 }
 
 inline void CPU::rotateLeftCircular(Integer<8> auto& target) {
@@ -339,8 +344,9 @@ inline void CPU::rotateLeftCircular(Integer<8> auto& target) {
 }
 
 inline void CPU::rotateLeftCircularIndirect(uint16_t address) {
-    auto& target = mmu[address];
-    rotateLeftCircular(target);
+    auto value = mmu.read(address);
+    rotateLeftCircular(value);
+    mmu.write(address, value);
 }
 
 inline void CPU::rotateRight(Integer<8> auto& target) {
@@ -357,8 +363,9 @@ inline void CPU::rotateRight(Integer<8> auto& target) {
 }
 
 inline void CPU::rotateRightIndirect(uint16_t address) {
-    auto& target = mmu[address];
-    rotateRight(target);
+    auto value = mmu.read(address);
+    rotateRight(value);
+    mmu.write(address, value);
 }
 
 inline void CPU::rotateRightCircular(Integer<8> auto& target) {
@@ -374,8 +381,9 @@ inline void CPU::rotateRightCircular(Integer<8> auto& target) {
 }
 
 inline void CPU::rotateRightCircularIndirect(uint16_t address) {
-    auto& target = mmu[address];
-    rotateRightCircular(target);
+    auto value = mmu.read(address);
+    rotateRightCircular(value);
+    mmu.write(address, value);
 }
 
 inline void CPU::shiftLeftArithmetic(Integer<8> auto& target) {
@@ -390,8 +398,9 @@ inline void CPU::shiftLeftArithmetic(Integer<8> auto& target) {
 }
 
 inline void CPU::shiftLeftArithmeticIndirect(uint16_t address) {
-    auto& target = mmu[address];
-    shiftLeftArithmetic(target);
+    auto value = mmu.read(address);
+    shiftLeftArithmetic(value);
+    mmu.write(address, value);
 }
 
 inline void CPU::shiftRightArithmetic(Integer<8> auto& target) {
@@ -407,8 +416,9 @@ inline void CPU::shiftRightArithmetic(Integer<8> auto& target) {
 }
 
 inline void CPU::shiftRightArithmeticIndirect(uint16_t address) {
-    auto& target = mmu[address];
-    shiftRightArithmetic(target);
+    auto value = mmu.read(address);
+    shiftRightArithmetic(value);
+    mmu.write(address, value);
 }
 
 inline void CPU::shiftRightLogical(Integer<8> auto& target) {
@@ -423,8 +433,9 @@ inline void CPU::shiftRightLogical(Integer<8> auto& target) {
 }
 
 inline void CPU::shiftRightLogicalIndirect(uint16_t address) {
-    auto& target = mmu[address];
-    shiftRightLogical(target);
+    auto value = mmu.read(address);
+    shiftRightLogical(value);
+    mmu.write(address, value);
 }
 
 inline void CPU::swap(Integer<8> auto& target) {
@@ -438,20 +449,21 @@ inline void CPU::swap(Integer<8> auto& target) {
 }
 
 inline void CPU::swapIndirect(uint16_t address) {
-    auto& target = mmu[address];
-    swap(target);
+    auto value = mmu.read(address);
+    swap(value);
+    mmu.write(address, value);
 }
 
 inline void CPU::pop(Register<16> auto& target) {
     auto& sp = SP;
-    target.setLo(mmu[sp++]);
-    target.setHi(mmu[sp++]);
+    target.setLo(mmu.read(sp++));
+    target.setHi(mmu.read(sp++));
 }
 
 inline void CPU::push(Register<16> auto& target) {
     auto& sp = SP;
-    mmu[--sp] = target.hi();
-    mmu[--sp] = target.lo();
+    mmu.write(--sp, target.hi());
+    mmu.write(--sp, target.lo());
 }
 
 inline void CPU::call(uint16_t address) {
@@ -509,7 +521,7 @@ inline void CPU::halt() {
         // pause execution until interrupt is serviced (call handler)
     }
     else {
-        if ((mmu[MMU::IE] & mmu[MMU::IF]) == 0) { // interrupts are not pending
+        if ((mmu.read(MMU::IE) & mmu.read(MMU::IF)) == 0) { // interrupts are not pending
             // pause execution until interrupt becomes pending, dont call handler
         }
         else { // interrupts are pending
