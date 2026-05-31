@@ -4,7 +4,7 @@
 
 class GameBoy {
     public:
-        void runBootRomTest();
+        void run();
 
     private:
         MMU mmu;

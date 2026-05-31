@@ -9,7 +9,7 @@ class CPU {
     public:
         CPU(MMU& mmu) : mmu(mmu) {}
 
-        void tick();
+        uint8_t tick();
         
     private:
 

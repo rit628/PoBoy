@@ -181,8 +181,9 @@ bool CPU::RRA_0x1F(int) {
 bool CPU::JR_0x20(RegisterView& F_NZ, int8_t e8, int) {
     if (!F_NZ.test(REGISTER_FLAG::Z)) {
         jumpRelative(e8);
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool CPU::LD_0x21(Register16& HL, uint16_t n16, int) {
@@ -223,8 +224,9 @@ bool CPU::DAA_0x27(int) {
 bool CPU::JR_0x28(RegisterView& F_Z, int8_t e8, int) {
     if (F_Z.test(REGISTER_FLAG::Z)) {
         jumpRelative(e8);
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool CPU::ADD_0x29(Register16& HL_1, Register16& HL_2, int) {
@@ -265,8 +267,9 @@ bool CPU::CPL_0x2F(int) {
 bool CPU::JR_0x30(RegisterView& F_NC, int8_t e8, int) {
     if (!F_NC.test(REGISTER_FLAG::C)) {
         jumpRelative(e8);
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool CPU::LD_0x31(Register16& SP, uint16_t n16, int) {
@@ -307,8 +310,9 @@ bool CPU::SCF_0x37(int) {
 bool CPU::JR_0x38(RegisterView& F_C, int8_t e8, int) {
     if (F_C.test(REGISTER_FLAG::C)) {
         jumpRelative(e8);
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool CPU::ADD_0x39(Register16& HL, Register16& SP, int) {
@@ -995,8 +999,9 @@ bool CPU::CP_0xBF(RegisterView& A, RegisterView& A2, int) {
 bool CPU::RET_0xC0(RegisterView& F_NZ, int) {
     if (!F_NZ.test(REGISTER_FLAG::Z)) {
         ret();
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool CPU::POP_0xC1(Register16& BC, int) {
@@ -1007,8 +1012,9 @@ bool CPU::POP_0xC1(Register16& BC, int) {
 bool CPU::JP_0xC2(RegisterView& F_NZ, uint16_t a16, int) {
     if (!F_NZ.test(REGISTER_FLAG::Z)) {
         jump(a16);
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool CPU::JP_0xC3(uint16_t a16, int) {
@@ -1019,8 +1025,9 @@ bool CPU::JP_0xC3(uint16_t a16, int) {
 bool CPU::CALL_0xC4(RegisterView& F_NZ, uint16_t a16, int) {
     if (!F_NZ.test(REGISTER_FLAG::Z)) {
         call(a16);
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool CPU::PUSH_0xC5(Register16& BC, int) {
@@ -1041,8 +1048,9 @@ bool CPU::RST_0xC7(uint8_t $0x00, int) {
 bool CPU::RET_0xC8(RegisterView& F_Z, int) {
     if (F_Z.test(REGISTER_FLAG::Z)) {
         ret();
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool CPU::RET_0xC9(int) {
@@ -1053,8 +1061,9 @@ bool CPU::RET_0xC9(int) {
 bool CPU::JP_0xCA(RegisterView& F_Z, uint16_t a16, int) {
     if (F_Z.test(REGISTER_FLAG::Z)) {
         jump(a16);
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool CPU::PREFIX_0xCB(int) {
@@ -1065,8 +1074,9 @@ bool CPU::PREFIX_0xCB(int) {
 bool CPU::CALL_0xCC(RegisterView& F_Z, uint16_t a16, int) {
     if (F_Z.test(REGISTER_FLAG::Z)) {
         call(a16);
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool CPU::CALL_0xCD(uint16_t address, int) {
@@ -1087,8 +1097,9 @@ bool CPU::RST_0xCF(uint8_t $0x08, int) {
 bool CPU::RET_0xD0(RegisterView& F_NC, int) {
     if (!F_NC.test(REGISTER_FLAG::C)) {
         ret();
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool CPU::POP_0xD1(Register16& DE, int) {
@@ -1099,8 +1110,9 @@ bool CPU::POP_0xD1(Register16& DE, int) {
 bool CPU::JP_0xD2(RegisterView& F_NC, uint16_t a16, int) {
     if (!F_NC.test(REGISTER_FLAG::C)) {
         jump(a16);
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool CPU::ILLEGAL_D3_0xD3(int) {
@@ -1110,8 +1122,9 @@ bool CPU::ILLEGAL_D3_0xD3(int) {
 bool CPU::CALL_0xD4(RegisterView& F_NC, uint16_t a16, int) {
     if (!F_NC.test(REGISTER_FLAG::C)) {
         call(a16);
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool CPU::PUSH_0xD5(Register16& DE, int) {
@@ -1132,8 +1145,9 @@ bool CPU::RST_0xD7(uint8_t $0x10, int) {
 bool CPU::RET_0xD8(RegisterView& F_C, int) {
     if (F_C.test(REGISTER_FLAG::C)) {
         ret();
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool CPU::RETI_0xD9(int) {
@@ -1144,8 +1158,9 @@ bool CPU::RETI_0xD9(int) {
 bool CPU::JP_0xDA(RegisterView& F_C, uint16_t a16, int) {
     if (F_C.test(REGISTER_FLAG::C)) {
         jump(a16);
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool CPU::ILLEGAL_DB_0xDB(int) {
@@ -1155,8 +1170,9 @@ bool CPU::ILLEGAL_DB_0xDB(int) {
 bool CPU::CALL_0xDC(RegisterView& F_C, uint16_t a16, int) {
     if (F_C.test(REGISTER_FLAG::C)) {
         call(a16);
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool CPU::ILLEGAL_DD_0xDD(int) {

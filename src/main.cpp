@@ -4,5 +4,5 @@
 int main() {
     GameBoy gb;
     std::println("Running Bootrom Test");
-    gb.runBootRomTest();
+    gb.run();
 }
