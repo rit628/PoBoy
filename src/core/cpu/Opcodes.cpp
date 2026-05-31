@@ -1346,10 +1346,280 @@ bool CPU::RST_0xFF(uint8_t $0x38, int) {
     return true;
 }
 
-/* some CB prefix implementations to test bootrom */
+/* 0xCB prefixed */
 
-bool CPU::BIT_0x7C(uint8_t $0b7, RegisterView& H, int) {
-    bitTest($0b7, H);
+bool CPU::RLC_0x00(RegisterView& B, int) {
+    rotateLeftCircular(B);
+    return true;
+}
+
+bool CPU::RLC_0x01(RegisterView& C, int) {
+    rotateLeftCircular(C);
+    return true;
+}
+
+bool CPU::RLC_0x02(RegisterView& D, int) {
+    rotateLeftCircular(D);
+    return true;
+}
+
+bool CPU::RLC_0x03(RegisterView& E, int) {
+    rotateLeftCircular(E);
+    return true;
+}
+
+bool CPU::RLC_0x04(RegisterView& H, int) {
+    rotateLeftCircular(H);
+    return true;
+}
+
+bool CPU::RLC_0x05(RegisterView& L, int) {
+    rotateLeftCircular(L);
+    return true;
+}
+
+bool CPU::RLC_0x06(Register16& HL, int) {
+    rotateLeftCircularIndirect(HL);
+    return true;
+}
+
+bool CPU::RLC_0x07(RegisterView& A, int) {
+    rotateLeftCircular(A);
+    return true;
+}
+
+bool CPU::RRC_0x08(RegisterView& B, int) {
+    rotateRightCircular(B);
+    return true;
+}
+
+bool CPU::RRC_0x09(RegisterView& C, int) {
+    rotateRightCircular(C);
+    return true;
+}
+
+bool CPU::RRC_0x0A(RegisterView& D, int) {
+    rotateRightCircular(D);
+    return true;
+}
+
+bool CPU::RRC_0x0B(RegisterView& E, int) {
+    rotateRightCircular(E);
+    return true;
+}
+
+bool CPU::RRC_0x0C(RegisterView& H, int) {
+    rotateRightCircular(H);
+    return true;
+}
+
+bool CPU::RRC_0x0D(RegisterView& L, int) {
+    rotateRightCircular(L);
+    return true;
+}
+
+bool CPU::RRC_0x0E(Register16& HL, int) {
+    rotateRightCircularIndirect(HL);
+    return true;
+}
+
+bool CPU::RRC_0x0F(RegisterView& A, int) {
+    rotateRightCircular(A);
+    return true;
+}
+
+bool CPU::RL_0x10(RegisterView& B, int) {
+    rotateLeft(B);
+    return true;
+}
+
+bool CPU::RL_0x11(RegisterView& C, int) {
+    rotateLeft(C);
+    return true;
+}
+
+bool CPU::RL_0x12(RegisterView& D, int) {
+    rotateLeft(D);
+    return true;
+}
+
+bool CPU::RL_0x13(RegisterView& E, int) {
+    rotateLeft(E);
+    return true;
+}
+
+bool CPU::RL_0x14(RegisterView& H, int) {
+    rotateLeft(H);
+    return true;
+}
+
+bool CPU::RL_0x15(RegisterView& L, int) {
+    rotateLeft(L);
+    return true;
+}
+
+bool CPU::RL_0x16(Register16& HL, int) {
+    rotateLeftIndirect(HL);
+    return true;
+}
+
+bool CPU::RL_0x17(RegisterView& A, int) {
+    rotateLeft(A);
+    return true;
+}
+
+bool CPU::RR_0x18(RegisterView& B, int) {
+    rotateRight(B);
+    return true;
+}
+
+bool CPU::RR_0x19(RegisterView& C, int) {
+    rotateRight(C);
+    return true;
+}
+
+bool CPU::RR_0x1A(RegisterView& D, int) {
+    rotateRight(D);
+    return true;
+}
+
+bool CPU::RR_0x1B(RegisterView& E, int) {
+    rotateRight(E);
+    return true;
+}
+
+bool CPU::RR_0x1C(RegisterView& H, int) {
+    rotateRight(H);
+    return true;
+}
+
+bool CPU::RR_0x1D(RegisterView& L, int) {
+    rotateRight(L);
+    return true;
+}
+
+bool CPU::RR_0x1E(Register16& HL, int) {
+    rotateRightIndirect(HL);
+    return true;
+}
+
+bool CPU::RR_0x1F(RegisterView& A, int) {
+    rotateRight(A);
+    return true;
+}
+
+bool CPU::SLA_0x20(RegisterView& B, int) {
+    shiftLeftArithmetic(B);
+    return true;
+}
+
+bool CPU::SLA_0x21(RegisterView& C, int) {
+    shiftLeftArithmetic(C);
+    return true;
+}
+
+bool CPU::SLA_0x22(RegisterView& D, int) {
+    shiftLeftArithmetic(D);
+    return true;
+}
+
+bool CPU::SLA_0x23(RegisterView& E, int) {
+    shiftLeftArithmetic(E);
+    return true;
+}
+
+bool CPU::SLA_0x24(RegisterView& H, int) {
+    shiftLeftArithmetic(H);
+    return true;
+}
+
+bool CPU::SLA_0x25(RegisterView& L, int) {
+    shiftLeftArithmetic(L);
+    return true;
+}
+
+bool CPU::SLA_0x26(Register16& HL, int) {
+    shiftLeftArithmeticIndirect(HL);
+    return true;
+}
+
+bool CPU::SLA_0x27(RegisterView& A, int) {
+    shiftLeftArithmetic(A);
+    return true;
+}
+
+bool CPU::SRA_0x28(RegisterView& B, int) {
+    shiftRightArithmetic(B);
+    return true;
+}
+
+bool CPU::SRA_0x29(RegisterView& C, int) {
+    shiftRightArithmetic(C);
+    return true;
+}
+
+bool CPU::SRA_0x2A(RegisterView& D, int) {
+    shiftRightArithmetic(D);
+    return true;
+}
+
+bool CPU::SRA_0x2B(RegisterView& E, int) {
+    shiftRightArithmetic(E);
+    return true;
+}
+
+bool CPU::SRA_0x2C(RegisterView& H, int) {
+    shiftRightArithmetic(H);
+    return true;
+}
+
+bool CPU::SRA_0x2D(RegisterView& L, int) {
+    shiftRightArithmetic(L);
+    return true;
+}
+
+bool CPU::SRA_0x2E(Register16& HL, int) {
+    shiftRightArithmeticIndirect(HL);
+    return true;
+}
+
+bool CPU::SRA_0x2F(RegisterView& A, int) {
+    shiftRightArithmetic(A);
+    return true;
+}
+
+bool CPU::SWAP_0x30(RegisterView& B, int) {
+    swap(B);
+    return true;
+}
+
+bool CPU::SWAP_0x31(RegisterView& C, int) {
+    swap(C);
+    return true;
+}
+
+bool CPU::SWAP_0x32(RegisterView& D, int) {
+    swap(D);
+    return true;
+}
+
+bool CPU::SWAP_0x33(RegisterView& E, int) {
+    swap(E);
+    return true;
+}
+
+bool CPU::SWAP_0x34(RegisterView& H, int) {
+    swap(H);
+    return true;
+}
+
+bool CPU::SWAP_0x35(RegisterView& L, int) {
+    swap(L);
+    return true;
+}
+
+bool CPU::SWAP_0x36(Register16& HL, int) {
+    swapIndirect(HL);
     return true;
 }
 
@@ -1358,7 +1628,1002 @@ bool CPU::SWAP_0x37(RegisterView& A, int) {
     return true;
 }
 
-bool CPU::RL_0x10(RegisterView& B, int) {
-    rotateLeft(B);
+bool CPU::SRL_0x38(RegisterView& B, int) {
+    shiftRightLogical(B);
+    return true;
+}
+
+bool CPU::SRL_0x39(RegisterView& C, int) {
+    shiftRightLogical(C);
+    return true;
+}
+
+bool CPU::SRL_0x3A(RegisterView& D, int) {
+    shiftRightLogical(D);
+    return true;
+}
+
+bool CPU::SRL_0x3B(RegisterView& E, int) {
+    shiftRightLogical(E);
+    return true;
+}
+
+bool CPU::SRL_0x3C(RegisterView& H, int) {
+    shiftRightLogical(H);
+    return true;
+}
+
+bool CPU::SRL_0x3D(RegisterView& L, int) {
+    shiftRightLogical(L);
+    return true;
+}
+
+bool CPU::SRL_0x3E(Register16& HL, int) {
+    shiftRightLogicalIndirect(HL);
+    return true;
+}
+
+bool CPU::SRL_0x3F(RegisterView& A, int) {
+    shiftRightLogical(A);
+    return true;
+}
+
+bool CPU::BIT_0x40(uint8_t _0, RegisterView& B, int) {
+    bitTest(_0, B);
+    return true;
+}
+
+bool CPU::BIT_0x41(uint8_t _0, RegisterView& C, int) {
+    bitTest(_0, C);
+    return true;
+}
+
+bool CPU::BIT_0x42(uint8_t _0, RegisterView& D, int) {
+    bitTest(_0, D);
+    return true;
+}
+
+bool CPU::BIT_0x43(uint8_t _0, RegisterView& E, int) {
+    bitTest(_0, E);
+    return true;
+}
+
+bool CPU::BIT_0x44(uint8_t _0, RegisterView& H, int) {
+    bitTest(_0, H);
+    return true;
+}
+
+bool CPU::BIT_0x45(uint8_t _0, RegisterView& L, int) {
+    bitTest(_0, L);
+    return true;
+}
+
+bool CPU::BIT_0x46(uint8_t _0, Register16& HL, int) {
+    bitTestIndirect(_0, HL);
+    return true;
+}
+
+bool CPU::BIT_0x47(uint8_t _0, RegisterView& A, int) {
+    bitTest(_0, A);
+    return true;
+}
+
+bool CPU::BIT_0x48(uint8_t _1, RegisterView& B, int) {
+    bitTest(_1, B);
+    return true;
+}
+
+bool CPU::BIT_0x49(uint8_t _1, RegisterView& C, int) {
+    bitTest(_1, C);
+    return true;
+}
+
+bool CPU::BIT_0x4A(uint8_t _1, RegisterView& D, int) {
+    bitTest(_1, D);
+    return true;
+}
+
+bool CPU::BIT_0x4B(uint8_t _1, RegisterView& E, int) {
+    bitTest(_1, E);
+    return true;
+}
+
+bool CPU::BIT_0x4C(uint8_t _1, RegisterView& H, int) {
+    bitTest(_1, H);
+    return true;
+}
+
+bool CPU::BIT_0x4D(uint8_t _1, RegisterView& L, int) {
+    bitTest(_1, L);
+    return true;
+}
+
+bool CPU::BIT_0x4E(uint8_t _1, Register16& HL, int) {
+    bitTestIndirect(_1, HL);
+    return true;
+}
+
+bool CPU::BIT_0x4F(uint8_t _1, RegisterView& A, int) {
+    bitTest(_1, A);
+    return true;
+}
+
+bool CPU::BIT_0x50(uint8_t _2, RegisterView& B, int) {
+    bitTest(_2, B);
+    return true;
+}
+
+bool CPU::BIT_0x51(uint8_t _2, RegisterView& C, int) {
+    bitTest(_2, C);
+    return true;
+}
+
+bool CPU::BIT_0x52(uint8_t _2, RegisterView& D, int) {
+    bitTest(_2, D);
+    return true;
+}
+
+bool CPU::BIT_0x53(uint8_t _2, RegisterView& E, int) {
+    bitTest(_2, E);
+    return true;
+}
+
+bool CPU::BIT_0x54(uint8_t _2, RegisterView& H, int) {
+    bitTest(_2, H);
+    return true;
+}
+
+bool CPU::BIT_0x55(uint8_t _2, RegisterView& L, int) {
+    bitTest(_2, L);
+    return true;
+}
+
+bool CPU::BIT_0x56(uint8_t _2, Register16& HL, int) {
+    bitTestIndirect(_2, HL);
+    return true;
+}
+
+bool CPU::BIT_0x57(uint8_t _2, RegisterView& A, int) {
+    bitTest(_2, A);
+    return true;
+}
+
+bool CPU::BIT_0x58(uint8_t _3, RegisterView& B, int) {
+    bitTest(_3, B);
+    return true;
+}
+
+bool CPU::BIT_0x59(uint8_t _3, RegisterView& C, int) {
+    bitTest(_3, C);
+    return true;
+}
+
+bool CPU::BIT_0x5A(uint8_t _3, RegisterView& D, int) {
+    bitTest(_3, D);
+    return true;
+}
+
+bool CPU::BIT_0x5B(uint8_t _3, RegisterView& E, int) {
+    bitTest(_3, E);
+    return true;
+}
+
+bool CPU::BIT_0x5C(uint8_t _3, RegisterView& H, int) {
+    bitTest(_3, H);
+    return true;
+}
+
+bool CPU::BIT_0x5D(uint8_t _3, RegisterView& L, int) {
+    bitTest(_3, L);
+    return true;
+}
+
+bool CPU::BIT_0x5E(uint8_t _3, Register16& HL, int) {
+    bitTestIndirect(_3, HL);
+    return true;
+}
+
+bool CPU::BIT_0x5F(uint8_t _3, RegisterView& A, int) {
+    bitTest(_3, A);
+    return true;
+}
+
+bool CPU::BIT_0x60(uint8_t _4, RegisterView& B, int) {
+    bitTest(_4, B);
+    return true;
+}
+
+bool CPU::BIT_0x61(uint8_t _4, RegisterView& C, int) {
+    bitTest(_4, C);
+    return true;
+}
+
+bool CPU::BIT_0x62(uint8_t _4, RegisterView& D, int) {
+    bitTest(_4, D);
+    return true;
+}
+
+bool CPU::BIT_0x63(uint8_t _4, RegisterView& E, int) {
+    bitTest(_4, E);
+    return true;
+}
+
+bool CPU::BIT_0x64(uint8_t _4, RegisterView& H, int) {
+    bitTest(_4, H);
+    return true;
+}
+
+bool CPU::BIT_0x65(uint8_t _4, RegisterView& L, int) {
+    bitTest(_4, L);
+    return true;
+}
+
+bool CPU::BIT_0x66(uint8_t _4, Register16& HL, int) {
+    bitTestIndirect(_4, HL);
+    return true;
+}
+
+bool CPU::BIT_0x67(uint8_t _4, RegisterView& A, int) {
+    bitTest(_4, A);
+    return true;
+}
+
+bool CPU::BIT_0x68(uint8_t _5, RegisterView& B, int) {
+    bitTest(_5, B);
+    return true;
+}
+
+bool CPU::BIT_0x69(uint8_t _5, RegisterView& C, int) {
+    bitTest(_5, C);
+    return true;
+}
+
+bool CPU::BIT_0x6A(uint8_t _5, RegisterView& D, int) {
+    bitTest(_5, D);
+    return true;
+}
+
+bool CPU::BIT_0x6B(uint8_t _5, RegisterView& E, int) {
+    bitTest(_5, E);
+    return true;
+}
+
+bool CPU::BIT_0x6C(uint8_t _5, RegisterView& H, int) {
+    bitTest(_5, H);
+    return true;
+}
+
+bool CPU::BIT_0x6D(uint8_t _5, RegisterView& L, int) {
+    bitTest(_5, L);
+    return true;
+}
+
+bool CPU::BIT_0x6E(uint8_t _5, Register16& HL, int) {
+    bitTestIndirect(_5, HL);
+    return true;
+}
+
+bool CPU::BIT_0x6F(uint8_t _5, RegisterView& A, int) {
+    bitTest(_5, A);
+    return true;
+}
+
+bool CPU::BIT_0x70(uint8_t _6, RegisterView& B, int) {
+    bitTest(_6, B);
+    return true;
+}
+
+bool CPU::BIT_0x71(uint8_t _6, RegisterView& C, int) {
+    bitTest(_6, C);
+    return true;
+}
+
+bool CPU::BIT_0x72(uint8_t _6, RegisterView& D, int) {
+    bitTest(_6, D);
+    return true;
+}
+
+bool CPU::BIT_0x73(uint8_t _6, RegisterView& E, int) {
+    bitTest(_6, E);
+    return true;
+}
+
+bool CPU::BIT_0x74(uint8_t _6, RegisterView& H, int) {
+    bitTest(_6, H);
+    return true;
+}
+
+bool CPU::BIT_0x75(uint8_t _6, RegisterView& L, int) {
+    bitTest(_6, L);
+    return true;
+}
+
+bool CPU::BIT_0x76(uint8_t _6, Register16& HL, int) {
+    bitTestIndirect(_6, HL);
+    return true;
+}
+
+bool CPU::BIT_0x77(uint8_t _6, RegisterView& A, int) {
+    bitTest(_6, A);
+    return true;
+}
+
+bool CPU::BIT_0x78(uint8_t _7, RegisterView& B, int) {
+    bitTest(_7, B);
+    return true;
+}
+
+bool CPU::BIT_0x79(uint8_t _7, RegisterView& C, int) {
+    bitTest(_7, C);
+    return true;
+}
+
+bool CPU::BIT_0x7A(uint8_t _7, RegisterView& D, int) {
+    bitTest(_7, D);
+    return true;
+}
+
+bool CPU::BIT_0x7B(uint8_t _7, RegisterView& E, int) {
+    bitTest(_7, E);
+    return true;
+}
+
+bool CPU::BIT_0x7C(uint8_t _7, RegisterView& H, int) {
+    bitTest(_7, H);
+    return true;
+}
+
+bool CPU::BIT_0x7D(uint8_t _7, RegisterView& L, int) {
+    bitTest(_7, L);
+    return true;
+}
+
+bool CPU::BIT_0x7E(uint8_t _7, Register16& HL, int) {
+    bitTestIndirect(_7, HL);
+    return true;
+}
+
+bool CPU::BIT_0x7F(uint8_t _7, RegisterView& A, int) {
+    bitTest(_7, A);
+    return true;
+}
+
+bool CPU::RES_0x80(uint8_t _0, RegisterView& B, int) {
+    bitReset(_0, B);
+    return true;
+}
+
+bool CPU::RES_0x81(uint8_t _0, RegisterView& C, int) {
+    bitReset(_0, C);
+    return true;
+}
+
+bool CPU::RES_0x82(uint8_t _0, RegisterView& D, int) {
+    bitReset(_0, D);
+    return true;
+}
+
+bool CPU::RES_0x83(uint8_t _0, RegisterView& E, int) {
+    bitReset(_0, E);
+    return true;
+}
+
+bool CPU::RES_0x84(uint8_t _0, RegisterView& H, int) {
+    bitReset(_0, H);
+    return true;
+}
+
+bool CPU::RES_0x85(uint8_t _0, RegisterView& L, int) {
+    bitReset(_0, L);
+    return true;
+}
+
+bool CPU::RES_0x86(uint8_t _0, Register16& HL, int) {
+    bitResetIndirect(_0, HL);
+    return true;
+}
+
+bool CPU::RES_0x87(uint8_t _0, RegisterView& A, int) {
+    bitReset(_0, A);
+    return true;
+}
+
+bool CPU::RES_0x88(uint8_t _1, RegisterView& B, int) {
+    bitReset(_1, B);
+    return true;
+}
+
+bool CPU::RES_0x89(uint8_t _1, RegisterView& C, int) {
+    bitReset(_1, C);
+    return true;
+}
+
+bool CPU::RES_0x8A(uint8_t _1, RegisterView& D, int) {
+    bitReset(_1, D);
+    return true;
+}
+
+bool CPU::RES_0x8B(uint8_t _1, RegisterView& E, int) {
+    bitReset(_1, E);
+    return true;
+}
+
+bool CPU::RES_0x8C(uint8_t _1, RegisterView& H, int) {
+    bitReset(_1, H);
+    return true;
+}
+
+bool CPU::RES_0x8D(uint8_t _1, RegisterView& L, int) {
+    bitReset(_1, L);
+    return true;
+}
+
+bool CPU::RES_0x8E(uint8_t _1, Register16& HL, int) {
+    bitResetIndirect(_1, HL);
+    return true;
+}
+
+bool CPU::RES_0x8F(uint8_t _1, RegisterView& A, int) {
+    bitReset(_1, A);
+    return true;
+}
+
+bool CPU::RES_0x90(uint8_t _2, RegisterView& B, int) {
+    bitReset(_2, B);
+    return true;
+}
+
+bool CPU::RES_0x91(uint8_t _2, RegisterView& C, int) {
+    bitReset(_2, C);
+    return true;
+}
+
+bool CPU::RES_0x92(uint8_t _2, RegisterView& D, int) {
+    bitReset(_2, D);
+    return true;
+}
+
+bool CPU::RES_0x93(uint8_t _2, RegisterView& E, int) {
+    bitReset(_2, E);
+    return true;
+}
+
+bool CPU::RES_0x94(uint8_t _2, RegisterView& H, int) {
+    bitReset(_2, H);
+    return true;
+}
+
+bool CPU::RES_0x95(uint8_t _2, RegisterView& L, int) {
+    bitReset(_2, L);
+    return true;
+}
+
+bool CPU::RES_0x96(uint8_t _2, Register16& HL, int) {
+    bitResetIndirect(_2, HL);
+    return true;
+}
+
+bool CPU::RES_0x97(uint8_t _2, RegisterView& A, int) {
+    bitReset(_2, A);
+    return true;
+}
+
+bool CPU::RES_0x98(uint8_t _3, RegisterView& B, int) {
+    bitReset(_3, B);
+    return true;
+}
+
+bool CPU::RES_0x99(uint8_t _3, RegisterView& C, int) {
+    bitReset(_3, C);
+    return true;
+}
+
+bool CPU::RES_0x9A(uint8_t _3, RegisterView& D, int) {
+    bitReset(_3, D);
+    return true;
+}
+
+bool CPU::RES_0x9B(uint8_t _3, RegisterView& E, int) {
+    bitReset(_3, E);
+    return true;
+}
+
+bool CPU::RES_0x9C(uint8_t _3, RegisterView& H, int) {
+    bitReset(_3, H);
+    return true;
+}
+
+bool CPU::RES_0x9D(uint8_t _3, RegisterView& L, int) {
+    bitReset(_3, L);
+    return true;
+}
+
+bool CPU::RES_0x9E(uint8_t _3, Register16& HL, int) {
+    bitResetIndirect(_3, HL);
+    return true;
+}
+
+bool CPU::RES_0x9F(uint8_t _3, RegisterView& A, int) {
+    bitReset(_3, A);
+    return true;
+}
+
+bool CPU::RES_0xA0(uint8_t _4, RegisterView& B, int) {
+    bitReset(_4, B);
+    return true;
+}
+
+bool CPU::RES_0xA1(uint8_t _4, RegisterView& C, int) {
+    bitReset(_4, C);
+    return true;
+}
+
+bool CPU::RES_0xA2(uint8_t _4, RegisterView& D, int) {
+    bitReset(_4, D);
+    return true;
+}
+
+bool CPU::RES_0xA3(uint8_t _4, RegisterView& E, int) {
+    bitReset(_4, E);
+    return true;
+}
+
+bool CPU::RES_0xA4(uint8_t _4, RegisterView& H, int) {
+    bitReset(_4, H);
+    return true;
+}
+
+bool CPU::RES_0xA5(uint8_t _4, RegisterView& L, int) {
+    bitReset(_4, L);
+    return true;
+}
+
+bool CPU::RES_0xA6(uint8_t _4, Register16& HL, int) {
+    bitResetIndirect(_4, HL);
+    return true;
+}
+
+bool CPU::RES_0xA7(uint8_t _4, RegisterView& A, int) {
+    bitReset(_4, A);
+    return true;
+}
+
+bool CPU::RES_0xA8(uint8_t _5, RegisterView& B, int) {
+    bitReset(_5, B);
+    return true;
+}
+
+bool CPU::RES_0xA9(uint8_t _5, RegisterView& C, int) {
+    bitReset(_5, C);
+    return true;
+}
+
+bool CPU::RES_0xAA(uint8_t _5, RegisterView& D, int) {
+    bitReset(_5, D);
+    return true;
+}
+
+bool CPU::RES_0xAB(uint8_t _5, RegisterView& E, int) {
+    bitReset(_5, E);
+    return true;
+}
+
+bool CPU::RES_0xAC(uint8_t _5, RegisterView& H, int) {
+    bitReset(_5, H);
+    return true;
+}
+
+bool CPU::RES_0xAD(uint8_t _5, RegisterView& L, int) {
+    bitReset(_5, L);
+    return true;
+}
+
+bool CPU::RES_0xAE(uint8_t _5, Register16& HL, int) {
+    bitResetIndirect(_5, HL);
+    return true;
+}
+
+bool CPU::RES_0xAF(uint8_t _5, RegisterView& A, int) {
+    bitReset(_5, A);
+    return true;
+}
+
+bool CPU::RES_0xB0(uint8_t _6, RegisterView& B, int) {
+    bitReset(_6, B);
+    return true;
+}
+
+bool CPU::RES_0xB1(uint8_t _6, RegisterView& C, int) {
+    bitReset(_6, C);
+    return true;
+}
+
+bool CPU::RES_0xB2(uint8_t _6, RegisterView& D, int) {
+    bitReset(_6, D);
+    return true;
+}
+
+bool CPU::RES_0xB3(uint8_t _6, RegisterView& E, int) {
+    bitReset(_6, E);
+    return true;
+}
+
+bool CPU::RES_0xB4(uint8_t _6, RegisterView& H, int) {
+    bitReset(_6, H);
+    return true;
+}
+
+bool CPU::RES_0xB5(uint8_t _6, RegisterView& L, int) {
+    bitReset(_6, L);
+    return true;
+}
+
+bool CPU::RES_0xB6(uint8_t _6, Register16& HL, int) {
+    bitResetIndirect(_6, HL);
+    return true;
+}
+
+bool CPU::RES_0xB7(uint8_t _6, RegisterView& A, int) {
+    bitReset(_6, A);
+    return true;
+}
+
+bool CPU::RES_0xB8(uint8_t _7, RegisterView& B, int) {
+    bitReset(_7, B);
+    return true;
+}
+
+bool CPU::RES_0xB9(uint8_t _7, RegisterView& C, int) {
+    bitReset(_7, C);
+    return true;
+}
+
+bool CPU::RES_0xBA(uint8_t _7, RegisterView& D, int) {
+    bitReset(_7, D);
+    return true;
+}
+
+bool CPU::RES_0xBB(uint8_t _7, RegisterView& E, int) {
+    bitReset(_7, E);
+    return true;
+}
+
+bool CPU::RES_0xBC(uint8_t _7, RegisterView& H, int) {
+    bitReset(_7, H);
+    return true;
+}
+
+bool CPU::RES_0xBD(uint8_t _7, RegisterView& L, int) {
+    bitReset(_7, L);
+    return true;
+}
+
+bool CPU::RES_0xBE(uint8_t _7, Register16& HL, int) {
+    bitResetIndirect(_7, HL);
+    return true;
+}
+
+bool CPU::RES_0xBF(uint8_t _7, RegisterView& A, int) {
+    bitReset(_7, A);
+    return true;
+}
+
+bool CPU::SET_0xC0(uint8_t _0, RegisterView& B, int) {
+    bitSet(_0, B);
+    return true;
+}
+
+bool CPU::SET_0xC1(uint8_t _0, RegisterView& C, int) {
+    bitSet(_0, C);
+    return true;
+}
+
+bool CPU::SET_0xC2(uint8_t _0, RegisterView& D, int) {
+    bitSet(_0, D);
+    return true;
+}
+
+bool CPU::SET_0xC3(uint8_t _0, RegisterView& E, int) {
+    bitSet(_0, E);
+    return true;
+}
+
+bool CPU::SET_0xC4(uint8_t _0, RegisterView& H, int) {
+    bitSet(_0, H);
+    return true;
+}
+
+bool CPU::SET_0xC5(uint8_t _0, RegisterView& L, int) {
+    bitSet(_0, L);
+    return true;
+}
+
+bool CPU::SET_0xC6(uint8_t _0, Register16& HL, int) {
+    bitSetIndirect(_0, HL);
+    return true;
+}
+
+bool CPU::SET_0xC7(uint8_t _0, RegisterView& A, int) {
+    bitSet(_0, A);
+    return true;
+}
+
+bool CPU::SET_0xC8(uint8_t _1, RegisterView& B, int) {
+    bitSet(_1, B);
+    return true;
+}
+
+bool CPU::SET_0xC9(uint8_t _1, RegisterView& C, int) {
+    bitSet(_1, C);
+    return true;
+}
+
+bool CPU::SET_0xCA(uint8_t _1, RegisterView& D, int) {
+    bitSet(_1, D);
+    return true;
+}
+
+bool CPU::SET_0xCB(uint8_t _1, RegisterView& E, int) {
+    bitSet(_1, E);
+    return true;
+}
+
+bool CPU::SET_0xCC(uint8_t _1, RegisterView& H, int) {
+    bitSet(_1, H);
+    return true;
+}
+
+bool CPU::SET_0xCD(uint8_t _1, RegisterView& L, int) {
+    bitSet(_1, L);
+    return true;
+}
+
+bool CPU::SET_0xCE(uint8_t _1, Register16& HL, int) {
+    bitSetIndirect(_1, HL);
+    return true;
+}
+
+bool CPU::SET_0xCF(uint8_t _1, RegisterView& A, int) {
+    bitSet(_1, A);
+    return true;
+}
+
+bool CPU::SET_0xD0(uint8_t _2, RegisterView& B, int) {
+    bitSet(_2, B);
+    return true;
+}
+
+bool CPU::SET_0xD1(uint8_t _2, RegisterView& C, int) {
+    bitSet(_2, C);
+    return true;
+}
+
+bool CPU::SET_0xD2(uint8_t _2, RegisterView& D, int) {
+    bitSet(_2, D);
+    return true;
+}
+
+bool CPU::SET_0xD3(uint8_t _2, RegisterView& E, int) {
+    bitSet(_2, E);
+    return true;
+}
+
+bool CPU::SET_0xD4(uint8_t _2, RegisterView& H, int) {
+    bitSet(_2, H);
+    return true;
+}
+
+bool CPU::SET_0xD5(uint8_t _2, RegisterView& L, int) {
+    bitSet(_2, L);
+    return true;
+}
+
+bool CPU::SET_0xD6(uint8_t _2, Register16& HL, int) {
+    bitSetIndirect(_2, HL);
+    return true;
+}
+
+bool CPU::SET_0xD7(uint8_t _2, RegisterView& A, int) {
+    bitSet(_2, A);
+    return true;
+}
+
+bool CPU::SET_0xD8(uint8_t _3, RegisterView& B, int) {
+    bitSet(_3, B);
+    return true;
+}
+
+bool CPU::SET_0xD9(uint8_t _3, RegisterView& C, int) {
+    bitSet(_3, C);
+    return true;
+}
+
+bool CPU::SET_0xDA(uint8_t _3, RegisterView& D, int) {
+    bitSet(_3, D);
+    return true;
+}
+
+bool CPU::SET_0xDB(uint8_t _3, RegisterView& E, int) {
+    bitSet(_3, E);
+    return true;
+}
+
+bool CPU::SET_0xDC(uint8_t _3, RegisterView& H, int) {
+    bitSet(_3, H);
+    return true;
+}
+
+bool CPU::SET_0xDD(uint8_t _3, RegisterView& L, int) {
+    bitSet(_3, L);
+    return true;
+}
+
+bool CPU::SET_0xDE(uint8_t _3, Register16& HL, int) {
+    bitSetIndirect(_3, HL);
+    return true;
+}
+
+bool CPU::SET_0xDF(uint8_t _3, RegisterView& A, int) {
+    bitSet(_3, A);
+    return true;
+}
+
+bool CPU::SET_0xE0(uint8_t _4, RegisterView& B, int) {
+    bitSet(_4, B);
+    return true;
+}
+
+bool CPU::SET_0xE1(uint8_t _4, RegisterView& C, int) {
+    bitSet(_4, C);
+    return true;
+}
+
+bool CPU::SET_0xE2(uint8_t _4, RegisterView& D, int) {
+    bitSet(_4, D);
+    return true;
+}
+
+bool CPU::SET_0xE3(uint8_t _4, RegisterView& E, int) {
+    bitSet(_4, E);
+    return true;
+}
+
+bool CPU::SET_0xE4(uint8_t _4, RegisterView& H, int) {
+    bitSet(_4, H);
+    return true;
+}
+
+bool CPU::SET_0xE5(uint8_t _4, RegisterView& L, int) {
+    bitSet(_4, L);
+    return true;
+}
+
+bool CPU::SET_0xE6(uint8_t _4, Register16& HL, int) {
+    bitSetIndirect(_4, HL);
+    return true;
+}
+
+bool CPU::SET_0xE7(uint8_t _4, RegisterView& A, int) {
+    bitSet(_4, A);
+    return true;
+}
+
+bool CPU::SET_0xE8(uint8_t _5, RegisterView& B, int) {
+    bitSet(_5, B);
+    return true;
+}
+
+bool CPU::SET_0xE9(uint8_t _5, RegisterView& C, int) {
+    bitSet(_5, C);
+    return true;
+}
+
+bool CPU::SET_0xEA(uint8_t _5, RegisterView& D, int) {
+    bitSet(_5, D);
+    return true;
+}
+
+bool CPU::SET_0xEB(uint8_t _5, RegisterView& E, int) {
+    bitSet(_5, E);
+    return true;
+}
+
+bool CPU::SET_0xEC(uint8_t _5, RegisterView& H, int) {
+    bitSet(_5, H);
+    return true;
+}
+
+bool CPU::SET_0xED(uint8_t _5, RegisterView& L, int) {
+    bitSet(_5, L);
+    return true;
+}
+
+bool CPU::SET_0xEE(uint8_t _5, Register16& HL, int) {
+    bitSetIndirect(_5, HL);
+    return true;
+}
+
+bool CPU::SET_0xEF(uint8_t _5, RegisterView& A, int) {
+    bitSet(_5, A);
+    return true;
+}
+
+bool CPU::SET_0xF0(uint8_t _6, RegisterView& B, int) {
+    bitSet(_6, B);
+    return true;
+}
+
+bool CPU::SET_0xF1(uint8_t _6, RegisterView& C, int) {
+    bitSet(_6, C);
+    return true;
+}
+
+bool CPU::SET_0xF2(uint8_t _6, RegisterView& D, int) {
+    bitSet(_6, D);
+    return true;
+}
+
+bool CPU::SET_0xF3(uint8_t _6, RegisterView& E, int) {
+    bitSet(_6, E);
+    return true;
+}
+
+bool CPU::SET_0xF4(uint8_t _6, RegisterView& H, int) {
+    bitSet(_6, H);
+    return true;
+}
+
+bool CPU::SET_0xF5(uint8_t _6, RegisterView& L, int) {
+    bitSet(_6, L);
+    return true;
+}
+
+bool CPU::SET_0xF6(uint8_t _6, Register16& HL, int) {
+    bitSetIndirect(_6, HL);
+    return true;
+}
+
+bool CPU::SET_0xF7(uint8_t _6, RegisterView& A, int) {
+    bitSet(_6, A);
+    return true;
+}
+
+bool CPU::SET_0xF8(uint8_t _7, RegisterView& B, int) {
+    bitSet(_7, B);
+    return true;
+}
+
+bool CPU::SET_0xF9(uint8_t _7, RegisterView& C, int) {
+    bitSet(_7, C);
+    return true;
+}
+
+bool CPU::SET_0xFA(uint8_t _7, RegisterView& D, int) {
+    bitSet(_7, D);
+    return true;
+}
+
+bool CPU::SET_0xFB(uint8_t _7, RegisterView& E, int) {
+    bitSet(_7, E);
+    return true;
+}
+
+bool CPU::SET_0xFC(uint8_t _7, RegisterView& H, int) {
+    bitSet(_7, H);
+    return true;
+}
+
+bool CPU::SET_0xFD(uint8_t _7, RegisterView& L, int) {
+    bitSet(_7, L);
+    return true;
+}
+
+bool CPU::SET_0xFE(uint8_t _7, Register16& HL, int) {
+    bitSetIndirect(_7, HL);
+    return true;
+}
+
+bool CPU::SET_0xFF(uint8_t _7, RegisterView& A, int) {
+    bitSet(_7, A);
     return true;
 }

@@ -37,6 +37,8 @@ class RegisterBase : public RegisterTag<Bits> {
         RegisterBase<Bits>& operator&=(value_t rhs) { reg &= rhs; return *this; }
         RegisterBase<Bits>& operator|=(value_t rhs) { reg |= rhs; return *this; }
         RegisterBase<Bits>& operator^=(value_t rhs) { reg ^= rhs; return *this; }
+        RegisterBase<Bits>& operator<<=(value_t rhs) { reg <<= rhs; return *this; }
+        RegisterBase<Bits>& operator>>=(value_t rhs) { reg >>= rhs; return *this; }
 
         RegisterBase<Bits>& operator++() { ++reg; return *this; }
         RegisterBase<Bits> operator++(int) { auto temp = *this; reg++; return temp; }
@@ -113,6 +115,14 @@ class RegisterView : public RegisterTag<8> {
         }
         RegisterView& operator^=(uint8_t rhs) {
             *this = (*this ^ rhs);
+            return *this;
+        }
+        RegisterView& operator<<=(uint8_t rhs) {
+            *this = (*this << rhs);
+            return *this;
+        }
+        RegisterView& operator>>=(uint8_t rhs) {
+            *this = (*this >> rhs);
             return *this;
         }
 
