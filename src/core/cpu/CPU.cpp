@@ -37,9 +37,12 @@ uint8_t CPU::tick() {
                     byte = mmu[PC++]; \
                 } \
                 std::memcpy(&name, bytes.data(), bytecount); \
-                if constexpr (debug) { std::print(" {:#06X}", name); } \
+                if constexpr (debug) { std::print(" {:#06x}", name); } \
             } \
-            else if constexpr (debug) { std::print(" {}", #name); }
+            else if constexpr (debug) { \
+                if constexpr (immediate) { std::print(" {}{}", #name, #postop); } \
+                else { std::print(" [{}{}]", #name, #postop); } \
+            }
             #define OPCODE_END(code, name, args...) \
             if constexpr (debug) { std::println(); } \
             return (name##_##code(args)) ? cyclesTaken : cyclesSkipped; \
