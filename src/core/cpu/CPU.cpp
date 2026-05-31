@@ -15,7 +15,7 @@ uint8_t CPU::tick() {
     RegisterView& F_Z = F, F_NZ = F, F_C = F, F_NC = F;
 
     /* these are just here to keep xmacro happy when no cycle count is given */
-    uint8_t cyclesTaken [[ maybe_unused ]] = 0, cyclesSkipped [[ maybe_unused ]] = 0;
+    constexpr uint8_t cyclesTaken [[ maybe_unused ]] = 0, cyclesSkipped [[ maybe_unused ]] = 0;
     constexpr bool debug = false;
 
     if (readPrefixed) {
@@ -23,21 +23,27 @@ uint8_t CPU::tick() {
         readPrefixed = false;
         switch (opcode) {
             case OPCODE_CBPREFIXED::BIT_0x7C: {
-                std::println("{}: {} {} {} {}", PC, "0x7C", "BIT", "7", "B");
+                if constexpr (debug) {
+                    std::println("{}: {} {} {} {}", PC, "0x7C", "BIT", "7", "B");
+                }
                 BIT_0x7C(7, H);
                 return 2;
             }
             break;
 
             case OPCODE_CBPREFIXED::SWAP_0x37: {
-                std::println("{}: {} {} {}", PC, "0x37", "SWAP", "A");
+                if constexpr (debug) {
+                    std::println("{}: {} {} {}", PC, "0x37", "SWAP", "A");
+                }
                 SWAP_0x37(A);
                 return 2;
             }
             break;
 
             case OPCODE_CBPREFIXED::RL_0x10: {
-                std::println("{}: {} {} {}", PC, "0x10", "RL", "B");
+                if constexpr (debug) {
+                    std::println("{}: {} {} {}", PC, "0x10", "RL", "B");
+                }
                 RL_0x10(B);
                 return 2;
             }
