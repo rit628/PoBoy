@@ -149,8 +149,6 @@ class CPU {
 
         MMU& mmu;
 
-        bool readPrefixed = false;
-        
         /* Register File */
         Register16 PC; // program counter
         Register16 SP; // stack pointer

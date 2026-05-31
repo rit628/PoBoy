@@ -1067,7 +1067,6 @@ bool CPU::JP_0xCA(RegisterView& F_Z, uint16_t a16, int) {
 }
 
 bool CPU::PREFIX_0xCB(int) {
-    readPrefixed = true;
     return true;
 }
 
