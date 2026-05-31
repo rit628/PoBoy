@@ -6,7 +6,6 @@ class GameBoy {
     public:
         void runBootRomTest();
 
-
     private:
         MMU mmu;
         CPU cpu{mmu};

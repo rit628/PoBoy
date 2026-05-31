@@ -1,17 +1,34 @@
 #pragma once
+#include "RomMetadata.hpp"
 #include <array>
 #include <cstdint>
+#include <fstream>
+#include <filesystem>
 
 class MMU {
     public:
+        const RomMetadata& loadRom(const std::filesystem::path& romFile);
         uint8_t& operator[](uint16_t address);
+        
+        /* some important addresses and constants */
+        static constexpr uint16_t MEMORY_SIZE = 0xFFFF;
+        static constexpr uint16_t BOOTROM_SIZE = 0x0100;
+        static constexpr uint16_t ROM_BANK_SIZE = 0x4000;
 
-        /* some important addresses */
         static constexpr uint16_t IE = 0xFFFF; // interrupt enable
         static constexpr uint16_t IF = 0xFF0F; // interrupt flag
 
+        /* embedded binaries */
+        static constexpr std::array<uint8_t, BOOTROM_SIZE> bootrom = {
+            #embed "bootix_dmg.bin"
+        };
+
     private:
-        std::array<uint8_t, 0xFFFF> memory{};
+        void readRomMetadata();
+
+        std::ifstream rom;
+        RomMetadata metadata;
+        std::array<uint8_t, MEMORY_SIZE> memory{};
 
         bool readFromBootRom = true; // for testing
 };
