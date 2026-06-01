@@ -20,9 +20,15 @@ FetchContent_Declare(
 )
 set(BOOST_INCLUDE_LIBRARIES static_string)
 
+FetchContent_Declare(
+    SDL3
+    SYSTEM # Disable warnings in headers
+    URL https://github.com/libsdl-org/SDL/archive/refs/tags/release-3.4.10.zip
+)
+
 set(CMAKE_CXX_FLAGS "-w") # Disable warnings for fetched content
-FetchContent_MakeAvailable(Boost)
-link_libraries(Boost::static_string)
+FetchContent_MakeAvailable(Boost SDL3)
+link_libraries(Boost::static_string SDL3::SDL3)
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-c23-extensions --embed-dir=${CMAKE_SOURCE_DIR}/bin")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -glldb -gfull")

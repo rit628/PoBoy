@@ -15,7 +15,10 @@ void GameBoy::run() {
     uint64_t totalMCycles = 0;
     
     while (true) {
-        totalMCycles += cpu.tick();
+        auto mCycles = cpu.tick();
+        ppu.tick(mCycles * 4);
+
+        totalMCycles += mCycles;
         auto totalTCycles = totalMCycles * 4;
 
         auto now = clock::now();
@@ -26,6 +29,5 @@ void GameBoy::run() {
             auto waitTime = expectedElapsed - elapsed;
             std::this_thread::sleep_for(waitTime);
         }
-        std::println("Emulated Clock Speed: {} MHz", totalTCycles / elapsed.count());
     }
 }

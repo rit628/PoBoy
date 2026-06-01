@@ -1,6 +1,7 @@
 #pragma once
 #include "MMU.hpp"
 #include "CPU.hpp"
+#include "PPU.hpp"
 
 class GameBoy {
     public:
@@ -9,4 +10,5 @@ class GameBoy {
     private:
         MMU mmu;
         CPU cpu{mmu};
+        PPU ppu{mmu};
 };
