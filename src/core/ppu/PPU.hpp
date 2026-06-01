@@ -20,7 +20,7 @@ class PPU {
         static constexpr uint8_t VBLANK_LINES = 10;
         static constexpr uint8_t LCD_LINES = FRAME_LINES - VBLANK_LINES;
 
-        static constexpr uint32_t DOTS_PER_FRAME = 70244;
+        static constexpr uint32_t DOTS_PER_FRAME = 70224;
         static constexpr uint16_t DOTS_PER_LINE = DOTS_PER_FRAME / FRAME_LINES;
         static constexpr uint32_t DOTS_PER_LCD_SCAN = LCD_LINES * DOTS_PER_LINE;
         static constexpr uint16_t DOTS_PER_OAM_SCAN_MODE = 80;

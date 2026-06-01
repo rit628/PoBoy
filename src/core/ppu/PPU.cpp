@@ -38,6 +38,12 @@ void PPU::updateMode() {
     }
     
     /* for now wrap the counters here in case mode switching is broken */
-    if (lineDotsElapsed >= DOTS_PER_LINE) lineDotsElapsed = 0;
-    if (frameDotsElapsed >= DOTS_PER_FRAME) frameDotsElapsed = 0;
+    if (lineDotsElapsed >= DOTS_PER_LINE) {
+        lineDotsElapsed = 0;
+        mmu.write(MMU::LY,  mmu.read(MMU::LY) + 1);
+    }
+    if (frameDotsElapsed >= DOTS_PER_FRAME) {
+        frameDotsElapsed = 0;
+        mmu.write(MMU::LY, 0);
+    }
 }
