@@ -2,10 +2,11 @@
 #include "MMU.hpp"
 #include "CPU.hpp"
 #include "PPU.hpp"
+#include <filesystem>
 
 class GameBoy {
     public:
-        void run();
+        void run(const std::filesystem::path& romFile);
 
     private:
         MMU mmu;
