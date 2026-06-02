@@ -1258,6 +1258,7 @@ bool CPU::LDH_0xF0(RegisterView& A, uint8_t a8, int) {
 
 bool CPU::POP_0xF1(Register16& AF, int) {
     pop(AF);
+    AF.setLo(F & 0xF0); // lower 4 bits of F must always be 0
     return true;
 }
 
