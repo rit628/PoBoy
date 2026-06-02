@@ -56,9 +56,6 @@ uint8_t CPU::tick() {
         #undef OPCODE_END
     }
 
-    /* 0xCB Prefixed Opcode Argument Constants */
-    constexpr uint8_t prefixCycles = 1;
-
     opcode = mmu.read(PC++);
     switch (static_cast<OPCODE_CBPREFIXED>(opcode)) {
         #define OPCODE_BEGIN(code, name, bytecount, ...) \
@@ -73,7 +70,7 @@ uint8_t CPU::tick() {
             #define OPCODE_END(code, name, args...) \
             if constexpr (debug) { std::println(); } \
             name##_##code(args); \
-            return prefixCycles + cyclesTaken; /* no cb prefixed instructions contain branching */ \
+            return cyclesTaken; /* no cb prefixed instructions contain branching */ \
         }
         #include "cbprefixed.inc"
         #undef OPCODE_BEGIN
