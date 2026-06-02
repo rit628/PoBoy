@@ -23,25 +23,14 @@ inline uint8_t CPU::addAndSetFlags(uint8_t a, uint8_t b, uint8_t carry) {
     using enum REGISTER_FLAG;
     uint8_t result = a + b + carry;
 
-    auto& flags = F;
     setZero(result);
-    flags.clear(N);
+    F.clear(N);
 
     // set half carry (H): mask upper 4 bits and check if exceeds lower 4
-    if (((a & 0x0F) + (b & 0x0F) + carry) > 0x0F) {
-        flags.set(H);
-    }
-    else {
-        flags.clear(H);
-    }
+    (((a & 0x0F) + (b & 0x0F) + carry) > 0x0F) ? F.set(H) : F.clear(H);
 
     // set carry (C): check if greater than uint8_t max
-    if ((static_cast<uint16_t>(a) + static_cast<uint16_t>(b) + carry) > 0xFF) {
-        flags.set(C);
-    }
-    else {
-        flags.clear(C);
-    }
+    ((static_cast<uint16_t>(a) + static_cast<uint16_t>(b) + carry) > 0xFF) ? F.set(C) : F.clear(C);
     
     return result;
 }
@@ -50,25 +39,30 @@ inline uint16_t CPU::addAndSetFlags(uint16_t a, uint16_t b) {
     using enum REGISTER_FLAG;
     uint16_t result = a + b;
 
-    auto& flags = F;
-    flags.clear(N);
+    F.clear(N);
 
     // set half carry (H): mask upper 4 bits and check if exceeds lower 12
-    if (((a & 0x0FFF) + (b & 0x0FFF)) > 0x0FFF) {
-        flags.set(H);
-    }
-    else {
-        flags.clear(H);
-    }
+    (((a & 0x0FFF) + (b & 0x0FFF)) > 0x0FFF) ? F.set(H) : F.clear(H);
 
     // set carry (C): check if greater than uint16_t max
-    if ((static_cast<uint32_t>(a) + static_cast<uint32_t>(b)) > 0xFFFF) {
-        flags.set(C);
-    }
-    else {
-        flags.clear(C);
-    }
+    ((static_cast<uint32_t>(a) + static_cast<uint32_t>(b)) > 0xFFFF) ? F.set(C) : F.clear(C);
     
+    return result;
+}
+
+inline uint16_t CPU::addAndSetFlags(uint16_t a, int8_t b) {
+    using enum REGISTER_FLAG;
+    uint16_t result = a + b;
+
+    F.clear(Z);
+    F.clear(N);
+
+    // set half carry (H): mask upper 4 bits and check if exceeds lower 4
+    (((a & 0x000F) + (b & 0x0F)) > 0x0F) ? F.set(H) : F.clear(H);
+
+    // set carry (C): check if greater than uint8_t max
+    (((a & 0x00FF) + b) > 0xFF) ? F.set(C) : F.clear(C);
+
     return result;
 }
 
@@ -76,25 +70,14 @@ inline uint8_t CPU::subtractAndSetFlags(uint8_t a, uint8_t b, uint8_t carry) {
     using enum REGISTER_FLAG;
     uint8_t result = static_cast<int16_t>(a) - static_cast<int16_t>(b) - carry;
 
-    auto& flags = F;
     setZero(result);
-    flags.set(N);
+    F.set(N);
 
     // set half carry (H): mask upper 4 bits and check if negative (borrow from bit 4)
-    if ((static_cast<int8_t>(a & 0x0F) - static_cast<int8_t>(b & 0x0F) - carry) < 0) {
-        flags.set(H);
-    }
-    else {
-        flags.clear(H);
-    }
+    ((static_cast<int8_t>(a & 0x0F) - static_cast<int8_t>(b & 0x0F) - carry) < 0) ? F.set(H) : F.clear(H);
 
     // set carry (C): check if result is negative (borrow required)
-    if ((static_cast<int16_t>(a) - static_cast<int16_t>(b) - carry) < 0) {
-        flags.set(C);
-    }
-    else {
-        flags.clear(C);
-    }
+    ((static_cast<int16_t>(a) - static_cast<int16_t>(b) - carry) < 0) ? F.set(C) : F.clear(C);
 
     return result;
 }
@@ -136,6 +119,11 @@ inline void CPU::loadDecrement(Register<16> auto& address, uint8_t value) {
     mmu.write(address--, value);
 }
 
+inline void CPU::loadAdjusted(Register<16> auto& target, Register<16> auto& value, int8_t adjust) {
+    auto adjustedValue = addAndSetFlags(value, adjust);
+    target = adjustedValue;
+}
+
 template<size_t N>
 inline void CPU::add(Register<N> auto& target, RegisterValue<N> value) {
     target = addAndSetFlags(target, value);
@@ -154,6 +142,10 @@ inline void CPU::adc(Register<8> auto& target, uint8_t value) {
 inline void CPU::adcIndirect(Register<8> auto& target, uint16_t address) {
     auto value = mmu.read(address);
     adc(target, value);
+}
+
+inline void CPU::addRelative(Register<16> auto& target, int8_t value) {
+    target = addAndSetFlags(target, value);
 }
 
 inline void CPU::sub(Register<8> auto& target, uint8_t value) {
@@ -187,9 +179,8 @@ inline void CPU::compareIndirect(uint8_t lhs, uint16_t address) {
 inline void CPU::decrement(Integer<8> auto& target) {
     using enum REGISTER_FLAG;
     bool carrySet = getCarry();
-    auto& flags = F;
     target = subtractAndSetFlags(target, 1);
-    (carrySet) ? flags.set(C) : flags.clear(C); // ensure C remains unmodified
+    (carrySet) ? F.set(C) : F.clear(C); // ensure C remains unmodified
 }
 
 inline void CPU::decrement(Register<16> auto& target) {
@@ -205,9 +196,8 @@ inline void CPU::decrementIndirect(uint16_t address) {
 inline void CPU::increment(Integer<8> auto& target) {
     using enum REGISTER_FLAG;
     bool carrySet = getCarry();
-    auto& flags = F;
     target = addAndSetFlags(target, 1);
-    (carrySet) ? flags.set(C) : flags.clear(C); // ensure C remains unmodified
+    (carrySet) ? F.set(C) : F.clear(C); // ensure C remains unmodified
 }
 
 inline void CPU::increment(Register<16> auto& target) {
@@ -223,11 +213,10 @@ inline void CPU::incrementIndirect(uint16_t address) {
 inline void CPU::bitAnd(Register<8> auto& lhs, uint8_t rhs) {
     using enum REGISTER_FLAG;
     lhs &= rhs;
-    auto& flags = F;
     setZero(lhs);
-    flags.clear(N);
-    flags.set(H);
-    flags.clear(C);
+    F.clear(N);
+    F.set(H);
+    F.clear(C);
 }
 
 inline void CPU::bitAndIndirect(Register<8> auto& lhs, uint16_t address) {
@@ -238,19 +227,17 @@ inline void CPU::bitAndIndirect(Register<8> auto& lhs, uint16_t address) {
 inline void CPU::bitNot(Register<8> auto& target) {
     using enum REGISTER_FLAG;
     target = ~target;
-    auto& flags = F;
-    flags.set(N);
-    flags.set(H);
+    F.set(N);
+    F.set(H);
 }
 
 inline void CPU::bitOr(Register<8> auto& lhs, uint8_t rhs) {
     using enum REGISTER_FLAG;
     lhs |= rhs;
-    auto& flags = F;
     setZero(lhs);
-    flags.clear(N);
-    flags.clear(H);
-    flags.clear(C);
+    F.clear(N);
+    F.clear(H);
+    F.clear(C);
 }
 
 inline void CPU::bitOrIndirect(Register<8> auto& lhs, uint16_t address) {
@@ -261,11 +248,10 @@ inline void CPU::bitOrIndirect(Register<8> auto& lhs, uint16_t address) {
 inline void CPU::bitXor(Register<8> auto& lhs, uint8_t rhs) {
     using enum REGISTER_FLAG;
     lhs ^= rhs;
-    auto& flags = F;
     setZero(lhs);
-    flags.clear(N);
-    flags.clear(H);
-    flags.clear(C);
+    F.clear(N);
+    F.clear(H);
+    F.clear(C);
 }
 
 inline void CPU::bitXorIndirect(Register<8> auto& lhs, uint16_t address) {
@@ -275,11 +261,10 @@ inline void CPU::bitXorIndirect(Register<8> auto& lhs, uint16_t address) {
 
 inline void CPU::bitTest(uint8_t bitIndex, uint8_t target) {
     using enum REGISTER_FLAG;
-    auto& flags = F;
     uint8_t test = 1 << bitIndex;
-    (test & target) ? flags.clear(Z) : flags.set(Z);
-    flags.clear(N);
-    flags.set(H);
+    (test & target) ? F.clear(Z) : F.set(Z);
+    F.clear(N);
+    F.set(H);
 }
 
 inline void CPU::bitTestIndirect(uint8_t bitIndex, uint16_t address) {
@@ -315,11 +300,10 @@ inline void CPU::rotateLeft(Integer<8> auto& target) {
     bool msb = target & 0x80;
     target = (target << 1) | carry; // rotate through carry
 
-    auto& flags = F;
     setZero(target);
-    flags.clear(N);
-    flags.clear(H);
-    (msb) ? flags.set(C) : flags.clear(C); // carry = former msb
+    F.clear(N);
+    F.clear(H);
+    (msb) ? F.set(C) : F.clear(C); // carry = former msb
 }
 
 inline void CPU::rotateLeftIndirect(uint16_t address) {
@@ -333,11 +317,10 @@ inline void CPU::rotateLeftCircular(Integer<8> auto& target) {
     uint8_t msb = (target & 0x80) >> 7; // msb becomes new lsb
     target = (target << 1) | msb; 
 
-    auto& flags = F;
     setZero(target);
-    flags.clear(N);
-    flags.clear(H);
-    (msb) ? flags.set(C) : flags.clear(C); // carry = former msb
+    F.clear(N);
+    F.clear(H);
+    (msb) ? F.set(C) : F.clear(C); // carry = former msb
 }
 
 inline void CPU::rotateLeftCircularIndirect(uint16_t address) {
@@ -352,11 +335,10 @@ inline void CPU::rotateRight(Integer<8> auto& target) {
     bool lsb = target & 0x01;
     target = (target >> 1) | carry; // rotate through carry
 
-    auto& flags = F;
     setZero(target);
-    flags.clear(N);
-    flags.clear(H);
-    (lsb) ? flags.set(C) : flags.clear(C); // carry = former lsb
+    F.clear(N);
+    F.clear(H);
+    (lsb) ? F.set(C) : F.clear(C); // carry = former lsb
 }
 
 inline void CPU::rotateRightIndirect(uint16_t address) {
@@ -370,11 +352,10 @@ inline void CPU::rotateRightCircular(Integer<8> auto& target) {
     uint8_t lsb = (target & 0x01) << 7; // lsb becomes new msb
     target = (target >> 1) | lsb;
 
-    auto& flags = F;
     setZero(target);
-    flags.clear(N);
-    flags.clear(H);
-    (lsb) ? flags.set(C) : flags.clear(C); // carry = former lsb
+    F.clear(N);
+    F.clear(H);
+    (lsb) ? F.set(C) : F.clear(C); // carry = former lsb
 }
 
 inline void CPU::rotateRightCircularIndirect(uint16_t address) {
@@ -387,11 +368,10 @@ inline void CPU::shiftLeftArithmetic(Integer<8> auto& target) {
     using enum REGISTER_FLAG;
     bool msb = target & 0x80;
     target <<= 1;
-    auto& flags = F;
     setZero(target);
-    flags.clear(N);
-    flags.clear(H);
-    (msb) ? flags.set(C) : flags.clear(C);
+    F.clear(N);
+    F.clear(H);
+    (msb) ? F.set(C) : F.clear(C);
 }
 
 inline void CPU::shiftLeftArithmeticIndirect(uint16_t address) {
@@ -405,11 +385,10 @@ inline void CPU::shiftRightArithmetic(Integer<8> auto& target) {
     bool lsb = target & 0x01;
     uint8_t msb = target & 0x80;
     target = (target >> 1) | msb; // preserve msb
-    auto& flags = F;
     setZero(target);
-    flags.clear(N);
-    flags.clear(H);
-    (lsb) ? flags.set(C) : flags.clear(C);
+    F.clear(N);
+    F.clear(H);
+    (lsb) ? F.set(C) : F.clear(C);
 }
 
 inline void CPU::shiftRightArithmeticIndirect(uint16_t address) {
@@ -422,11 +401,10 @@ inline void CPU::shiftRightLogical(Integer<8> auto& target) {
     using enum REGISTER_FLAG;
     bool lsb = target & 0x01;
     target >>= 1;
-    auto& flags = F;
     setZero(target);
-    flags.clear(N);
-    flags.clear(H);
-    (lsb) ? flags.set(C) : flags.clear(C);
+    F.clear(N);
+    F.clear(H);
+    (lsb) ? F.set(C) : F.clear(C);
 }
 
 inline void CPU::shiftRightLogicalIndirect(uint16_t address) {
@@ -438,11 +416,10 @@ inline void CPU::shiftRightLogicalIndirect(uint16_t address) {
 inline void CPU::swap(Integer<8> auto& target) {
     using enum REGISTER_FLAG;
     target = (target << 4) | (target >> 4);
-    auto& flags = F;
     setZero(target);
-    flags.clear(N);
-    flags.clear(H);
-    flags.clear(C);
+    F.clear(N);
+    F.clear(H);
+    F.clear(C);
 }
 
 inline void CPU::swapIndirect(uint16_t address) {
@@ -452,15 +429,13 @@ inline void CPU::swapIndirect(uint16_t address) {
 }
 
 inline void CPU::pop(Register<16> auto& target) {
-    auto& sp = SP;
-    target.setLo(mmu.read(sp++));
-    target.setHi(mmu.read(sp++));
+    target.setLo(mmu.read(SP++));
+    target.setHi(mmu.read(SP++));
 }
 
 inline void CPU::push(Register<16> auto& target) {
-    auto& sp = SP;
-    mmu.write(--sp, target.hi());
-    mmu.write(--sp, target.lo());
+    mmu.write(--SP, target.hi());
+    mmu.write(--SP, target.lo());
 }
 
 inline void CPU::call(uint16_t address) {
@@ -491,18 +466,16 @@ inline void CPU::restart(uint8_t address) {
 
 inline void CPU::complementCarryFlag() {
     using enum REGISTER_FLAG;
-    auto& flags = F;
-    flags.clear(N);
-    flags.clear(H);
-    (flags.test(C)) ? flags.clear(C) : flags.set(C);
+    F.clear(N);
+    F.clear(H);
+    (F.test(C)) ? F.clear(C) : F.set(C);
 }
 
 inline void CPU::setCarryFlag() {
     using enum REGISTER_FLAG;
-    auto& flags = F;
-    flags.clear(N);
-    flags.clear(H);
-    flags.set(C);
+    F.clear(N);
+    F.clear(H);
+    F.set(C);
 }
 
 inline void CPU::disableInterrupts() {
@@ -529,30 +502,29 @@ inline void CPU::halt() {
 
 inline void CPU::decimalAdjustAccumulator() {
     using enum REGISTER_FLAG;
-    auto& flags = F;
     auto& accumulator = A;
     uint8_t adjustment = 0;
-    if (flags.test(N)) {
-        if (flags.test(H)) {
+    if (F.test(N)) {
+        if (F.test(H)) {
             adjustment += 0x06;
         }
-        if (flags.test(C)) {
+        if (F.test(C)) {
             adjustment += 0x60;
         }
         accumulator -= adjustment;
     }
     else {
-        if (flags.test(H) || ((accumulator & 0x0F) > 0x09)) {
+        if (F.test(H) || ((accumulator & 0x0F) > 0x09)) {
             adjustment += 0x06;
         }
-        if (flags.test(C) || (accumulator > 0x99)) {
+        if (F.test(C) || (accumulator > 0x99)) {
             adjustment += 0x60;
-            flags.set(C);
+            F.set(C);
         }
         accumulator += adjustment;
     }
     setZero(accumulator);
-    flags.clear(H);
+    F.clear(H);
 }
 
 inline void CPU::stop() {

@@ -39,10 +39,7 @@ bool CPU::LD_0x06(RegisterView& B, uint8_t n8, int) {
 
 bool CPU::RLCA_0x07(int) {
     rotateLeftCircular(A);
-    using enum REGISTER_FLAG;
-    F.clear(Z);
-    F.clear(N);
-    F.clear(H);
+    F.clear(REGISTER_FLAG::Z); // set Z unconditionally
     return true;
 }
 
@@ -83,10 +80,7 @@ bool CPU::LD_0x0E(RegisterView& C, uint8_t n8, int) {
 
 bool CPU::RRCA_0x0F(int) {
     rotateRightCircular(A);
-    using enum REGISTER_FLAG;
-    F.clear(Z);
-    F.clear(N);
-    F.clear(H);
+    F.clear(REGISTER_FLAG::Z); // set Z unconditionally
     return true;
 }
 
@@ -127,10 +121,7 @@ bool CPU::LD_0x16(RegisterView& D, uint8_t n8, int) {
 
 bool CPU::RLA_0x17(int) {
     rotateLeft(A);
-    using enum REGISTER_FLAG;
-    F.clear(Z);
-    F.clear(N);
-    F.clear(H);
+    F.clear(REGISTER_FLAG::Z); // set Z unconditionally
     return true;
 }
 
@@ -171,10 +162,7 @@ bool CPU::LD_0x1E(RegisterView& E, uint8_t n8, int) {
 
 bool CPU::RRA_0x1F(int) {
     rotateRight(A);
-    using enum REGISTER_FLAG;
-    F.clear(Z);
-    F.clear(N);
-    F.clear(H);
+    F.clear(REGISTER_FLAG::Z); // set Z unconditionally
     return true;
 }
 
@@ -1227,10 +1215,7 @@ bool CPU::RST_0xE7(uint8_t $0x20, int) {
 }
 
 bool CPU::ADD_0xE8(Register16& SP, int8_t e8, int) {
-    add<16>(SP, e8);
-    using enum REGISTER_FLAG;
-    F.clear(Z);
-    F.clear(N);
+    addRelative(SP, e8);
     return true;
 }
 
@@ -1306,10 +1291,7 @@ bool CPU::RST_0xF7(uint8_t $0x30, int) {
 }
 
 bool CPU::LD_0xF8(Register16& HL, Register16& SP, int8_t e8, int) {
-    add<16>(HL, SP + e8);
-    using enum REGISTER_FLAG;
-    F.clear(Z);
-    F.clear(N);
+    loadAdjusted(HL, SP, e8);
     return true;
 }
 

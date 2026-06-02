@@ -36,6 +36,7 @@ class CPU {
         void setZero(uint8_t result);
         uint8_t addAndSetFlags(uint8_t a, uint8_t b, uint8_t carry = 0);
         uint16_t addAndSetFlags(uint16_t a, uint16_t b);
+        uint16_t addAndSetFlags(uint16_t a, int8_t b);
         uint8_t subtractAndSetFlags(uint8_t a, uint8_t b, uint8_t carry = 0);
         
         /* load instructions */
@@ -52,12 +53,15 @@ class CPU {
         void loadDecrement(Register<8> auto& target, Register<16> auto& address);
         void loadDecrement(Register<16> auto& address, uint8_t value);
 
+        void loadAdjusted(Register<16> auto& target, Register<16> auto& value, int8_t adjust);
+
         /* arithmetic instructions */
         template<size_t N>
         void add(Register<N> auto& target, RegisterValue<N> value);
         void addIndirect(Register<8> auto& target, uint16_t address);
         void adc(Register<8> auto& target, uint8_t value);
         void adcIndirect(Register<8> auto& target, uint16_t address);
+        void addRelative(Register<16> auto& target, int8_t value);
 
         void sub(Register<8> auto& target, uint8_t value);
         void subIndirect(Register<8> auto& target, uint16_t address);
