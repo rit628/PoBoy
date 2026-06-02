@@ -48,10 +48,9 @@ inline uint8_t CPU::addAndSetFlags(uint8_t a, uint8_t b, uint8_t carry) {
 
 inline uint16_t CPU::addAndSetFlags(uint16_t a, uint16_t b) {
     using enum REGISTER_FLAG;
-    uint8_t result = a + b;
+    uint16_t result = a + b;
 
     auto& flags = F;
-    setZero(result);
     flags.clear(N);
 
     // set half carry (H): mask upper 4 bits and check if exceeds lower 12
@@ -139,7 +138,7 @@ inline void CPU::loadDecrement(Register<16> auto& address, uint8_t value) {
 
 template<size_t N>
 inline void CPU::add(Register<N> auto& target, RegisterValue<N> value) {
-    target = addAndSetFlags(target, value); // may need to add a check if N == 16 to ensure Z isnt modified
+    target = addAndSetFlags(target, value);
 }
 
 inline void CPU::addIndirect(Register<8> auto& target, uint16_t address) {
