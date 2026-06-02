@@ -51,19 +51,15 @@ inline uint16_t CPU::addAndSetFlags(uint16_t a, uint16_t b) {
 }
 
 inline uint16_t CPU::addAndSetFlags(uint16_t a, int8_t b) {
+    // set carry and half carry based on 8 bit unsigned addition
+    addAndSetFlags(static_cast<uint8_t>(a & 0x00FF), std::bit_cast<uint8_t, int8_t>(b));
+    
+    // clear Z and N flags unconditionally
     using enum REGISTER_FLAG;
-    uint16_t result = a + b;
-
     F.clear(Z);
     F.clear(N);
 
-    // set half carry (H): mask upper 4 bits and check if exceeds lower 4
-    (((a & 0x000F) + (b & 0x0F)) > 0x0F) ? F.set(H) : F.clear(H);
-
-    // set carry (C): check if greater than uint8_t max
-    (((a & 0x00FF) + b) > 0xFF) ? F.set(C) : F.clear(C);
-
-    return result;
+    return a + b;
 }
 
 inline uint8_t CPU::subtractAndSetFlags(uint8_t a, uint8_t b, uint8_t carry) {
