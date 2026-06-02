@@ -43,6 +43,7 @@ class CPU {
         template<size_t N>
         void load(Register<N> auto& target, RegisterValue<N> value);
         void loadIndirect(uint16_t address, uint8_t value);
+        void loadIndirect(uint16_t address, uint16_t value);
         void loadIndirect(Register<8> auto& target, uint16_t address);
         
         void loadHiIndirect(Register<8> auto& target, uint8_t address);

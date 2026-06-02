@@ -44,7 +44,7 @@ bool CPU::RLCA_0x07(int) {
 }
 
 bool CPU::LD_0x08(uint16_t a16, Register16& SP, int) {
-    loadIndirect(a16, SP); // might need specific impl due to sp being 2 bytes wide
+    loadIndirect(a16, SP);
     return true;
 }
 

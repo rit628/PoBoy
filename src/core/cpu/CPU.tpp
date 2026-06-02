@@ -91,6 +91,11 @@ inline void CPU::loadIndirect(uint16_t address, uint8_t value) {
     mmu.write(address, value);
 }
 
+inline void CPU::loadIndirect(uint16_t address, uint16_t value) {
+    mmu.write(address, value & 0x00FF);
+    mmu.write(address + 1, (value & 0xFF00) >> 8);
+}
+
 inline void CPU::loadIndirect(Register<8> auto& target, uint16_t address) {
     target = mmu.read(address);
 }
