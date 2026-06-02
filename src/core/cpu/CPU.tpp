@@ -482,7 +482,7 @@ inline void CPU::ret() {
 
 inline void CPU::reti() {
     ret();
-    IME = INTERRUPT_MASTER_FLAG::ENABLE_PENDING; // skip to this state since ret() counts as next instruction
+    IME = INTERRUPT_MASTER_FLAG::ENABLED; // skip to this state since ret() counts as next instruction
 }
 
 inline void CPU::restart(uint8_t address) {
@@ -510,7 +510,7 @@ inline void CPU::disableInterrupts() {
 }
 
 inline void CPU::enableInterrupts() {
-    IME = INTERRUPT_MASTER_FLAG::ENABLE_REQUESTED; // signal to enable IME after next instruction
+    IME = INTERRUPT_MASTER_FLAG::ENABLE_PENDING; // signal to enable interrupts after next machine cycle
 }
 
 inline void CPU::halt() {

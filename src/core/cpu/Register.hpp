@@ -15,7 +15,6 @@ enum class REGISTER_FLAG : uint8_t {
 
 enum class INTERRUPT_MASTER_FLAG : uint8_t {
     ENABLED,
-    ENABLE_REQUESTED,
     ENABLE_PENDING,
     DISABLED
 };

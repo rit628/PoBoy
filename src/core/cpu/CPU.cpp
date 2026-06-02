@@ -19,6 +19,9 @@ uint8_t CPU::tick() {
     /* these are just here to keep xmacro happy when no cycle count is given */
     constexpr uint8_t cyclesTaken [[ maybe_unused ]] = 0, cyclesSkipped [[ maybe_unused ]] = 0;
 
+    /* set IME since next opcode read will consume one M cycle */
+    if (IME == INTERRUPT_MASTER_FLAG::ENABLE_PENDING) IME = INTERRUPT_MASTER_FLAG::ENABLED;
+
     auto opcode = mmu.read(PC++);
     switch (static_cast<OPCODE_UNPREFIXED>(opcode)) {
         #define OPCODE_BEGIN(code, name, bytecount, ...) \

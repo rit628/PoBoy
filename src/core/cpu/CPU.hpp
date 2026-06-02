@@ -162,7 +162,7 @@ class CPU {
         RegisterView D{DE.hi()}, E{DE.lo()}; // general purpose 8bit DE
         RegisterView H{HL.hi()}, L{HL.lo()}; // general purpose 8bit HL
 
-        INTERRUPT_MASTER_FLAG IME; // interrupt master enable flag
+        INTERRUPT_MASTER_FLAG IME = INTERRUPT_MASTER_FLAG::DISABLED; // interrupt master enable flag
 };
 
 #include "CPU.tpp"
