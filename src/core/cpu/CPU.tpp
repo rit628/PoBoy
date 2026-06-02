@@ -404,7 +404,7 @@ inline void CPU::shiftLeftArithmeticIndirect(uint16_t address) {
 inline void CPU::shiftRightArithmetic(Integer<8> auto& target) {
     using enum REGISTER_FLAG;
     bool lsb = target & 0x01;
-    bool msb = target & 0x80;
+    uint8_t msb = target & 0x80;
     target = (target >> 1) | msb; // preserve msb
     auto& flags = F;
     setZero(target);
