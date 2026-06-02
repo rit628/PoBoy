@@ -1,13 +1,11 @@
 #include "MMU.hpp"
 #include <cstdint>
+#include <iostream>
+#include <print>
 
-const uint8_t& MMU::read(uint16_t address) {
+uint8_t MMU::read(uint16_t address) {
     if (address >= MEMORY_SIZE) return READ_ERROR;
-
-    if (address < BOOTROM_SIZE && !memory.at(BOOT)) {
-        return bootrom.at(address);
-    }
-
+    if (address < BOOTROM_SIZE && !memory.at(BOOT)) return bootrom.at(address);
     return memory.at(address);
 }
 
@@ -15,6 +13,9 @@ void MMU::write(uint16_t address, uint8_t value) {
     if (address >= MEMORY_SIZE) return;
     if (address == BOOT && memory.at(BOOT)) return; // bootrom remains unmapped until next reset
     memory.at(address) = value;
+    if (address == SB) { // for test rom output
+        std::print(std::cerr, "{:c}", value);
+    }
 }
 
 const RomMetadata& MMU::loadRom(const std::filesystem::path& romFile) {

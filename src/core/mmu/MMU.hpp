@@ -8,7 +8,7 @@
 class MMU {
     public:
         const RomMetadata& loadRom(const std::filesystem::path& romFile);
-        const uint8_t& read(uint16_t address);
+        uint8_t read(uint16_t address);
         void write(uint16_t address, uint8_t value);
         
         /* some important addresses and constants */
@@ -18,6 +18,7 @@ class MMU {
         static constexpr uint16_t BOOTROM_SIZE  = 0x0100;
         static constexpr uint16_t ROM_BANK_SIZE = 0x4000;
 
+        static constexpr uint16_t SB    = 0xFF01; // serial transfer data
         static constexpr uint16_t LY    = 0xFF44; // lcd y coordinate
         static constexpr uint16_t BOOT  = 0xFF50; // boot rom lock register
         static constexpr uint16_t IE    = 0xFFFF; // interrupt enable
