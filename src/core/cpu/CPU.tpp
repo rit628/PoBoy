@@ -143,7 +143,7 @@ inline void CPU::add(Register<N> auto& target, RegisterValue<N> value) {
 }
 
 inline void CPU::addIndirect(Register<8> auto& target, uint16_t address) {
-    auto& value = mmu.read(address);
+    auto value = mmu.read(address);
     add<8>(target, value);
 }
 
@@ -153,7 +153,7 @@ inline void CPU::adc(Register<8> auto& target, uint8_t value) {
 }
 
 inline void CPU::adcIndirect(Register<8> auto& target, uint16_t address) {
-    auto& value = mmu.read(address);
+    auto value = mmu.read(address);
     adc(target, value);
 }
 
@@ -162,7 +162,7 @@ inline void CPU::sub(Register<8> auto& target, uint8_t value) {
 }
 
 inline void CPU::subIndirect(Register<8> auto& target, uint16_t address) {
-    auto& value = mmu.read(address);
+    auto value = mmu.read(address);
     sub(target, value);
 }
 
@@ -172,7 +172,7 @@ inline void CPU::sbc(Register<8> auto& target, uint8_t value) {
 }
 
 inline void CPU::sbcIndirect(Register<8> auto& target, uint16_t address) {
-    auto& value = mmu.read(address);
+    auto value = mmu.read(address);
     sbc(target, value);
 }
 
@@ -181,7 +181,7 @@ inline void CPU::compare(uint8_t lhs, uint8_t rhs) {
 }
 
 inline void CPU::compareIndirect(uint8_t lhs, uint16_t address) {
-    auto& rhs = mmu.read(address);
+    auto rhs = mmu.read(address);
     compare(lhs, rhs);
 }
 
@@ -232,7 +232,7 @@ inline void CPU::bitAnd(Register<8> auto& lhs, uint8_t rhs) {
 }
 
 inline void CPU::bitAndIndirect(Register<8> auto& lhs, uint16_t address) {
-    auto& rhs = mmu.read(address);
+    auto rhs = mmu.read(address);
     bitAnd(lhs, rhs);
 }
 
@@ -255,7 +255,7 @@ inline void CPU::bitOr(Register<8> auto& lhs, uint8_t rhs) {
 }
 
 inline void CPU::bitOrIndirect(Register<8> auto& lhs, uint16_t address) {
-    auto& rhs = mmu.read(address);
+    auto rhs = mmu.read(address);
     bitOr(lhs, rhs);
 }
 
@@ -270,7 +270,7 @@ inline void CPU::bitXor(Register<8> auto& lhs, uint8_t rhs) {
 }
 
 inline void CPU::bitXorIndirect(Register<8> auto& lhs, uint16_t address) {
-    auto& rhs = mmu.read(address);
+    auto rhs = mmu.read(address);
     bitXor(lhs, rhs);
 }
 
@@ -278,15 +278,13 @@ inline void CPU::bitTest(uint8_t bitIndex, uint8_t target) {
     using enum REGISTER_FLAG;
     auto& flags = F;
     uint8_t test = 1 << bitIndex;
-    if (!(test & target)) {
-        flags.set(Z);
-    }
+    (test & target) ? flags.clear(Z) : flags.set(Z);
     flags.clear(N);
     flags.set(H);
 }
 
 inline void CPU::bitTestIndirect(uint8_t bitIndex, uint16_t address) {
-    auto& target = mmu.read(address);
+    auto target = mmu.read(address);
     bitTest(bitIndex, target);
 }
 
