@@ -15,7 +15,6 @@ class PPU {
         void tick(uint8_t dots);
         void tick();
 
-        /* important constants */
         static constexpr uint8_t FRAME_LINES = 154;
         static constexpr uint8_t VBLANK_LINES = 10;
         static constexpr uint8_t LCD_LINES = FRAME_LINES - VBLANK_LINES;

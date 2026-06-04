@@ -1,5 +1,6 @@
 #pragma once
 #include "CPU.hpp"
+#include "IO.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <utility>
@@ -492,7 +493,7 @@ inline void CPU::halt() {
         // pause execution until interrupt is serviced (call handler)
     }
     else {
-        if ((mmu.read(MMU::IE) & mmu.read(MMU::IF)) == 0) { // interrupts are not pending
+        if ((mmu.read(IO::IE) & mmu.read(IO::IF)) == 0) { // interrupts are not pending
             // pause execution until interrupt becomes pending, dont call handler
         }
         else { // interrupts are pending

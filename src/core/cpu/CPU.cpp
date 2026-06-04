@@ -1,5 +1,6 @@
 #include "CPU.hpp"
 #include "Opcodes.hpp"
+#include "IO.hpp"
 #include "Register.hpp"
 #include <array>
 #include <cstdint>
@@ -123,8 +124,8 @@ void CPU::handleInterrupts() {
     static constexpr uint8_t JOYPAD_INTERRUPT_ADDRESS      = 0X60;
 
     if (IME == INTERRUPT_MASTER_FLAG::DISABLED) return;
-    auto IF = mmu.read(MMU::IF);
-    auto IE = mmu.read(MMU::IE);
+    auto IF = mmu.read(IO::IF);
+    auto IE = mmu.read(IO::IE);
     uint8_t interrupts = IF & IE;
     if (!interrupts) return;
 
@@ -132,7 +133,7 @@ void CPU::handleInterrupts() {
         if (flagTest(interrupts, flag)) {
             IME = INTERRUPT_MASTER_FLAG::DISABLED;
             flagClear(IF, flag);
-            mmu.write(MMU::IF, IF);
+            mmu.write(IO::IF, IF);
             restart(address);
             return true;
         }
