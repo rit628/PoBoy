@@ -29,6 +29,7 @@ const RomMetadata& MMU::loadRom(const std::filesystem::path& romFile) {
 
 void MMU::initialize() {
     memory.fill(0);
+    memory.at(IF) = 0b11100000;
 }
 
 void MMU::readRomMetadata() {

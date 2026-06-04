@@ -14,10 +14,34 @@ enum class REGISTER_FLAG : uint8_t {
 };
 
 enum class INTERRUPT_MASTER_FLAG : uint8_t {
-    ENABLED,
-    ENABLE_PENDING,
-    DISABLED
+    DISABLED = 0,
+    ENABLED = 1,
+    ENABLE_PENDING = 2
 };
+
+enum class INTERRUPT_BIT : uint8_t {
+    JOYPAD      = 0b00010000,
+    SERIAL      = 0b00001000,
+    TIMER       = 0b00000100,
+    LCD_STAT    = 0b00000010,
+    VBLANK      = 0b00000001
+};
+
+namespace {
+    template<typename T>
+    concept Flag = std::is_enum_v<T> && std::is_same_v<std::underlying_type_t<T>, uint8_t>;
+
+    template<typename T>
+    concept Testable = requires (T a, uint8_t b) {
+        { a |= b } -> std::same_as<T&>;
+        { a &= b } -> std::same_as<T&>;
+        { a & b } -> std::convertible_to<uint8_t>;
+    };
+}
+
+void flagSet(Testable auto& target, Flag auto flag) { target |= std::to_underlying(flag); }
+void flagClear(Testable auto& target, Flag auto flag) { target &= ~std::to_underlying(flag); }
+bool flagTest(Testable auto target, Flag auto flag) { return target & std::to_underlying(flag); }
 
 template<size_t Bits> requires (Bits == 8 || Bits == 16)
 class RegisterTag {};
@@ -64,7 +88,7 @@ using RegisterValue = std::conditional_t<Bits == 8, uint8_t, uint16_t>;
     is not possible (such as reference contexts)
 */
 template<typename T, size_t Bits>
-concept Integer = Register<T, Bits> || std::same_as<T, RegisterValue<Bits>>; 
+concept Integer = Register<T, Bits> || std::same_as<T, RegisterValue<Bits>>;
 
 using Register8 = RegisterBase<8>;
 
@@ -126,9 +150,9 @@ class RegisterView : public RegisterTag<8> {
         }
 
         // only implementing for ops with F register
-        void set(REGISTER_FLAG bitFlag) {*this |= std::to_underlying(bitFlag);}
-        void clear(REGISTER_FLAG bitFlag) {*this &= ~std::to_underlying(bitFlag);}
-        bool test(REGISTER_FLAG bitFlag) {return *this & std::to_underlying(bitFlag);}
+        void set(REGISTER_FLAG bitFlag) { flagSet(*this, bitFlag); }
+        void clear(REGISTER_FLAG bitFlag) { flagClear(*this, bitFlag); }
+        bool test(REGISTER_FLAG bitFlag) { return flagTest(*this, bitFlag); }
 
         // cant use r16++ due to hi/lo byte difference
         RegisterView& operator++() { *this = *this + 1; return *this; }

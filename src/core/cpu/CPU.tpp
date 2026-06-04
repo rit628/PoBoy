@@ -97,11 +97,11 @@ inline void CPU::loadIndirect(Register<8> auto& target, uint16_t address) {
 }
 
 inline void CPU::loadHiIndirect(Register<8> auto& target, uint8_t address) {
-    target = mmu.read(static_cast<uint16_t>(address) + 0xFF00);
+    target = mmu.read(static_cast<uint16_t>(address) | 0xFF00);
 }
 
 inline void CPU::loadHiIndirect(uint16_t address, uint8_t value) {
-    mmu.write(static_cast<uint16_t>(address) + 0xFF00, value);
+    mmu.write(static_cast<uint16_t>(address) | 0xFF00, value);
 }
 
 inline void CPU::loadIncrement(Register<8> auto& target, Register<16> auto& address) {

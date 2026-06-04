@@ -21,8 +21,8 @@ class MMU {
         static constexpr uint16_t SB    = 0xFF01; // serial transfer data
         static constexpr uint16_t LY    = 0xFF44; // lcd y coordinate
         static constexpr uint16_t BOOT  = 0xFF50; // boot rom lock register
-        static constexpr uint16_t IE    = 0xFFFF; // interrupt enable
         static constexpr uint16_t IF    = 0xFF0F; // interrupt flag
+        static constexpr uint16_t IE    = 0xFFFF; // interrupt enable
 
         /* embedded binaries */
         static constexpr std::array<uint8_t, BOOTROM_SIZE> bootrom = {

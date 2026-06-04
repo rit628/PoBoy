@@ -6,9 +6,38 @@
 #include <cstring>
 #include <print>
 
-uint8_t CPU::tick() {
-    constexpr bool debug = false;
+#define DEBUG_PRINT false
 
+#if DEBUG_PRINT
+    #define DEBUG_PRINT_OPCODE(code, name) \
+    std::print("{:#06x}: {} {}", PC - 1, #code, #name);
+    #define DEBUG_PRINT_ARGS(name, type, bytecount, immediate, postop) \
+    if constexpr (immediate) { \
+        if constexpr (bytecount == 1 || std::is_same_v<type, RegisterView&>) { \
+            std::print(" {}{} ({:#04x})", #name, #postop, name); \
+        } \
+        else { \
+            std::print(" {}{} ({:#06x})", #name, #postop, name); \
+        } \
+    } \
+    else { \
+        if constexpr (bytecount == 1 || std::is_same_v<type, RegisterView&>) { /* for ldh */ \
+            std::print(" [{}{}] ([{:#06x}] = {:#04x})", #name, #postop, name | 0xFF00, mmu.read(name | 0xFF00)); \
+        } \
+        else { \
+            std::print(" [{}{}] ([{:#06x}] = {:#04x})", #name, #postop, name, mmu.read(name)); \
+        } \
+    } 
+    #define DEBUG_PRINT_NEWLINE() \
+    std::println();
+#else
+    #define DEBUG_PRINT_OPCODE(code, name)
+    #define DEBUG_PRINT_ARGS(name, type, bytecount, immediate, postop)
+    #define DEBUG_PRINT_NEWLINE()
+#endif
+
+
+uint8_t CPU::tick() {
     /* Unprefixed Opcode Argument Constants */
     uint8_t $00 = 0x00, $08 = 0x08, $10 = 0x10, $18 = 0x18, $20 = 0x20, $28 = 0x28, $30 = 0x30, $38 = 0x38;
     uint16_t a16 = 0, n16 = 0;
@@ -17,7 +46,9 @@ uint8_t CPU::tick() {
     RegisterView& F_Z = F, F_NZ = F, F_C = F, F_NC = F;
 
     /* these are just here to keep xmacro happy when no cycle count is given */
-    constexpr uint8_t cyclesTaken [[ maybe_unused ]] = 0, cyclesSkipped [[ maybe_unused ]] = 0;
+    static constexpr uint8_t cyclesTaken [[ maybe_unused ]] = 0, cyclesSkipped [[ maybe_unused ]] = 0;
+
+    handleInterrupts();
 
     /* set IME since next opcode read will consume one M cycle */
     if (IME == INTERRUPT_MASTER_FLAG::ENABLE_PENDING) IME = INTERRUPT_MASTER_FLAG::ENABLED;
@@ -27,7 +58,7 @@ uint8_t CPU::tick() {
         #define OPCODE_BEGIN(code, name, bytecount, ...) \
         case OPCODE_UNPREFIXED::name##_##code: { \
             if constexpr (code == 0xCB) { break; } /* decode cb prefixed opcode */ \
-            if constexpr (debug) { std::print("{}: {} {}", PC, #code, #name); }
+            DEBUG_PRINT_OPCODE(code, name)
             #define CYCLES_TAKEN(count) \
             constexpr uint8_t cyclesTaken = count;
             #define CYCLES_SKIPPED(count) \
@@ -40,14 +71,10 @@ uint8_t CPU::tick() {
                     byte = mmu.read(PC++); \
                 } \
                 std::memcpy(&name, bytes.data(), bytecount); \
-                if constexpr (debug) { std::print(" {:#06x}", name); } \
             } \
-            else if constexpr (debug) { \
-                if constexpr (immediate) { std::print(" {}{}", #name, #postop); } \
-                else { std::print(" [{}{}]", #name, #postop); } \
-            }
+            DEBUG_PRINT_ARGS(name, type, bytecount, immediate, postop)
             #define OPCODE_END(code, name, args...) \
-            if constexpr (debug) { std::println(); } \
+            DEBUG_PRINT_NEWLINE() \
             return (name##_##code(args)) ? cyclesTaken : cyclesSkipped; \
         }
         #include "unprefixed.inc"
@@ -63,15 +90,15 @@ uint8_t CPU::tick() {
     switch (static_cast<OPCODE_CBPREFIXED>(opcode)) {
         #define OPCODE_BEGIN(code, name, bytecount, ...) \
         case OPCODE_CBPREFIXED::name##_##code: { \
-            if constexpr (debug) { std::print("{}: {} {}", PC, #code, #name); }
+            DEBUG_PRINT_OPCODE(code, name)
             #define CYCLES_TAKEN(count) \
             constexpr uint8_t cyclesTaken = count;
             #define CYCLES_SKIPPED(...)
             #define FLAG_VALUE(...)
-            #define OPERAND(name, ...) \
-            if constexpr (debug) { std::print(" {}", #name); } /* all cb prefixed instructions have immediate operands */
+            #define OPERAND(name, type, bytecount, immediate, postop, ...) \
+            DEBUG_PRINT_ARGS(name, type, bytecount, immediate, postop)
             #define OPCODE_END(code, name, args...) \
-            if constexpr (debug) { std::println(); } \
+            DEBUG_PRINT_NEWLINE() \
             name##_##code(args); \
             return cyclesTaken; /* no cb prefixed instructions contain branching */ \
         }
@@ -83,4 +110,35 @@ uint8_t CPU::tick() {
         #undef OPERAND
         #undef OPCODE_END
     }
+}
+
+void CPU::handleInterrupts() {
+    static constexpr uint8_t VBLANK_INTERRUPT_ADDRESS      = 0x40;
+    static constexpr uint8_t LCD_STAT_INTERRUPT_ADDRESS    = 0x48;
+    static constexpr uint8_t TIMER_INTERRUPT_ADDRESS       = 0X50;
+    static constexpr uint8_t SERIAL_INTERRUPT_ADDRESS      = 0X58;
+    static constexpr uint8_t JOYPAD_INTERRUPT_ADDRESS      = 0X60;
+
+    if (IME == INTERRUPT_MASTER_FLAG::DISABLED) return;
+    auto IF = mmu.read(MMU::IF);
+    auto IE = mmu.read(MMU::IE);
+    uint8_t interrupts = IF & IE;
+    if (!interrupts) return;
+
+    auto handleInterrupt = [&, this]<INTERRUPT_BIT flag, uint8_t address>() {
+        if (flagTest(interrupts, flag)) {
+            IME = INTERRUPT_MASTER_FLAG::DISABLED;
+            flagClear(IF, flag);
+            mmu.write(MMU::IF, IF);
+            restart(address);
+            return true;
+        }
+        return false;
+    };
+
+    if (handleInterrupt.operator()<INTERRUPT_BIT::VBLANK, VBLANK_INTERRUPT_ADDRESS>()) return;
+    if (handleInterrupt.operator()<INTERRUPT_BIT::LCD_STAT, LCD_STAT_INTERRUPT_ADDRESS>()) return;
+    if (handleInterrupt.operator()<INTERRUPT_BIT::TIMER, TIMER_INTERRUPT_ADDRESS>()) return;
+    if (handleInterrupt.operator()<INTERRUPT_BIT::SERIAL, SERIAL_INTERRUPT_ADDRESS>()) return;
+    if (handleInterrupt.operator()<INTERRUPT_BIT::JOYPAD, JOYPAD_INTERRUPT_ADDRESS>()) return;
 }

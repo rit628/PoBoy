@@ -13,6 +13,8 @@ class CPU {
         
     private:
 
+        void handleInterrupts();
+
         #define OPCODE_BEGIN(code, name, ...) \
         bool name##_##code(
         #define CYCLES_TAKEN(...)
