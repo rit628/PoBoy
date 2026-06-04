@@ -4,7 +4,7 @@
 #include "PPU.hpp"
 #include <filesystem>
 
-class GameBoy {
+class DMG {
     public:
         void run(const std::filesystem::path& romFile);
 
