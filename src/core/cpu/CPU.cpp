@@ -30,10 +30,13 @@
     } 
     #define DEBUG_PRINT_NEWLINE() \
     std::println();
+    #define DEBUG_PRINT_INTERRUPT(interruptType) \
+    std::println("{} INTERRUPT: RST {:#04x}", #interruptType, interruptType##_INTERRUPT_ADDRESS);
 #else
     #define DEBUG_PRINT_OPCODE(code, name)
     #define DEBUG_PRINT_ARGS(name, type, bytecount, immediate, postop)
     #define DEBUG_PRINT_NEWLINE()
+    #define DEBUG_PRINT_INTERRUPT(interruptType)
 #endif
 
 
@@ -136,9 +139,10 @@ void CPU::handleInterrupts() {
         return false;
     };
 
-    if (handleInterrupt.operator()<INTERRUPT_BIT::VBLANK, VBLANK_INTERRUPT_ADDRESS>()) return;
-    if (handleInterrupt.operator()<INTERRUPT_BIT::LCD_STAT, LCD_STAT_INTERRUPT_ADDRESS>()) return;
-    if (handleInterrupt.operator()<INTERRUPT_BIT::TIMER, TIMER_INTERRUPT_ADDRESS>()) return;
-    if (handleInterrupt.operator()<INTERRUPT_BIT::SERIAL, SERIAL_INTERRUPT_ADDRESS>()) return;
-    if (handleInterrupt.operator()<INTERRUPT_BIT::JOYPAD, JOYPAD_INTERRUPT_ADDRESS>()) return;
+    using enum INTERRUPT_BIT;
+    if (handleInterrupt.operator()<VBLANK, VBLANK_INTERRUPT_ADDRESS>())     {DEBUG_PRINT_INTERRUPT(VBLANK) return;}
+    if (handleInterrupt.operator()<LCD_STAT, LCD_STAT_INTERRUPT_ADDRESS>()) {DEBUG_PRINT_INTERRUPT(LCD_STAT) return;}
+    if (handleInterrupt.operator()<TIMER, TIMER_INTERRUPT_ADDRESS>())       {DEBUG_PRINT_INTERRUPT(TIMER) return;}
+    if (handleInterrupt.operator()<SERIAL, SERIAL_INTERRUPT_ADDRESS>())     {DEBUG_PRINT_INTERRUPT(SERIAL) return;}
+    if (handleInterrupt.operator()<JOYPAD, JOYPAD_INTERRUPT_ADDRESS>())     {DEBUG_PRINT_INTERRUPT(JOYPAD) return;}
 }
