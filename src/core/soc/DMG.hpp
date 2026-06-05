@@ -2,6 +2,7 @@
 #include "MMU.hpp"
 #include "CPU.hpp"
 #include "PPU.hpp"
+#include "SystemTimer.hpp"
 #include <filesystem>
 
 class DMG {
@@ -12,4 +13,5 @@ class DMG {
         MMU mmu;
         CPU cpu{mmu};
         PPU ppu{mmu};
+        SystemTimer sysClock{mmu};
 };

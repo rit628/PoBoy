@@ -1,4 +1,5 @@
 add_subdirectory(mmu)
+add_subdirectory(timer)
 add_subdirectory(cpu)
 add_subdirectory(ppu)
 add_subdirectory(soc)
