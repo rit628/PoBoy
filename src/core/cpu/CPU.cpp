@@ -54,10 +54,14 @@ uint8_t CPU::tick() {
 
     handleInterrupts();
 
+    /* pause instruction execution while halted */
+    if (state == STATE::HALTED) return 1;
+
     /* set IME since next opcode read will consume one M cycle */
     if (IME == INTERRUPT_MASTER_FLAG::ENABLE_PENDING) IME = INTERRUPT_MASTER_FLAG::ENABLED;
 
     auto opcode = mmu.read(PC++);
+    handleHaltBug();
     switch (static_cast<OPCODE_UNPREFIXED>(opcode)) {
         #define OPCODE_BEGIN(code, name, bytecount, ...) \
         case OPCODE_UNPREFIXED::name##_##code: { \
@@ -123,11 +127,16 @@ void CPU::handleInterrupts() {
     static constexpr uint8_t SERIAL_INTERRUPT_ADDRESS      = 0X58;
     static constexpr uint8_t JOYPAD_INTERRUPT_ADDRESS      = 0X60;
 
-    if (IME == INTERRUPT_MASTER_FLAG::DISABLED) return;
     auto IF = mmu.read(IO::IF);
     auto IE = mmu.read(IO::IE);
-    uint8_t interrupts = IF & IE;
-    if (!interrupts) return;
+    uint8_t interrupts = IF & IE & 0x1F;
+
+    /* break out of halt mode on interrupt */
+    using enum STATE;
+    if (state == HALTED) state = (!interrupts) ? HALTED : RUNNING;
+
+    /* skip interrupt handling if master flag is not enabled or none found in current cycle */
+    if (IME != INTERRUPT_MASTER_FLAG::ENABLED || !interrupts) return;
 
     auto handleInterrupt = [&, this]<INTERRUPT_BIT flag, uint8_t address>() {
         if (flagTest(interrupts, flag)) {
@@ -146,4 +155,12 @@ void CPU::handleInterrupts() {
     if (handleInterrupt.operator()<TIMER, TIMER_INTERRUPT_ADDRESS>())       {DEBUG_PRINT_INTERRUPT(TIMER) return;}
     if (handleInterrupt.operator()<SERIAL, SERIAL_INTERRUPT_ADDRESS>())     {DEBUG_PRINT_INTERRUPT(SERIAL) return;}
     if (handleInterrupt.operator()<JOYPAD, JOYPAD_INTERRUPT_ADDRESS>())     {DEBUG_PRINT_INTERRUPT(JOYPAD) return;}
+}
+
+void CPU::handleHaltBug() {
+    using enum STATE;
+    if (state == BUGGED) {
+        PC--;
+        state = RUNNING;
+    }
 }

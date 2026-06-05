@@ -489,16 +489,14 @@ inline void CPU::enableInterrupts() {
 }
 
 inline void CPU::halt() {
-    if (IME == INTERRUPT_MASTER_FLAG::ENABLED) {
-        // pause execution until interrupt is serviced (call handler)
+    using enum STATE;
+    auto IF = mmu.read(IO::IF);
+    auto IE = mmu.read(IO::IE);
+    if (IME == INTERRUPT_MASTER_FLAG::ENABLED || !(IF & IE & 0x1F)) {
+        state = HALTED;
     }
-    else {
-        if ((mmu.read(IO::IE) & mmu.read(IO::IF)) == 0) { // interrupts are not pending
-            // pause execution until interrupt becomes pending, dont call handler
-        }
-        else { // interrupts are pending
-            // continue execution, read next byte twice, dont increment pc (bug emulation)
-        }
+    else { // IME = 0 and some interrupt is pending => halt bug
+        state = BUGGED;
     }
 }
 

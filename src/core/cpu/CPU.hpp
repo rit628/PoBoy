@@ -12,8 +12,10 @@ class CPU {
         uint8_t tick();
         
     private:
+        enum class STATE : uint8_t { RUNNING, HALTED, BUGGED };
 
         void handleInterrupts();
+        void handleHaltBug();
 
         #define OPCODE_BEGIN(code, name, ...) \
         bool name##_##code(
@@ -170,6 +172,8 @@ class CPU {
         RegisterView H{HL.hi()}, L{HL.lo()}; // general purpose 8bit HL
 
         INTERRUPT_MASTER_FLAG IME = INTERRUPT_MASTER_FLAG::DISABLED; // interrupt master enable flag
+        
+        STATE state = STATE::RUNNING;
 };
 
 #include "CPU.tpp"
