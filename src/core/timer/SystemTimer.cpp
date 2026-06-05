@@ -20,7 +20,9 @@ void SystemTimer::tick() {
         auto count = mmu.read(IO::TIMA);
         if (count == 0xFF) {
             count = mmu.read(IO::TMA);
-            mmu.write(IO::IF, mmu.read(IO::IF) | 0b00000100); // interrupt bit set
+            auto IF = mmu.read(IO::IF);
+            flagSet(IF, INTERRUPT_BIT::TIMER);
+            mmu.write(IO::IF,  IF);
         }
         else {
             count++;

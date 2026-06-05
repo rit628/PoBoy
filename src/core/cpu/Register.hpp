@@ -1,9 +1,9 @@
 #pragma once
+#include "IO.hpp"
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <type_traits>
-#include <utility>
 #include <format>
 
 enum class REGISTER_FLAG : uint8_t {
@@ -18,30 +18,6 @@ enum class INTERRUPT_MASTER_FLAG : uint8_t {
     ENABLED = 1,
     ENABLE_PENDING = 2
 };
-
-enum class INTERRUPT_BIT : uint8_t {
-    JOYPAD      = 0b00010000,
-    SERIAL      = 0b00001000,
-    TIMER       = 0b00000100,
-    LCD_STAT    = 0b00000010,
-    VBLANK      = 0b00000001
-};
-
-namespace {
-    template<typename T>
-    concept Flag = std::is_enum_v<T> && std::is_same_v<std::underlying_type_t<T>, uint8_t>;
-
-    template<typename T>
-    concept Testable = requires (T a, uint8_t b) {
-        { a |= b } -> std::same_as<T&>;
-        { a &= b } -> std::same_as<T&>;
-        { a & b } -> std::convertible_to<uint8_t>;
-    };
-}
-
-void flagSet(Testable auto& target, Flag auto flag) { target |= std::to_underlying(flag); }
-void flagClear(Testable auto& target, Flag auto flag) { target &= ~std::to_underlying(flag); }
-bool flagTest(Testable auto target, Flag auto flag) { return target & std::to_underlying(flag); }
 
 template<size_t Bits> requires (Bits == 8 || Bits == 16)
 class RegisterTag {};
