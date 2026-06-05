@@ -502,7 +502,6 @@ inline void CPU::halt() {
 
 inline void CPU::decimalAdjustAccumulator() {
     using enum REGISTER_FLAG;
-    auto& accumulator = A;
     uint8_t adjustment = 0;
     if (F.test(N)) {
         if (F.test(H)) {
@@ -511,19 +510,19 @@ inline void CPU::decimalAdjustAccumulator() {
         if (F.test(C)) {
             adjustment += 0x60;
         }
-        accumulator -= adjustment;
+        A -= adjustment;
     }
     else {
-        if (F.test(H) || ((accumulator & 0x0F) > 0x09)) {
+        if (F.test(H) || ((A & 0x0F) > 0x09)) {
             adjustment += 0x06;
         }
-        if (F.test(C) || (accumulator > 0x99)) {
+        if (F.test(C) || (A > 0x99)) {
             adjustment += 0x60;
             F.set(C);
         }
-        accumulator += adjustment;
+        A += adjustment;
     }
-    setZero(accumulator);
+    setZero(A);
     F.clear(H);
 }
 
