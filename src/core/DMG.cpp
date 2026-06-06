@@ -28,7 +28,7 @@ void DMG::run(const std::filesystem::path& romFile) {
 
         if (elapsed < expectedElapsed) {
             auto waitTime = expectedElapsed - elapsed;
-            std::this_thread::sleep_for(waitTime);
+            // std::this_thread::sleep_for(waitTime);
         }
     }
 }

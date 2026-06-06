@@ -4,4 +4,4 @@ add_subdirectory(core)
 add_subdirectory(util)
 
 add_executable(simpleDMG main.cpp)
-target_link_libraries(simpleDMG PUBLIC soc)
+target_link_libraries(simpleDMG PRIVATE core)
