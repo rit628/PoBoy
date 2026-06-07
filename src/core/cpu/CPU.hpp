@@ -13,6 +13,7 @@ class CPU {
         
     private:
         enum class STATE : uint8_t { RUNNING, HALTED, BUGGED };
+        enum class INTERRUPT_MASTER_FLAG : uint8_t { DISABLED, ENABLED, ENABLE_PENDING };
 
         void handleInterrupts();
         void handleHaltBug();

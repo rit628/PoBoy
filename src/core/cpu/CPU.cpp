@@ -138,7 +138,7 @@ void CPU::handleInterrupts() {
     /* skip interrupt handling if master flag is not enabled or none found in current cycle */
     if (IME != INTERRUPT_MASTER_FLAG::ENABLED || !interrupts) return;
 
-    auto handleInterrupt = [&, this]<INTERRUPT_BIT flag, uint8_t address>() {
+    auto handleInterrupt = [&, this]<INTERRUPT_FLAG flag, uint8_t address>() {
         if (flagTest(interrupts, flag)) {
             IME = INTERRUPT_MASTER_FLAG::DISABLED;
             flagClear(IF, flag);
@@ -149,7 +149,7 @@ void CPU::handleInterrupts() {
         return false;
     };
 
-    using enum INTERRUPT_BIT;
+    using enum INTERRUPT_FLAG;
     if (handleInterrupt.operator()<VBLANK, VBLANK_INTERRUPT_ADDRESS>())     {DEBUG_PRINT_INTERRUPT(VBLANK) return;}
     if (handleInterrupt.operator()<LCD_STAT, LCD_STAT_INTERRUPT_ADDRESS>()) {DEBUG_PRINT_INTERRUPT(LCD_STAT) return;}
     if (handleInterrupt.operator()<TIMER, TIMER_INTERRUPT_ADDRESS>())       {DEBUG_PRINT_INTERRUPT(TIMER) return;}

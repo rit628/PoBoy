@@ -16,7 +16,7 @@ void DMG::run(const std::filesystem::path& romFile) {
     
     while (true) {
         auto mCycles = cpu.tick();
-        sysClock.tick(mCycles * 4);
+        imu.tick(mCycles * 4);
         ppu.tick(mCycles * 4);
 
         totalMCycles += mCycles;

@@ -68,27 +68,3 @@ namespace IO {
     constexpr uint16_t IE       = 0xFFFF;   // Interrupt enable
 
 }
-
-enum class INTERRUPT_BIT : uint8_t {
-    JOYPAD      = 0b00010000,
-    SERIAL      = 0b00001000,
-    TIMER       = 0b00000100,
-    LCD_STAT    = 0b00000010,
-    VBLANK      = 0b00000001
-};
-
-namespace {
-    template<typename T>
-    concept Flag = std::is_enum_v<T> && std::is_same_v<std::underlying_type_t<T>, uint8_t>;
-
-    template<typename T>
-    concept Testable = requires (T a, uint8_t b) {
-        { a |= b } -> std::same_as<T&>;
-        { a &= b } -> std::same_as<T&>;
-        { a & b } -> std::convertible_to<uint8_t>;
-    };
-}
-
-inline void flagSet(Testable auto& target, Flag auto flag) { target |= std::to_underlying(flag); }
-inline void flagClear(Testable auto& target, Flag auto flag) { target &= ~std::to_underlying(flag); }
-inline bool flagTest(Testable auto target, Flag auto flag) { return target & std::to_underlying(flag); }

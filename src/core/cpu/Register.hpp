@@ -1,6 +1,5 @@
 #pragma once
-#include "IO.hpp"
-#include <concepts>
+#include "FlagOps.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <type_traits>
@@ -11,12 +10,6 @@ enum class REGISTER_FLAG : uint8_t {
     N = 0b01000000,
     H = 0b00100000,
     C = 0b00010000
-};
-
-enum class INTERRUPT_MASTER_FLAG : uint8_t {
-    DISABLED = 0,
-    ENABLED = 1,
-    ENABLE_PENDING = 2
 };
 
 template<size_t Bits> requires (Bits == 8 || Bits == 16)

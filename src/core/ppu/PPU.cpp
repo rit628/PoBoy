@@ -1,5 +1,4 @@
 #include "PPU.hpp"
-#include "IO.hpp"
 #include <cstdint>
 
 void PPU::tick(uint8_t dots) {
@@ -11,6 +10,26 @@ void PPU::tick(uint8_t dots) {
 void PPU::tick() {
     // TODO: render based on mode
     updateMode();
+}
+
+uint8_t PPU::readVRAM(uint16_t address) {
+    return vram.at(address);
+}
+
+void PPU::writeVRAM(uint16_t address, uint8_t value) {
+    vram.at(address) = value;
+}
+
+uint8_t PPU::readOAM(uint16_t address) {
+    return oam.at(address);
+}
+
+void PPU::writeOAM(uint16_t address, uint8_t value) {
+    oam.at(address) = value;
+}
+
+uint8_t PPU::readLY() {
+    return currentLine;
 }
 
 void PPU::updateMode() {
@@ -41,10 +60,10 @@ void PPU::updateMode() {
     /* for now wrap the counters here in case mode switching is broken */
     if (lineDotsElapsed >= DOTS_PER_LINE) {
         lineDotsElapsed = 0;
-        mmu.write(IO::LY,  mmu.read(IO::LY) + 1);
+        currentLine++;
     }
     if (frameDotsElapsed >= DOTS_PER_FRAME) {
         frameDotsElapsed = 0;
-        mmu.write(IO::LY, 0);
+        currentLine = 0;
     }
 }

@@ -1,8 +1,8 @@
 #pragma once
+#include "IMU.hpp"
+#include "PPU.hpp"
 #include "MMU.hpp"
 #include "CPU.hpp"
-#include "PPU.hpp"
-#include "SystemTimer.hpp"
 #include <filesystem>
 
 class DMG {
@@ -10,8 +10,8 @@ class DMG {
         void run(const std::filesystem::path& romFile);
 
     private:
-        MMU mmu;
+        IMU imu;
+        PPU ppu;
+        MMU mmu{imu, ppu};
         CPU cpu{mmu};
-        PPU ppu{mmu};
-        SystemTimer sysClock{mmu};
 };
