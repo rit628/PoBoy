@@ -25,7 +25,7 @@ uint8_t MMU::read(uint16_t address) {
         return wram.at(address - ECHO_RAM_START);
     }
     if (address < OAM_END) {
-        return ppu.readOAM(address);
+        return ppu.readOAM(address - OAM_START);
     }
     if (address < PROHIBITED_END) {
         return READ_ERROR; // oam bug
@@ -88,7 +88,7 @@ void MMU::write(uint16_t address, uint8_t value) {
         wram.at(address - ECHO_RAM_START) = value;
     }
     else if (address < OAM_END) {
-        ppu.writeOAM(address, value);
+        ppu.writeOAM(address - OAM_START, value);
     }
     else if (address < PROHIBITED_END) {
         return; // oam bug
