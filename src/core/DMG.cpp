@@ -18,6 +18,10 @@ void DMG::run(const std::filesystem::path& romFile) {
         auto mCycles = cpu.tick();
         imu.tick(mCycles * 4);
         ppu.tick(mCycles * 4);
+        if (tileStream && !(totalMCycles & (0xFFFF))) { // render tiles every 0xFFFF cycles
+            auto tileData = ppu.getTileData();
+            tileStream->write(reinterpret_cast<const char *>(tileData.data()), tileData.size());
+        }
 
         totalMCycles += mCycles;
         auto totalTCycles = totalMCycles * 4;
@@ -31,4 +35,8 @@ void DMG::run(const std::filesystem::path& romFile) {
             // std::this_thread::sleep_for(waitTime);
         }
     }
+}
+
+void DMG::setTileOutputStream(std::ostream& os) {
+    tileStream = &os;
 }

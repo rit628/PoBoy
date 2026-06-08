@@ -1,9 +1,11 @@
 #include "DMG.hpp"
+#include <iostream>
 #include <print>
 
 int main(int argc, char** argv) {
     const std::filesystem::path romFile = (argc > 1) ? argv[1] : "test.gb";
-    std::println("Running {}", romFile.filename().c_str());
+    std::println(std::cerr, "Running {}", romFile.filename().c_str());
     DMG gb;
+    gb.setTileOutputStream(std::cout);
     gb.run(romFile);
 }

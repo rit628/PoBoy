@@ -1,5 +1,7 @@
 #include "PPU.hpp"
+#include <array>
 #include <cstdint>
+#include <print>
 
 void PPU::tick(uint8_t dots) {
     for (uint8_t i = 0; i < dots; i++) {
@@ -66,4 +68,8 @@ void PPU::updateMode() {
         frameDotsElapsed = 0;
         currentLine = 0;
     }
+}
+
+std::span<const uint8_t, PPU::TILE_DATA_SIZE> PPU::getTileData() {
+    return std::span(vram).subspan<0, TILE_DATA_SIZE>();
 }

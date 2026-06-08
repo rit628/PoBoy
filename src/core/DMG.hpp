@@ -4,12 +4,16 @@
 #include "MMU.hpp"
 #include "CPU.hpp"
 #include <filesystem>
+#include <ostream>
 
 class DMG {
     public:
         void run(const std::filesystem::path& romFile);
+        void setTileOutputStream(std::ostream& os);
 
     private:
+        std::ostream* tileStream = nullptr;
+
         IMU imu;
         PPU ppu;
         MMU mmu{imu, ppu};
