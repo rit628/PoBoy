@@ -11,7 +11,7 @@ class TilePrinter {
         static constexpr uint16_t TILE_ROWS         = 8;
         static constexpr uint16_t TILE_DATA_SIZE    = TILE_COUNT * TILE_BYTES;
 
-        void printTileData(const std::array<uint8_t, TILE_DATA_SIZE>& tileData);
+        void printTileData(const uint8_t bgPaletteMap, const std::array<uint8_t, TILE_DATA_SIZE>& tileData);
     
     private:
         void flushTiles();
@@ -20,5 +20,6 @@ class TilePrinter {
 
         std::stringstream outputBuffer;
         std::stringstream idLine;
-        std::array<std::stringstream, TILE_ROWS> tileRows; 
+        std::array<std::stringstream, TILE_ROWS> tileRows;
+        uint8_t bgPaletteMap = 0b11100100;
 };

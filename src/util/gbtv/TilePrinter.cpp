@@ -4,7 +4,8 @@
 #include <iostream>
 #include <print>
 
-void TilePrinter::printTileData(const std::array<uint8_t, TILE_DATA_SIZE>& tileData) {
+void TilePrinter::printTileData(const uint8_t bgPaletteMap, const std::array<uint8_t, TILE_DATA_SIZE>& tileData) {
+    this->bgPaletteMap = bgPaletteMap;
     uint8_t tilesThisLine = 0;
     for (uint16_t i = 0; i < tileData.size(); i += TILE_BYTES) {
         std::span<const uint8_t, TILE_BYTES> tile = std::span(tileData).subspan(i).first<TILE_BYTES>();
@@ -50,6 +51,7 @@ void TilePrinter::outputRow(std::stringstream& row, std::pair<uint8_t, uint8_t> 
         bool msb = bitPlane.first & (0x1 << (7 - i));
         bool lsb = bitPlane.second & (0x1 << (7 - i));
         uint8_t paletteIndex = (msb << 1) | lsb;
+        paletteIndex = (bgPaletteMap >> (2 * paletteIndex)) & 0b11;
         auto pixel = convert.to_bytes(palette.at(paletteIndex));
         row << pixel;
     }
