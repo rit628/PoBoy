@@ -2,6 +2,8 @@
 #include "IMU.hpp"
 #include <cstdint>
 
+using namespace Interrupts;
+
 SystemTimer::SystemTimer(IMU& imu) : imu(imu) {}
 
 void SystemTimer::tick(uint8_t tCycles) {

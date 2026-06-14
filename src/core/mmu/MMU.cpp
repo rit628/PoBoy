@@ -7,7 +7,7 @@
 
 using namespace Memory;
 
-MMU::MMU(IMU& imu, Graphics::PPU& ppu) : imu(imu), ppu(ppu) {}
+MMU::MMU(Interrupts::IMU& imu, Graphics::PPU& ppu) : imu(imu), ppu(ppu) {}
 
 uint8_t MMU::read(uint16_t address) {
     if (address < ROM_BANKS_END) {

@@ -12,7 +12,7 @@ namespace Memory {
 
     class MMU {
         public:
-            MMU(IMU& imu, Graphics::PPU& ppu);
+            MMU(Interrupts::IMU& imu, Graphics::PPU& ppu);
     
             const RomMetadata& loadRom(const std::filesystem::path& romFile);
             uint8_t read(uint16_t address);
@@ -25,7 +25,7 @@ namespace Memory {
                 #embed "bootix_dmg.bin"
             };
     
-            IMU& imu;
+            Interrupts::IMU& imu;
             Graphics::PPU& ppu;
     
             std::ifstream rom;

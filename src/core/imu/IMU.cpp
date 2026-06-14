@@ -1,6 +1,8 @@
 #include "IMU.hpp"
 #include "FlagOps.hpp"
 
+using namespace Interrupts;
+
 uint8_t IMU::readIF() {
     return interruptFlags;
 }
