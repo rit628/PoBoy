@@ -9,7 +9,7 @@
 
 class MMU {
     public:
-        MMU(IMU& imu, PPU& ppu);
+        MMU(IMU& imu, Graphics::PPU& ppu);
 
         const RomMetadata& loadRom(const std::filesystem::path& romFile);
         uint8_t read(uint16_t address);
@@ -28,7 +28,7 @@ class MMU {
         static constexpr uint16_t ROM_BANKS_START       = 0;
         static constexpr uint16_t ROM_BANKS_END         = ROM_BANK_SIZE * 2;
         static constexpr uint16_t VRAM_START            = ROM_BANKS_END;
-        static constexpr uint16_t VRAM_END              = VRAM_START + PPU::VRAM_SIZE;
+        static constexpr uint16_t VRAM_END              = VRAM_START + Graphics::VRAM_SIZE;
         static constexpr uint16_t CARTRIDGE_RAM_START   = VRAM_END;
         static constexpr uint16_t CARTRIDGE_RAM_END     = CARTRIDGE_RAM_START + CART_RAM_SIZE;
         static constexpr uint16_t WRAM_START            = CARTRIDGE_RAM_END;
@@ -36,7 +36,7 @@ class MMU {
         static constexpr uint16_t ECHO_RAM_START        = WRAM_END;
         static constexpr uint16_t ECHO_RAM_END          = ECHO_RAM_START + WRAM_SIZE - 0X0200;
         static constexpr uint16_t OAM_START             = ECHO_RAM_END;
-        static constexpr uint16_t OAM_END               = OAM_START + PPU::OAM_SIZE;
+        static constexpr uint16_t OAM_END               = OAM_START + Graphics::OAM_SIZE;
         static constexpr uint16_t PROHIBITED_START      = OAM_END;
         static constexpr uint16_t PROHIBITED_END        = PROHIBITED_START + 0x60;
         static constexpr uint16_t IO_START              = PROHIBITED_END;
@@ -52,7 +52,7 @@ class MMU {
         };
 
         IMU& imu;
-        PPU& ppu;
+        Graphics::PPU& ppu;
 
         std::ifstream rom;
         RomMetadata metadata;

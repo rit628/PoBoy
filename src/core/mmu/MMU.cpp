@@ -5,7 +5,7 @@
 #include <iostream>
 #include <print>
 
-MMU::MMU(IMU& imu, PPU& ppu) : imu(imu), ppu(ppu) {}
+MMU::MMU(IMU& imu, Graphics::PPU& ppu) : imu(imu), ppu(ppu) {}
 
 uint8_t MMU::read(uint16_t address) {
     if (address < ROM_BANKS_END) {
@@ -58,6 +58,22 @@ uint8_t MMU::read(uint16_t address) {
 
             case IO::TAC:
                 return imu.readTAC();
+            break;
+
+            case IO::SCX:
+                return ppu.readSCX();
+            break;
+
+            case IO::SCY:
+                return ppu.readSCY();
+            break;
+
+            case IO::LCDC:
+                return ppu.readLCDC();
+            break;
+
+            case IO::BGP:
+                return ppu.readBGP();
             break;
 
             default:
@@ -122,6 +138,22 @@ void MMU::write(uint16_t address, uint8_t value) {
 
             case IO::TAC:
                 imu.writeTAC(value);
+            break;
+
+            case IO::SCX:
+                ppu.writeSCX(value);
+            break;
+
+            case IO::SCY:
+                ppu.writeSCY(value);
+            break;
+
+            case IO::LCDC:
+                ppu.writeLCDC(value);
+            break;
+
+            case IO::BGP:
+                ppu.writeBGP(value);
             break;
 
             default:
