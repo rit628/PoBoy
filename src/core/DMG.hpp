@@ -17,5 +17,5 @@ class DMG {
         Interrupts::IMU imu;
         Graphics::PPU ppu;
         Memory::MMU mmu{imu, ppu};
-        CPU cpu{mmu};
+        Processing::CPU cpu{mmu};
 };

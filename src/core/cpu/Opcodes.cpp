@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <stdexcept>
 
+using namespace Processing;
+
 bool CPU::NOP_0x00(int) {
     return true;
 }

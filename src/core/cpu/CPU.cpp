@@ -40,6 +40,7 @@
     #define DEBUG_PRINT_INTERRUPT(interruptType)
 #endif
 
+using namespace Processing;
 
 uint8_t CPU::tick() {
     /* Unprefixed Opcode Argument Constants */
