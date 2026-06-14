@@ -16,6 +16,6 @@ class DMG {
 
         IMU imu;
         Graphics::PPU ppu;
-        MMU mmu{imu, ppu};
+        Memory::MMU mmu{imu, ppu};
         CPU cpu{mmu};
 };

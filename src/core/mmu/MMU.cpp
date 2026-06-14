@@ -1,9 +1,11 @@
 #include "MMU.hpp"
 #include "IMU.hpp"
-#include "IO.hpp"
+#include "MemoryConstants.hpp"
 #include <cstdint>
 #include <iostream>
 #include <print>
+
+using namespace Memory;
 
 MMU::MMU(IMU& imu, Graphics::PPU& ppu) : imu(imu), ppu(ppu) {}
 
@@ -28,51 +30,51 @@ uint8_t MMU::read(uint16_t address) {
         return ppu.readOAM(address - OAM_START);
     }
     if (address < PROHIBITED_END) {
-        return READ_ERROR; // oam bug
+        return 0xFF; // oam bug
     }
     if (address < IO_END) {
         switch (address) {
-            case IO::BANK:
+            case BANK:
                 return bootRomDisabled;
             break;
 
-            case IO::LY:
+            case LY:
                 return ppu.readLY();
             break;
 
-            case IO::IF:
+            case IF:
                 return imu.readIF();
             break;
             
-            case IO::DIV:
+            case DIV:
                 return imu.readDIV();
             break;
 
-            case IO::TIMA:
+            case TIMA:
                 return imu.readTIMA();
             break;
 
-            case IO::TMA:
+            case TMA:
                 return imu.readTMA();
             break;
 
-            case IO::TAC:
+            case TAC:
                 return imu.readTAC();
             break;
 
-            case IO::SCX:
+            case SCX:
                 return ppu.readSCX();
             break;
 
-            case IO::SCY:
+            case SCY:
                 return ppu.readSCY();
             break;
 
-            case IO::LCDC:
+            case LCDC:
                 return ppu.readLCDC();
             break;
 
-            case IO::BGP:
+            case BGP:
                 return ppu.readBGP();
             break;
 
@@ -111,48 +113,48 @@ void MMU::write(uint16_t address, uint8_t value) {
     }
     else if (address < IO_END) {
         switch (address) {
-            case IO::BANK:
+            case BANK:
                 // bootrom can only be unmapped
                 bootRomDisabled = bootRomDisabled || value;
             break;
 
-            case IO::SB:
+            case SB:
                 std::print(std::cerr, "{:c}", value);
             break;
 
-            case IO::IF:
+            case IF:
                 imu.writeIF(value);
             break;
 
-            case IO::DIV:
+            case DIV:
                 imu.writeDIV(value);
             break;
 
-            case IO::TIMA:
+            case TIMA:
                 imu.writeTIMA(value);
             break;
 
-            case IO::TMA:
+            case TMA:
                 imu.writeTMA(value);
             break;
 
-            case IO::TAC:
+            case TAC:
                 imu.writeTAC(value);
             break;
 
-            case IO::SCX:
+            case SCX:
                 ppu.writeSCX(value);
             break;
 
-            case IO::SCY:
+            case SCY:
                 ppu.writeSCY(value);
             break;
 
-            case IO::LCDC:
+            case LCDC:
                 ppu.writeLCDC(value);
             break;
 
-            case IO::BGP:
+            case BGP:
                 ppu.writeBGP(value);
             break;
 

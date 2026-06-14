@@ -1,6 +1,6 @@
 #include "CPU.hpp"
 #include "Opcodes.hpp"
-#include "IO.hpp"
+#include "MemoryConstants.hpp"
 #include "Register.hpp"
 #include <array>
 #include <cstdint>
@@ -127,8 +127,8 @@ void CPU::handleInterrupts() {
     static constexpr uint8_t SERIAL_INTERRUPT_ADDRESS      = 0X58;
     static constexpr uint8_t JOYPAD_INTERRUPT_ADDRESS      = 0X60;
 
-    auto IF = mmu.read(IO::IF);
-    auto IE = mmu.read(IO::IE);
+    auto IF = mmu.read(Memory::IF);
+    auto IE = mmu.read(Memory::IE);
     uint8_t interrupts = IF & IE & 0x1F;
 
     /* break out of halt mode on interrupt */
@@ -142,7 +142,7 @@ void CPU::handleInterrupts() {
         if (flagTest(interrupts, flag)) {
             IME = INTERRUPT_MASTER_FLAG::DISABLED;
             flagClear(IF, flag);
-            mmu.write(IO::IF, IF);
+            mmu.write(Memory::IF, IF);
             restart(address);
             return true;
         }

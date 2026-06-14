@@ -7,7 +7,7 @@
 
 class CPU {
     public:
-        CPU(MMU& mmu) : mmu(mmu) {}
+        CPU(Memory::MMU& mmu) : mmu(mmu) {}
 
         uint8_t tick();
         
@@ -157,7 +157,7 @@ class CPU {
         void decimalAdjustAccumulator();
         void stop();
 
-        MMU& mmu;
+        Memory::MMU& mmu;
 
         /* Register File */
         Register16 PC; // program counter

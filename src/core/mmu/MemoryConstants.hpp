@@ -1,9 +1,35 @@
 #pragma once
+#include "GraphicsConstants.hpp"
 #include <cstdint>
-#include <type_traits>
-#include <utility>
 
-namespace IO {
+namespace Memory {
+
+    static constexpr uint32_t MEMORY_SIZE           = 0x10000;
+    static constexpr uint16_t BOOTROM_SIZE          = 0x0100;
+    static constexpr uint16_t ROM_BANK_SIZE         = 0x4000;
+    static constexpr uint16_t CART_RAM_SIZE         = 0x2000;
+    static constexpr uint16_t WRAM_SIZE             = 0x2000;
+    static constexpr uint8_t  IO_SIZE               = 0x80;
+    static constexpr uint8_t  HRAM_SIZE             = 0x7F;
+
+    static constexpr uint16_t ROM_BANKS_START       = 0;
+    static constexpr uint16_t ROM_BANKS_END         = ROM_BANK_SIZE * 2;
+    static constexpr uint16_t VRAM_START            = ROM_BANKS_END;
+    static constexpr uint16_t VRAM_END              = VRAM_START + Graphics::VRAM_SIZE;
+    static constexpr uint16_t CARTRIDGE_RAM_START   = VRAM_END;
+    static constexpr uint16_t CARTRIDGE_RAM_END     = CARTRIDGE_RAM_START + CART_RAM_SIZE;
+    static constexpr uint16_t WRAM_START            = CARTRIDGE_RAM_END;
+    static constexpr uint16_t WRAM_END              = WRAM_START + WRAM_SIZE;
+    static constexpr uint16_t ECHO_RAM_START        = WRAM_END;
+    static constexpr uint16_t ECHO_RAM_END          = ECHO_RAM_START + WRAM_SIZE - 0X0200;
+    static constexpr uint16_t OAM_START             = ECHO_RAM_END;
+    static constexpr uint16_t OAM_END               = OAM_START + Graphics::OAM_SIZE;
+    static constexpr uint16_t PROHIBITED_START      = OAM_END;
+    static constexpr uint16_t PROHIBITED_END        = PROHIBITED_START + 0x60;
+    static constexpr uint16_t IO_START              = PROHIBITED_END;
+    static constexpr uint16_t IO_END                = IO_START + IO_SIZE;
+    static constexpr uint16_t HRAM_START            = IO_END;
+    static constexpr uint16_t HRAM_END              = HRAM_START + HRAM_SIZE;
 
     constexpr uint16_t P1       = 0xFF00;   // Joypad
     constexpr uint16_t SB       = 0xFF01;   // Serial transfer data

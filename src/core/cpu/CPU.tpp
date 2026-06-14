@@ -1,6 +1,6 @@
 #pragma once
 #include "CPU.hpp"
-#include "IO.hpp"
+#include "MemoryConstants.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <utility>
@@ -490,8 +490,8 @@ inline void CPU::enableInterrupts() {
 
 inline void CPU::halt() {
     using enum STATE;
-    auto IF = mmu.read(IO::IF);
-    auto IE = mmu.read(IO::IE);
+    auto IF = mmu.read(Memory::IF);
+    auto IE = mmu.read(Memory::IE);
     if (IME == INTERRUPT_MASTER_FLAG::ENABLED || !(IF & IE & 0x1F)) {
         state = HALTED;
     }
