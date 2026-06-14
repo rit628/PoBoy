@@ -1,8 +1,8 @@
 #pragma once
 #include "GraphicsConstants.hpp"
 #include "Pixel.hpp"
+#include <array>
 #include <cstdint>
-#include <queue>
 #include <span>
 
 namespace Graphics {
@@ -34,7 +34,8 @@ namespace Graphics {
             
             STATE state = STATE::GET_TILE;
             bool onSecondDot = false;
-            std::queue<Pixel> pixelFifo;
+            std::array<Pixel, 8> pixelFifo;
+            uint8_t fifoFront = pixelFifo.size();
             
             const uint8_t& lcdControl;  // LCDC register reference
             const uint8_t& bgPalette;   // BGP register reference

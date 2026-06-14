@@ -49,22 +49,18 @@ void BackgroundFetcher::tick() {
 }
 
 void BackgroundFetcher::reset() {
-    while (!pixelFifo.empty()) {
-        pixelFifo.pop();
-    }
+    fifoFront = pixelFifo.size();
     state = STATE::GET_TILE;
     onSecondDot = false;
     xPos = 0;
 }
 
 Pixel BackgroundFetcher::fifoPop() {
-    auto result = pixelFifo.front();
-    pixelFifo.pop();
-    return result;
+    return pixelFifo.at(fifoFront++);
 }
 
 bool BackgroundFetcher::fifoEmpty() {
-    return pixelFifo.empty();
+    return fifoFront == pixelFifo.size();
 }
 
 uint8_t BackgroundFetcher::getXCoordinate() {
@@ -104,14 +100,17 @@ void BackgroundFetcher::sleep() {
 
 void BackgroundFetcher::push() {
     if (!fifoEmpty()) return;
-    for (uint8_t i = 0; i < 8; i++) {
+    /* refill pixel fifo */
+    for (uint8_t i = 0; i < pixelFifo.size(); i++) {
         bool msb = tileBitPlaneLo & (0x1 << (7 - i));
         bool lsb = tileBitPlaneHi & (0x1 << (7 - i));
         uint8_t paletteIndex = (msb << 1) | lsb;
         Pixel pixel;
         pixel.color = (bgPalette >> (2 * paletteIndex)) & 0b11;
-        pixelFifo.push(pixel);
+        pixelFifo.at(i) = pixel;
     }
+    fifoFront = 0;
+       
     /* increment x past row and return to first state */
     xPos += 8;
     state = STATE::GET_TILE;

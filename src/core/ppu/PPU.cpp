@@ -41,41 +41,44 @@ void PPU::tick() {
 void PPU::updateMode() {
     lineDotsElapsed++;
     frameDotsElapsed++;
+
+    auto incrementLine = [this]() {
+        lineDotsElapsed = 0;
+        currentLine++;
+    };
     
     switch (mode) {
         using enum MODE;
         case OAM_SCAN:
-            if (lineDotsElapsed >= DOTS_PER_OAM_SCAN_MODE) mode = PIXEL_TRANSFER;
-        break;
-        
-        case PIXEL_TRANSFER:
-            if (mixer.atLineEnd()) {
-                mode = HBLANK;
+            if (lineDotsElapsed >= DOTS_PER_OAM_SCAN_MODE) [[ unlikely ]] {
+                mode = PIXEL_TRANSFER;
                 mixer.resetFifos();
             }
         break;
+        
+        case PIXEL_TRANSFER:
+            if (mixer.atLineEnd()) [[ unlikely ]] mode = HBLANK;
+        break;
 
         case HBLANK:
-            if (lineDotsElapsed >= DOTS_PER_LINE) mode = OAM_SCAN;
-            if (frameDotsElapsed >= DOTS_PER_LCD_SCAN) {
+            if (lineDotsElapsed >= DOTS_PER_LINE) [[ unlikely ]] {
+                mode = OAM_SCAN;
+                incrementLine();
+            }
+            if (frameDotsElapsed >= DOTS_PER_LCD_SCAN) [[ unlikely ]] {
                 mode = VBLANK;
                 renderFrame(mixer.extractFrame());
             }
         break;
 
         case VBLANK:
-            if (frameDotsElapsed >= DOTS_PER_FRAME) mode = OAM_SCAN;
+            if (lineDotsElapsed >= DOTS_PER_LINE) [[ unlikely ]] incrementLine();
+            if (frameDotsElapsed >= DOTS_PER_FRAME) [[ unlikely ]] {
+                mode = OAM_SCAN;
+                frameDotsElapsed = 0;
+                currentLine = 0;
+            }
         break;
-    }
-    
-    /* for now wrap the counters here in case mode switching is broken */
-    if (lineDotsElapsed >= DOTS_PER_LINE) {
-        lineDotsElapsed = 0;
-        currentLine++;
-    }
-    if (frameDotsElapsed >= DOTS_PER_FRAME) {
-        frameDotsElapsed = 0;
-        currentLine = 0;
     }
 }
 
