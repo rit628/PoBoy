@@ -121,9 +121,9 @@ namespace Processing {
             }
     
             // only implementing for ops with F register
-            void set(REGISTER_FLAG bitFlag) { flagSet(*this, bitFlag); }
-            void clear(REGISTER_FLAG bitFlag) { flagClear(*this, bitFlag); }
-            bool test(REGISTER_FLAG bitFlag) { return flagTest(*this, bitFlag); }
+            void set(REGISTER_FLAG bitFlag) { setFlags(*this, bitFlag); }
+            void clear(REGISTER_FLAG bitFlag) { clearFlags(*this, bitFlag); }
+            bool test(REGISTER_FLAG bitFlag) { return testFlags(*this, bitFlag); }
     
             // cant use r16++ due to hi/lo byte difference
             RegisterView& operator++() { *this = *this + 1; return *this; }

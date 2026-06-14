@@ -140,9 +140,9 @@ void CPU::handleInterrupts() {
     if (IME != INTERRUPT_MASTER_FLAG::ENABLED || !interrupts) return;
 
     auto handleInterrupt = [&, this]<Interrupts::INTERRUPT_FLAG flag, uint8_t address>() {
-        if (flagTest(interrupts, flag)) {
+        if (testFlags(interrupts, flag)) {
             IME = INTERRUPT_MASTER_FLAG::DISABLED;
-            flagClear(IF, flag);
+            clearFlags(IF, flag);
             mmu.write(Memory::IF, IF);
             restart(address);
             return true;

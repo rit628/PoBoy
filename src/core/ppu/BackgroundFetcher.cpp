@@ -69,7 +69,7 @@ uint8_t BackgroundFetcher::getXCoordinate() {
 
 void BackgroundFetcher::getTile() {
     if (!onSecondDot) return; // wait for one dot
-    bool selectedTileMap = flagTest(lcdControl, LCDC_FLAG::BACKGROUND_TILEMAP_OFFSET);
+    bool selectedTileMap = testFlags(lcdControl, LCDC_FLAG::BACKGROUND_TILEMAP_OFFSET);
     uint8_t xCoordinate = (xPos + bgX) / 8;
     uint8_t yCoordinate = (yPos + bgY) / 8;
     uint16_t posAddress = selectedTileMap << 10 | yCoordinate << 5 | xCoordinate;
@@ -79,7 +79,7 @@ void BackgroundFetcher::getTile() {
 
 void BackgroundFetcher::getTileDataLo() {
     if (!onSecondDot) return; // wait for one dot
-    bool selectedTileData = flagTest(lcdControl, LCDC_FLAG::BACKGROUND_AND_WINDOW_DATA_OFFSET);
+    bool selectedTileData = testFlags(lcdControl, LCDC_FLAG::BACKGROUND_AND_WINDOW_DATA_OFFSET);
     uint8_t tileRow = (yPos + bgY) % 8;
     tileAddress = selectedTileData << 12 | tileId << 4 | tileRow << 1;
     tileBitPlaneLo = tileData[tileAddress];

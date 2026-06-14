@@ -83,12 +83,12 @@ void PPU::updateMode() {
 }
 
 uint8_t PPU::readVRAM(uint16_t address) {
-    if (mode == MODE::PIXEL_TRANSFER && flagTest(lcdControl, LCDC_FLAG::LCD_AND_PPU_ENABLE)) return 0xFF;
+    if (mode == MODE::PIXEL_TRANSFER && testFlags(lcdControl, LCDC_FLAG::LCD_AND_PPU_ENABLE)) return 0xFF;
     return vram.at(address);
 }
 
 void PPU::writeVRAM(uint16_t address, uint8_t value) {
-    if (mode == MODE::PIXEL_TRANSFER && flagTest(lcdControl, LCDC_FLAG::LCD_AND_PPU_ENABLE)) return;
+    if (mode == MODE::PIXEL_TRANSFER && testFlags(lcdControl, LCDC_FLAG::LCD_AND_PPU_ENABLE)) return;
     vram.at(address) = value;
 }
 

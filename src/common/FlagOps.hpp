@@ -14,6 +14,17 @@ namespace {
     };
 }
 
-inline void flagSet(Testable auto& target, Flag auto flag) { target |= std::to_underlying(flag); }
-inline void flagClear(Testable auto& target, Flag auto flag) { target &= ~std::to_underlying(flag); }
-inline bool flagTest(Testable auto target, Flag auto flag) { return target & std::to_underlying(flag); }
+template<typename... T> requires (Flag<T> && ...)
+inline void setFlags(Testable auto& target, T... flags) {
+    target |= (std::to_underlying(flags) | ...);
+}
+
+template<typename... T> requires (Flag<T> && ...)
+inline void clearFlags(Testable auto& target, T... flags) {
+    target &= (~std::to_underlying(flags) & ...);
+}
+
+template<typename... T> requires (Flag<T> && ...)
+inline bool testFlags(Testable auto target, T... flags) {
+    return target & (std::to_underlying(flags) | ...);
+}

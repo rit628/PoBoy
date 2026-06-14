@@ -13,7 +13,7 @@ void IMU::writeIF(uint8_t value) {
 }
 
 void IMU::writeIF(INTERRUPT_FLAG flag) {
-    flagSet(interruptFlags, flag);
+    setFlags(interruptFlags, flag);
 }
 
 uint8_t IMU::readIE() {
@@ -25,7 +25,7 @@ void IMU::writeIE(uint8_t value) {
 }
 
 void IMU::writeIE(INTERRUPT_FLAG flag) {
-    flagSet(interruptEnable, flag);
+    setFlags(interruptEnable, flag);
 }
 
 
