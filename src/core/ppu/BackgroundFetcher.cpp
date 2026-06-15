@@ -9,15 +9,19 @@ using namespace Graphics;
 BackgroundFetcher::BackgroundFetcher(const uint8_t& lcdControl
                                    , const uint8_t& bgPalette
                                    , const uint8_t& yPos
-                                   , const uint8_t& bgX
-                                   , const uint8_t& bgY
+                                   , const uint8_t& scrollX
+                                   , const uint8_t& scrollY
+                                   , const uint8_t& windowX
+                                   , const uint8_t& windowY
                                    , std::span<const uint8_t, TILE_DATA_SIZE> tileData
                                    , std::span<const uint8_t, 2 * TILE_MAP_SIZE> tileMaps)
                                    : lcdControl(lcdControl)
                                    , bgPalette(bgPalette)
                                    , yPos(yPos)
-                                   , bgX(bgX)
-                                   , bgY(bgY)
+                                   , scrollX(scrollX)
+                                   , scrollY(scrollY)
+                                   , windowX(windowX)
+                                   , windowY(windowY)
                                    , tileData(tileData)
                                    , tileMaps(tileMaps)
                                    {}
@@ -69,18 +73,37 @@ uint8_t BackgroundFetcher::getXCoordinate() {
 
 void BackgroundFetcher::getTile() {
     if (!onSecondDot) return; // wait for one dot
-    bool selectedTileMap = testFlags(lcdControl, LCDC_FLAG::BACKGROUND_TILEMAP_OFFSET);
-    uint8_t xCoordinate = (xPos + bgX) / 8;
-    uint8_t yCoordinate = (yPos + bgY) / 8;
-    uint16_t posAddress = selectedTileMap << 10 | yCoordinate << 5 | xCoordinate;
-    tileId = tileMaps[posAddress];
+    bool windowEnabled = testFlags(lcdControl, LCDC_FLAG::WINDOW_ENABLE);
+    bool inWindow = windowEnabled && (xPos + WINDOW_X_OFFSET >= windowX) && (yPos >= windowY);
+    uint16_t tileIdAddress = 0;
+    if (inWindow) {  // get window tile
+        bool selectedTileMap = testFlags(lcdControl, LCDC_FLAG::WINDOW_TILEMAP_OFFSET);
+        uint8_t xCoordinate = xPos / 8;
+        uint8_t yCoordinate = windowY / 8;
+        tileIdAddress = selectedTileMap << 10 | yCoordinate << 5 | xCoordinate;
+    }
+    else {  // get background tile
+        bool selectedTileMap = testFlags(lcdControl, LCDC_FLAG::BACKGROUND_TILEMAP_OFFSET);
+        uint8_t xCoordinate = (xPos + scrollX) / 8;
+        uint8_t yCoordinate = (yPos + scrollY) / 8;
+        tileIdAddress = selectedTileMap << 10 | yCoordinate << 5 | xCoordinate;
+    }
+    tileId = tileMaps[tileIdAddress];
     state = STATE::GET_TILE_DATA_LO;
 }
 
 void BackgroundFetcher::getTileDataLo() {
     if (!onSecondDot) return; // wait for one dot
+    bool windowEnabled = testFlags(lcdControl, LCDC_FLAG::WINDOW_ENABLE);
+    bool inWindow = windowEnabled && (xPos + WINDOW_X_OFFSET >= windowX) && (yPos >= windowY);
     bool selectedTileData = testFlags(lcdControl, LCDC_FLAG::BACKGROUND_AND_WINDOW_DATA_OFFSET);
-    uint8_t tileRow = (yPos + bgY) % 8;
+    uint8_t tileRow = 0;
+    if (inWindow) {  // get window tile data
+        tileRow = windowY % 8;
+    }
+    else {  // get background tile data
+        tileRow = (yPos + scrollY) % 8;
+    }
     tileAddress = selectedTileData << 12 | tileId << 4 | tileRow << 1;
     tileBitPlaneLo = tileData[tileAddress];
     state = STATE::GET_TILE_DATA_HI;

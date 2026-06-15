@@ -49,4 +49,6 @@ namespace Graphics {
 
     constexpr uint16_t TILE_MAP_SIZE                = 32 * 32;
 
+    constexpr uint8_t WINDOW_X_OFFSET               = 7;
+
 }

@@ -10,9 +10,19 @@ PixelMixer::PixelMixer(const uint8_t& lcdc
                      , const uint8_t& ly
                      , const uint8_t& scx
                      , const uint8_t& scy
+                     , const uint8_t& wx
+                     , const uint8_t& wy
                      , std::span<const uint8_t, TILE_DATA_SIZE> tileData
                      , std::span<const uint8_t, 2 * TILE_MAP_SIZE> tileMaps)
-                     : backgroundFetcher(lcdc, bgp, ly, scx, scy, tileData, tileMaps)
+                     : backgroundFetcher(lcdc
+                                       , bgp
+                                       , ly
+                                       , scx
+                                       , scy
+                                       , wx
+                                       , wy
+                                       , tileData
+                                       , tileMaps)
                      {}
 
 void PixelMixer::tick() {

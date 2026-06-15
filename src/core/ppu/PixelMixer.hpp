@@ -15,6 +15,8 @@ namespace Graphics {
                      , const uint8_t& ly
                      , const uint8_t& scx
                      , const uint8_t& scy
+                     , const uint8_t& wx
+                     , const uint8_t& wy
                      , std::span<const uint8_t, TILE_DATA_SIZE> tileData
                      , std::span<const uint8_t, 2 * TILE_MAP_SIZE> tileMaps);
 

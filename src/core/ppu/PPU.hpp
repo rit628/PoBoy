@@ -34,6 +34,10 @@ namespace Graphics {
             void writeSCX(uint8_t value);
             uint8_t readSCY();
             void writeSCY(uint8_t value);
+            uint8_t readWX();
+            void writeWX(uint8_t value);
+            uint8_t readWY();
+            void writeWY(uint8_t value);
             uint8_t readLCDC();
             void writeLCDC(uint8_t value);
             uint8_t readBGP();
@@ -60,6 +64,8 @@ namespace Graphics {
             uint8_t lcdControl = 0;         // LCDC register
             uint8_t scrollX = 0;            // SCX register
             uint8_t scrollY = 0;            // SCY register
+            uint8_t windowX = 0;            // WX register
+            uint8_t windowY = 0;            // WY register
             uint8_t backgroundPalette = 0;  // BGP register
             /* STAT register components */
             uint8_t interruptMask = 0;      // STAT bits 6-3
@@ -70,6 +76,8 @@ namespace Graphics {
                            , currentLine
                            , scrollX
                            , scrollY
+                           , windowX
+                           , windowY
                            , getTileData()
                            , getTileMaps()};
     };

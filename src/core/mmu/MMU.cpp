@@ -74,6 +74,14 @@ uint8_t MMU::read(uint16_t address) {
                 return ppu.readSCY();
             break;
 
+            case WX:
+                return ppu.readWX();
+            break;
+
+            case WY:
+                return ppu.readWY();
+            break;
+
             case LCDC:
                 return ppu.readLCDC();
             break;
@@ -127,7 +135,8 @@ void MMU::write(uint16_t address, uint8_t value) {
             break;
 
             case SB:
-                std::print(std::cerr, "{:c}", value);
+                // for debugging
+                std::print(std::cerr, "{:c}", std::min(uint8_t(0x7F), value));
             break;
 
             case LYC:
@@ -160,6 +169,14 @@ void MMU::write(uint16_t address, uint8_t value) {
 
             case SCY:
                 ppu.writeSCY(value);
+            break;
+
+            case WX:
+                ppu.writeWX(value);
+            break;
+
+            case WY:
+                ppu.writeWY(value);
             break;
 
             case LCDC:

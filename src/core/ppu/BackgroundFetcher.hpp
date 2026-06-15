@@ -14,8 +14,10 @@ namespace Graphics {
             BackgroundFetcher(const uint8_t& lcdControl
                             , const uint8_t& bgPalette
                             , const uint8_t& yPos
-                            , const uint8_t& bgX
-                            , const uint8_t& bgY
+                            , const uint8_t& scrollX
+                            , const uint8_t& scrollY
+                            , const uint8_t& windowX
+                            , const uint8_t& windowY
                             , std::span<const uint8_t, TILE_DATA_SIZE> tileData
                             , std::span<const uint8_t, 2 * TILE_MAP_SIZE> tileMaps);
 
@@ -41,9 +43,11 @@ namespace Graphics {
             const uint8_t& bgPalette;   // BGP register reference
 
             uint8_t xPos = 0;
-            const uint8_t& yPos;        // LY register reference
-            const uint8_t& bgX;         // SCX register reference
-            const uint8_t& bgY;         // SCY register reference
+            const uint8_t& yPos;            // LY register reference
+            const uint8_t& scrollX;         // SCX register reference
+            const uint8_t& scrollY;         // SCY register reference
+            const uint8_t& windowX;         // WX register reference
+            const uint8_t& windowY;         // WY register reference
             
 
             uint8_t tileId = 0;

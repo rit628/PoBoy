@@ -145,6 +145,22 @@ void PPU::writeSCY(uint8_t value) {
     scrollY = value;
 }
 
+uint8_t PPU::readWX() {
+    return windowX;
+}
+
+void PPU::writeWX(uint8_t value) {
+    windowX = value;
+}
+
+uint8_t PPU::readWY() {
+    return windowY;
+}
+
+void PPU::writeWY(uint8_t value) {
+    windowY = value;
+}
+
 uint8_t PPU::readLCDC() {
     return lcdControl;
 }
