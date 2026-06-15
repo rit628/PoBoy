@@ -1,6 +1,7 @@
 #pragma once
 #include "GraphicsConstants.hpp"
 #include "PixelMixer.hpp"
+#include "IMU.hpp"
 #include <array>
 #include <cstdint>
 #include <span>
@@ -15,14 +16,20 @@ namespace Graphics {
                 HBLANK = 0,
                 VBLANK = 1
             };
+
+            PPU(Interrupts::IMU& imu);
             
             void tick(uint8_t dots);
             void tick();
+
             uint8_t readVRAM(uint16_t address);
             void writeVRAM(uint16_t address, uint8_t value);
             uint8_t readOAM(uint16_t address);
             void writeOAM(uint16_t address, uint8_t value);
+
             uint8_t readLY();
+            uint8_t readLYC();
+            void writeLYC(uint8_t value);
             uint8_t readSCX();
             void writeSCX(uint8_t value);
             uint8_t readSCY();
@@ -31,12 +38,17 @@ namespace Graphics {
             void writeLCDC(uint8_t value);
             uint8_t readBGP();
             void writeBGP(uint8_t value);
+            uint8_t readSTAT();
+            void writeSTAT(uint8_t value);
     
             std::span<const uint8_t, TILE_DATA_SIZE> getTileData();
             std::span<const uint8_t, 2 * TILE_MAP_SIZE> getTileMaps();
     
         private:
+            void updateInterrupts();
             void updateMode();
+
+            Interrupts::IMU& imu;
     
             std::array<uint8_t, VRAM_SIZE> vram{};
             std::array<uint8_t, OAM_SIZE> oam{};
@@ -50,7 +62,8 @@ namespace Graphics {
             uint8_t scrollY = 0;            // SCY register
             uint8_t backgroundPalette = 0;  // BGP register
             /* STAT register components */
-            MODE mode = MODE::OAM_SCAN;  // STAT bits 1-0
+            uint8_t interruptMask = 0;      // STAT bits 6-3
+            MODE mode = MODE::OAM_SCAN;     // STAT bits 1-0
 
             PixelMixer mixer{lcdControl
                            , backgroundPalette

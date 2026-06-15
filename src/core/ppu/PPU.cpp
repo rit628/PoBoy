@@ -1,12 +1,16 @@
 #include "PPU.hpp"
 #include "FlagOps.hpp"
 #include "GraphicsConstants.hpp"
+#include "IMU.hpp"
 #include <array>
 #include <cstdint>
+#include <utility>
 
 using namespace Graphics;
 
 #include "TerminalRenderer.inl"
+
+PPU::PPU(Interrupts::IMU& imu) : imu(imu) {}
 
 void PPU::tick(uint8_t dots) {
     for (uint8_t i = 0; i < dots; i++) {
@@ -35,7 +39,20 @@ void PPU::tick() {
             
         break;
     }
+    updateInterrupts();
     updateMode();
+}
+
+void PPU::updateInterrupts() {
+    uint8_t stat = readSTAT();
+    using enum STAT_FLAG;
+    if (testFlags(stat, LYC_INTERRUPT_ENABLE, LYC_INTERRUPT_BIT)
+     || (testFlags(stat, MODE_2_INTERRUPT_ENABLE) && extractFlags(stat, PPU_MODE_BITS) == 2)
+     || (testFlags(stat, MODE_1_INTERRUPT_ENABLE) && extractFlags(stat, PPU_MODE_BITS) == 1)
+     || (testFlags(stat, MODE_0_INTERRUPT_ENABLE) && extractFlags(stat, PPU_MODE_BITS) == 0))
+    {
+        imu.writeIF(Interrupts::INTERRUPT_FLAG::LCD_STAT);
+    }
 }
 
 void PPU::updateMode() {
@@ -104,6 +121,14 @@ uint8_t PPU::readLY() {
     return currentLine;
 }
 
+uint8_t PPU::readLYC() {
+    return lineCompare;
+}
+
+void PPU::writeLYC(uint8_t value) {
+    lineCompare = value;
+}
+
 uint8_t PPU::readSCX() {
     return scrollX;
 }
@@ -134,6 +159,14 @@ uint8_t PPU::readBGP() {
 
 void PPU::writeBGP(uint8_t value) {
     backgroundPalette = value;
+}
+
+uint8_t PPU::readSTAT() {
+    return interruptMask | (lineCompare == currentLine) << 2 | std::to_underlying(mode);
+}
+
+void PPU::writeSTAT(uint8_t value) {
+    interruptMask = value & 0x78;   // bits 0-2 and 7 are read only
 }
 
 std::span<const uint8_t, TILE_DATA_SIZE> PPU::getTileData() {

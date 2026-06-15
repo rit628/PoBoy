@@ -15,7 +15,7 @@ class DMG {
         std::ostream* tileStream = nullptr;
 
         Interrupts::IMU imu;
-        Graphics::PPU ppu;
+        Graphics::PPU ppu{imu};
         Memory::MMU mmu{imu, ppu};
         Processing::CPU cpu{mmu};
 };

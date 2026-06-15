@@ -25,6 +25,11 @@ inline void clearFlags(Testable auto& target, T... flags) {
 }
 
 template<typename... T> requires (Flag<T> && ...)
-inline bool testFlags(Testable auto target, T... flags) {
+inline uint8_t extractFlags(Testable auto target, T... flags) {
     return target & (std::to_underlying(flags) | ...);
+}
+
+template<typename... T> requires (Flag<T> && ...)
+inline bool testFlags(Testable auto target, T... flags) {
+    return extractFlags(target, flags...) == (std::to_underlying(flags) | ...);
 }

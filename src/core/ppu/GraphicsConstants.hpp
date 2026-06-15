@@ -15,6 +15,16 @@ namespace Graphics {
         BACKGROUND_AND_WINDOW_ENABLE        = 0b00000001
     };
 
+    /* LCD Status Register Flags */
+    enum class STAT_FLAG : uint8_t {
+        LYC_INTERRUPT_ENABLE        = 0b01000000,
+        MODE_2_INTERRUPT_ENABLE     = 0b00100000,
+        MODE_1_INTERRUPT_ENABLE     = 0b00010000,
+        MODE_0_INTERRUPT_ENABLE     = 0b00001000,
+        LYC_INTERRUPT_BIT           = 0b00000100,
+        PPU_MODE_BITS               = 0b00000011
+    };
+
     constexpr uint8_t LCD_WIDTH                     = 160;
     constexpr uint8_t LCD_HEIGHT                    = 144;
     constexpr uint8_t BITS_PER_PIXEL                = 2;

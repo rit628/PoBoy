@@ -42,6 +42,10 @@ uint8_t MMU::read(uint16_t address) {
                 return ppu.readLY();
             break;
 
+            case LYC:
+                return ppu.readLYC();
+            break;
+
             case IF:
                 return imu.readIF();
             break;
@@ -76,6 +80,10 @@ uint8_t MMU::read(uint16_t address) {
 
             case BGP:
                 return ppu.readBGP();
+            break;
+
+            case STAT:
+                return ppu.readSTAT();
             break;
 
             default:
@@ -122,6 +130,10 @@ void MMU::write(uint16_t address, uint8_t value) {
                 std::print(std::cerr, "{:c}", value);
             break;
 
+            case LYC:
+                ppu.writeLYC(value);
+            break;
+
             case IF:
                 imu.writeIF(value);
             break;
@@ -156,6 +168,10 @@ void MMU::write(uint16_t address, uint8_t value) {
 
             case BGP:
                 ppu.writeBGP(value);
+            break;
+
+            case STAT:
+                ppu.writeSTAT(value);
             break;
 
             default:
