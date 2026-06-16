@@ -1,21 +1,27 @@
 #pragma once
+#include "MemoryConstants.hpp"
 #include "Register.hpp"
 #include "MMU.hpp"
+#include <array>
 #include <cstddef>
 #include <cstdint>
+#include <type_traits>
 
 namespace Processing {
 
+    template<bool FlatMemory = false>
     class CPU {
         public:
-            CPU(Memory::MMU& mmu) : mmu(mmu) {}
-    
+            CPU() requires FlatMemory = default;
+            CPU(Memory::MMU& mmu) requires (!FlatMemory);
             uint8_t tick();
             
-        private:
+        protected:
             enum class STATE : uint8_t { RUNNING, HALTED, BUGGED };
-            enum class INTERRUPT_MASTER_FLAG : uint8_t { DISABLED, ENABLED, ENABLE_PENDING };
+            enum class INTERRUPT_MASTER_FLAG : uint8_t { DISABLED = 0, ENABLED = 1, ENABLE_PENDING = 2 };
     
+            uint8_t read(uint16_t address);
+            void write(uint16_t address, uint8_t value);
             void handleInterrupts();
             void handleHaltBug();
     
@@ -158,7 +164,9 @@ namespace Processing {
             void decimalAdjustAccumulator();
             void stop();
     
-            Memory::MMU& mmu;
+            using MemoryType = std::conditional_t<FlatMemory, std::array<uint8_t, Memory::MEMORY_SIZE>, Memory::MMU&>;
+            
+            MemoryType mmu;
     
             /* Register File */
             Register16 PC; // program counter

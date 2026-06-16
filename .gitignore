@@ -6,6 +6,9 @@ logs
 *.gb
 *.gbc
 
+# SST Tests
+**/sst/*.json
+
 # Build artifacts
 build/
 CMakeCache.txt

@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 4.0)
 
 set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)
+set(CMAKE_LINKER_TYPE LLD)
 
 project(DMG++)
 
@@ -18,7 +19,7 @@ FetchContent_Declare(
     SYSTEM # Disable warnings in headers
     URL https://github.com/boostorg/boost/releases/download/boost-1.89.0/boost-1.89.0-cmake.zip
 )
-set(BOOST_INCLUDE_LIBRARIES static_string)
+set(BOOST_INCLUDE_LIBRARIES static_string json)
 
 FetchContent_Declare(
     SDL3
@@ -41,3 +42,4 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 add_subdirectory(src)
+add_subdirectory(test)
