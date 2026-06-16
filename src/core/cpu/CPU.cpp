@@ -10,29 +10,30 @@
 #define DEBUG_PRINT false
 
 #if DEBUG_PRINT
+    #include <iostream>
     #define DEBUG_PRINT_OPCODE(code, name) \
-    std::print("{:#06x}: {} {}", PC - 1, #code, #name);
+    std::print(std::cerr, "{:#06x}: {} {}", PC - 1, #code, #name);
     #define DEBUG_PRINT_ARGS(name, type, bytecount, immediate, postop) \
     if constexpr (immediate) { \
         if constexpr (bytecount == 1 || std::is_same_v<type, RegisterView&>) { \
-            std::print(" {}{} ({:#04x})", #name, #postop, name); \
+            std::print(std::cerr, " {}{} ({:#04x})", #name, #postop, name); \
         } \
         else { \
-            std::print(" {}{} ({:#06x})", #name, #postop, name); \
+            std::print(std::cerr, " {}{} ({:#06x})", #name, #postop, name); \
         } \
     } \
     else { \
         if constexpr (bytecount == 1 || std::is_same_v<type, RegisterView&>) { /* for ldh */ \
-            std::print(" [{}{}] ([{:#06x}] = {:#04x})", #name, #postop, name | 0xFF00, mmu.read(name | 0xFF00)); \
+            std::print(std::cerr, " [{}{}] ([{:#06x}] = {:#04x})", #name, #postop, name | 0xFF00, read(name | 0xFF00)); \
         } \
         else { \
-            std::print(" [{}{}] ([{:#06x}] = {:#04x})", #name, #postop, name, mmu.read(name)); \
+            std::print(std::cerr, " [{}{}] ([{:#06x}] = {:#04x})", #name, #postop, name, read(name)); \
         } \
     } 
     #define DEBUG_PRINT_NEWLINE() \
     std::println();
     #define DEBUG_PRINT_INTERRUPT(interruptType) \
-    std::println("{} INTERRUPT: RST {:#04x}", #interruptType, interruptType##_INTERRUPT_ADDRESS);
+    std::println(std::cerr, "{} INTERRUPT: RST {:#04x}", #interruptType, interruptType##_INTERRUPT_ADDRESS);
 #else
     #define DEBUG_PRINT_OPCODE(code, name)
     #define DEBUG_PRINT_ARGS(name, type, bytecount, immediate, postop)

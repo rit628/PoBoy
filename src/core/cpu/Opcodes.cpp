@@ -1317,7 +1317,7 @@ bool CPU<FlatMemory>::JP_0xD2(RegisterView& F_NC, uint16_t a16, int) {
 
 template<bool FlatMemory>
 bool CPU<FlatMemory>::ILLEGAL_D3_0xD3(int) {
-    throw std::runtime_error("ILLEGAL OPCODE D3");
+    return true;    // treat as NOP
 }
 
 template<bool FlatMemory>
@@ -1373,7 +1373,7 @@ bool CPU<FlatMemory>::JP_0xDA(RegisterView& F_C, uint16_t a16, int) {
 
 template<bool FlatMemory>
 bool CPU<FlatMemory>::ILLEGAL_DB_0xDB(int) {
-    throw std::runtime_error("ILLEGAL OPCODE DB");
+    return true;    // treat as NOP
 }
 
 template<bool FlatMemory>
@@ -1387,7 +1387,7 @@ bool CPU<FlatMemory>::CALL_0xDC(RegisterView& F_C, uint16_t a16, int) {
 
 template<bool FlatMemory>
 bool CPU<FlatMemory>::ILLEGAL_DD_0xDD(int) {
-    throw std::runtime_error("ILLEGAL OPCODE DD");
+    return true;    // treat as NOP
 }
 
 template<bool FlatMemory>
@@ -1422,12 +1422,12 @@ bool CPU<FlatMemory>::LDH_0xE2(RegisterView& C, RegisterView& A, int) {
 
 template<bool FlatMemory>
 bool CPU<FlatMemory>::ILLEGAL_E3_0xE3(int) {
-    throw std::runtime_error("ILLEGAL OPCODE E3");
+    return true;    // treat as NOP
 }
 
 template<bool FlatMemory>
 bool CPU<FlatMemory>::ILLEGAL_E4_0xE4(int) {
-    throw std::runtime_error("ILLEGAL OPCODE E4");
+    return true;    // treat as NOP
 }
 
 template<bool FlatMemory>
@@ -1468,17 +1468,17 @@ bool CPU<FlatMemory>::LD_0xEA(uint16_t a16, RegisterView& A, int) {
 
 template<bool FlatMemory>
 bool CPU<FlatMemory>::ILLEGAL_EB_0xEB(int) {
-    throw std::runtime_error("ILLEGAL OPCODE EB");
+    return true;    // treat as NOP
 }
 
 template<bool FlatMemory>
 bool CPU<FlatMemory>::ILLEGAL_EC_0xEC(int) {
-    throw std::runtime_error("ILLEGAL OPCODE EC");
+    return true;    // treat as NOP
 }
 
 template<bool FlatMemory>
 bool CPU<FlatMemory>::ILLEGAL_ED_0xED(int) {
-    throw std::runtime_error("ILLEGAL OPCODE ED");
+    return true;    // treat as NOP
 }
 
 template<bool FlatMemory>
@@ -1520,7 +1520,7 @@ bool CPU<FlatMemory>::DI_0xF3(int) {
 
 template<bool FlatMemory>
 bool CPU<FlatMemory>::ILLEGAL_F4_0xF4(int) {
-    throw std::runtime_error("ILLEGAL OPCODE F4");
+    return true;    // treat as NOP
 }
 
 template<bool FlatMemory>
@@ -1567,12 +1567,12 @@ bool CPU<FlatMemory>::EI_0xFB(int) {
 
 template<bool FlatMemory>
 bool CPU<FlatMemory>::ILLEGAL_FC_0xFC(int) {
-    throw std::runtime_error("ILLEGAL OPCODE FC");
+    return true;    // treat as NOP
 }
 
 template<bool FlatMemory>
 bool CPU<FlatMemory>::ILLEGAL_FD_0xFD(int) {
-    throw std::runtime_error("ILLEGAL OPCODE FD");
+    return true;    // treat as NOP
 }
 
 template<bool FlatMemory>
