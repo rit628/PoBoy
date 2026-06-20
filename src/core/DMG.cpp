@@ -4,6 +4,12 @@
 #include <print>
 #include <thread>
 
+void DMG::systemTick() {
+    imu.tick(4);
+    ppu.tick(4);
+    totalMCycles++;
+}
+
 void DMG::run(const std::filesystem::path& romFile) {
     static constexpr double DMG_CLOCK_MHZ = 4.194304;
     static constexpr auto DMG_CLOCK_US = std::chrono::duration<double, std::micro>(1.0 / DMG_CLOCK_MHZ);
@@ -12,12 +18,11 @@ void DMG::run(const std::filesystem::path& romFile) {
 
     using clock = std::chrono::steady_clock;
     auto start = clock::now();
-    uint64_t totalMCycles = 0;
+    totalMCycles = 0;
     
     while (true) {
-        auto mCycles = cpu.tick();
-        imu.tick(mCycles * 4);
-        ppu.tick(mCycles * 4);
+        cpu.tick();
+        
         if (tileStream && !(totalMCycles & (0x3FF))) { // render tiles every 0x3FF cycles
             auto tileData = ppu.getTileData();
             uint8_t bgPaletteMap = mmu.read(Memory::BGP);
@@ -25,7 +30,6 @@ void DMG::run(const std::filesystem::path& romFile) {
             tileStream->write(reinterpret_cast<const char *>(tileData.data()), tileData.size());
         }
 
-        totalMCycles += mCycles;
         auto totalTCycles = totalMCycles * 4;
 
         auto now = clock::now();

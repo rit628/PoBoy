@@ -1,9 +1,9 @@
 #pragma once
 
 #include "CPU.hpp"
-#include "MemoryConstants.hpp"
 #include <boost/json.hpp>
 #include <cstddef>
+#include <cstdint>
 #include <print>
 #include <iostream>
 #include <stdexcept>
@@ -18,6 +18,7 @@ if (!(expr)) { \
 
 class Harness : Processing::CPU<true> {
     public:
+        Harness();
         void test(boost::json::value& testConfig);
 
     private:
@@ -26,7 +27,11 @@ class Harness : Processing::CPU<true> {
         void compare(boost::json::value& final);
 
         std::string currentTest;
+        uint8_t ticksThisInstruction = 0;
 };
+
+inline Harness::Harness()
+    : CPU<true>([this](){ticksThisInstruction++;}) {}
 
 inline void Harness::test(boost::json::value& testConfig) {
     currentTest = testConfig.at("name").as_string();
@@ -68,8 +73,11 @@ inline void Harness::init(boost::json::value& initial) {
 inline void Harness::run(boost::json::value& cycles) {
     auto totalMCycles = cycles.as_array().size();
     size_t elapsedMCycles = 0;
+    ticksThisInstruction = 0;
     while (elapsedMCycles != totalMCycles) {
-        elapsedMCycles += tick();
+        ticksThisInstruction = 0;
+        tick();
+        elapsedMCycles += ticksThisInstruction;
         if (elapsedMCycles > totalMCycles) {
             throw std::runtime_error("invalid cycle count: " + std::to_string(elapsedMCycles) + " expected: " + std::to_string(totalMCycles));
         }

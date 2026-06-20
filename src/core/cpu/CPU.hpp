@@ -5,6 +5,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <type_traits>
 
 namespace Processing {
@@ -12,21 +13,23 @@ namespace Processing {
     template<bool FlatMemory = false>
     class CPU {
         public:
-            CPU() requires FlatMemory = default;
-            CPU(Memory::MMU& mmu) requires (!FlatMemory);
-            uint8_t tick();
+            CPU(std::function<void()> systemTick) requires FlatMemory;
+            CPU(Memory::MMU& mmu, std::function<void()> systemTick) requires (!FlatMemory);
+            void tick();
             
         protected:
             enum class STATE : uint8_t { RUNNING, HALTED, BUGGED };
             enum class INTERRUPT_MASTER_FLAG : uint8_t { DISABLED = 0, ENABLED = 1, ENABLE_PENDING = 2 };
     
+            template<bool Tick = true>
             uint8_t read(uint16_t address);
+            template<bool Tick = true>
             void write(uint16_t address, uint8_t value);
             void handleInterrupts();
             void handleHaltBug();
     
             #define OPCODE_BEGIN(code, name, ...) \
-            bool name##_##code(
+            void name##_##code(
             #define CYCLES_TAKEN(...)
             #define CYCLES_SKIPPED(...)
             #define FLAG_VALUE(...)
@@ -144,12 +147,29 @@ namespace Processing {
             void push(Register<16> auto& target);
     
             /* control flow instructions */
+            template<REGISTER_FLAG Flag, bool N = false>
+            bool testCondition();
+            
             void call(uint16_t address);
+            template<REGISTER_FLAG Flag, bool N = false>
+            void call(uint16_t address);
+
             void jump(uint16_t address);
+            template<REGISTER_FLAG Flag, bool N = false>
+            void jump(uint16_t address);
+
             void jumpRelative(int8_t offset);
+            template<REGISTER_FLAG Flag, bool N = false>
+            void jumpRelative(int8_t offset);
+
             void ret();
+            template<REGISTER_FLAG Flag, bool N = false>
+            void ret();
+
             void reti();
-            void restart(uint8_t address);
+
+            template<uint8_t Address>
+            void restart();
     
             /* carry flag instructions */
             void complementCarryFlag();
@@ -167,6 +187,7 @@ namespace Processing {
             using MemoryType = std::conditional_t<FlatMemory, std::array<uint8_t, Memory::MEMORY_SIZE>, Memory::MMU&>;
             
             MemoryType mmu;
+            std::function<void()> systemTick;   // use std::function for simplicity
     
             /* Register File */
             Register16 PC; // program counter

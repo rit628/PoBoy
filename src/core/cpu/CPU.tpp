@@ -144,13 +144,14 @@ namespace Processing {
     inline void CPU<FlatMemory>::loadAdjusted(Register<16> auto& target, Register<16> auto& value, int8_t adjust) {
         auto adjustedValue = addAndSetFlags(value, adjust);
         target = adjustedValue;
+        systemTick();   // extra cycle for opcode 0xF8
     }
-    
     
     template<bool FlatMemory>
     template<size_t N>
     inline void CPU<FlatMemory>::add(Register<N> auto& target, RegisterValue<N> value) {
         target = addAndSetFlags(target, value);
+        if constexpr (N == 16) systemTick();    // 16 bit add takes extra cycle
     }
     
     template<bool FlatMemory>
@@ -174,6 +175,9 @@ namespace Processing {
     template<bool FlatMemory>
     inline void CPU<FlatMemory>::addRelative(Register<16> auto& target, int8_t value) {
         target = addAndSetFlags(target, value);
+        /* relative add takes 2 extra cycles */
+        systemTick();
+        systemTick();
     }
     
     template<bool FlatMemory>
@@ -221,6 +225,7 @@ namespace Processing {
     template<bool FlatMemory>
     inline void CPU<FlatMemory>::decrement(Register<16> auto& target) {
         target--;
+        systemTick();   // 16 bit dec takes extra cycle
     }
     
     template<bool FlatMemory>
@@ -241,6 +246,7 @@ namespace Processing {
     template<bool FlatMemory>
     inline void CPU<FlatMemory>::increment(Register<16> auto& target) {
         target++;
+        systemTick();   // 16 bit inc takes extra cycle
     }
     
     template<bool FlatMemory>
@@ -505,29 +511,66 @@ namespace Processing {
     
     template<bool FlatMemory>
     inline void CPU<FlatMemory>::push(Register<16> auto& target) {
+        systemTick();   // match delay from pipelined decrement
         write(--SP, target.hi());
         write(--SP, target.lo());
     }
     
     template<bool FlatMemory>
+    template<REGISTER_FLAG Flag, bool N>
+    inline bool CPU<FlatMemory>::testCondition() {
+        bool condition = F.test(Flag);
+        if constexpr (N) condition = !condition;
+        return condition;
+    }
+
+    template<bool FlatMemory>
     inline void CPU<FlatMemory>::call(uint16_t address) {
         push(PC);
-        jump(address);
+        PC = address;
+    }
+
+    template<bool FlatMemory>
+    template<REGISTER_FLAG Flag, bool N>
+    inline void CPU<FlatMemory>::call(uint16_t address) {
+        if (testCondition<Flag, N>()) call(address);
     }
     
     template<bool FlatMemory>
     inline void CPU<FlatMemory>::jump(uint16_t address) {
         PC = address;
+        systemTick();
+    }
+
+    template<bool FlatMemory>
+    template<REGISTER_FLAG Flag, bool N>
+    inline void CPU<FlatMemory>::jump(uint16_t address) {
+        if (testCondition<Flag, N>()) jump(address);
     }
     
     template<bool FlatMemory>
     inline void CPU<FlatMemory>::jumpRelative(int8_t offset) {
         PC += offset;
+        systemTick();
+    }
+
+    template<bool FlatMemory>
+    template<REGISTER_FLAG Flag, bool N>
+    inline void CPU<FlatMemory>::jumpRelative(int8_t offset) {
+        if (testCondition<Flag, N>()) jumpRelative(offset);
     }
     
     template<bool FlatMemory>
     inline void CPU<FlatMemory>::ret() {
         pop(PC);
+        systemTick();
+    }
+
+    template<bool FlatMemory>
+    template<REGISTER_FLAG Flag, bool N>
+    inline void CPU<FlatMemory>::ret() {
+        if (testCondition<Flag, N>()) ret();
+        systemTick();
     }
     
     template<bool FlatMemory>
@@ -537,8 +580,9 @@ namespace Processing {
     }
     
     template<bool FlatMemory>
-    inline void CPU<FlatMemory>::restart(uint8_t address) {
-        call(address);
+    template<uint8_t Address>
+    inline void CPU<FlatMemory>::restart() {
+        call(Address);
     }
     
     template<bool FlatMemory>
@@ -571,8 +615,8 @@ namespace Processing {
     
     template<bool FlatMemory>
     inline void CPU<FlatMemory>::halt() {
-        auto IF = read(Memory::IF);
-        auto IE = read(Memory::IE);
+        auto IF = read<false>(Memory::IF);
+        auto IE = read<false>(Memory::IE);
         if (IME == INTERRUPT_MASTER_FLAG::ENABLED || !(IF & IE & 0x1F)) {
             state = STATE::HALTED;
         }

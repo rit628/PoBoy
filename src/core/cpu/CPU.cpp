@@ -24,10 +24,10 @@
     } \
     else { \
         if constexpr (bytecount == 1 || std::is_same_v<type, RegisterView&>) { /* for ldh */ \
-            std::print(std::cerr, " [{}{}] ([{:#06x}] = {:#04x})", #name, #postop, name | 0xFF00, read(name | 0xFF00)); \
+            std::print(std::cerr, " [{}{}] ([{:#06x}] = {:#04x})", #name, #postop, name | 0xFF00, read<false>(name | 0xFF00)); \
         } \
         else { \
-            std::print(std::cerr, " [{}{}] ([{:#06x}] = {:#04x})", #name, #postop, name, read(name)); \
+            std::print(std::cerr, " [{}{}] ([{:#06x}] = {:#04x})", #name, #postop, name, read<false>(name)); \
         } \
     } 
     #define DEBUG_PRINT_NEWLINE() \
@@ -44,11 +44,15 @@
 using namespace Processing;
 
 template<bool FlatMemory>
-CPU<FlatMemory>::CPU(Memory::MMU& mmu) requires (!FlatMemory)
-                    : mmu(mmu) {}
+CPU<FlatMemory>::CPU(std::function<void()> systemTick) requires FlatMemory
+                    : systemTick(systemTick) {}
 
 template<bool FlatMemory>
-uint8_t CPU<FlatMemory>::tick() {
+CPU<FlatMemory>::CPU(Memory::MMU& mmu, std::function<void()> systemTick) requires (!FlatMemory)
+                    : mmu(mmu), systemTick(systemTick) {}
+
+template<bool FlatMemory>
+void CPU<FlatMemory>::tick() {
     /* Unprefixed Opcode Argument Constants */
     uint8_t $00 = 0x00, $08 = 0x08, $10 = 0x10, $18 = 0x18, $20 = 0x20, $28 = 0x28, $30 = 0x30, $38 = 0x38;
     uint16_t a16 = 0, n16 = 0;
@@ -56,14 +60,10 @@ uint8_t CPU<FlatMemory>::tick() {
     int8_t e8 = 0;
     RegisterView& F_Z = F, F_NZ = F, F_C = F, F_NC = F;
 
-    /* these are just here to keep xmacro happy when no cycle count is given */
-    static constexpr uint8_t cyclesTaken [[ maybe_unused ]] = 0, cyclesSkipped [[ maybe_unused ]] = 0;
-
     handleInterrupts();
 
     /* pause instruction execution while halted */
-    if (state == STATE::HALTED) return 1;
-
+    if (state == STATE::HALTED) return systemTick();
     /* set IME since next opcode read will consume one M cycle */
     if (IME == INTERRUPT_MASTER_FLAG::ENABLE_PENDING) IME = INTERRUPT_MASTER_FLAG::ENABLED;
 
@@ -74,10 +74,8 @@ uint8_t CPU<FlatMemory>::tick() {
         case OPCODE_UNPREFIXED::name##_##code: { \
             if constexpr (code == 0xCB) { break; } /* decode cb prefixed opcode */ \
             DEBUG_PRINT_OPCODE(code, name)
-            #define CYCLES_TAKEN(count) \
-            constexpr uint8_t cyclesTaken = count;
-            #define CYCLES_SKIPPED(count) \
-            constexpr uint8_t cyclesSkipped = count;
+            #define CYCLES_TAKEN(...)
+            #define CYCLES_SKIPPED(...)
             #define FLAG_VALUE(...)
             #define OPERAND(name, type, bytecount, immediate, postop, ...) \
             if constexpr (bytecount > 0) { \
@@ -90,7 +88,7 @@ uint8_t CPU<FlatMemory>::tick() {
             DEBUG_PRINT_ARGS(name, type, bytecount, immediate, postop)
             #define OPCODE_END(code, name, args...) \
             DEBUG_PRINT_NEWLINE() \
-            return (name##_##code(args)) ? cyclesTaken : cyclesSkipped; \
+            return name##_##code(args); \
         }
         #include "unprefixed.inc"
         #undef OPCODE_BEGIN
@@ -106,16 +104,14 @@ uint8_t CPU<FlatMemory>::tick() {
         #define OPCODE_BEGIN(code, name, bytecount, ...) \
         case OPCODE_CBPREFIXED::name##_##code: { \
             DEBUG_PRINT_OPCODE(code, name)
-            #define CYCLES_TAKEN(count) \
-            constexpr uint8_t cyclesTaken = count;
+            #define CYCLES_TAKEN(...)
             #define CYCLES_SKIPPED(...)
             #define FLAG_VALUE(...)
             #define OPERAND(name, type, bytecount, immediate, postop, ...) \
             DEBUG_PRINT_ARGS(name, type, bytecount, immediate, postop)
             #define OPCODE_END(code, name, args...) \
             DEBUG_PRINT_NEWLINE() \
-            name##_##code(args); \
-            return cyclesTaken; /* no cb prefixed instructions contain branching */ \
+            return name##_##code(args); \
         }
         #include "cbprefixed.inc"
         #undef OPCODE_BEGIN
@@ -128,24 +124,23 @@ uint8_t CPU<FlatMemory>::tick() {
 }
 
 template<bool FlatMemory>
+template<bool Tick>
 uint8_t CPU<FlatMemory>::read(uint16_t address) {
-    if constexpr (FlatMemory) {
-        return mmu.at(address);
-    }
-    else {
-        auto result = mmu.read(address);
-        return result;
-    }
+    uint8_t result = 0;
+    if constexpr (FlatMemory) result = mmu.at(address);
+    else result = mmu.read(address);
+
+    if constexpr (Tick) systemTick();
+    return result;
 }
 
 template<bool FlatMemory>
+template<bool Tick>
 void CPU<FlatMemory>::write(uint16_t address, uint8_t value) {
-    if constexpr (FlatMemory) {
-        mmu.at(address) = value;
-    }
-    else {
-        mmu.write(address, value);
-    }
+    if constexpr (FlatMemory) mmu.at(address) = value;
+    else mmu.write(address, value);
+
+    if constexpr (Tick) systemTick();
 }
 
 template<bool FlatMemory>
@@ -156,8 +151,8 @@ void CPU<FlatMemory>::handleInterrupts() {
     static constexpr uint8_t SERIAL_INTERRUPT_ADDRESS      = 0X58;
     static constexpr uint8_t JOYPAD_INTERRUPT_ADDRESS      = 0X60;
 
-    auto IF = read(Memory::IF);
-    auto IE = read(Memory::IE);
+    auto IF = read<false>(Memory::IF);
+    auto IE = read<false>(Memory::IE);
     uint8_t interrupts = IF & IE & 0x1F;
 
     /* break out of halt mode on interrupt */
@@ -166,12 +161,15 @@ void CPU<FlatMemory>::handleInterrupts() {
     /* skip interrupt handling if master flag is not enabled or none found in current cycle */
     if (IME != INTERRUPT_MASTER_FLAG::ENABLED || !interrupts) return;
 
-    auto handleInterrupt = [&, this]<Interrupts::INTERRUPT_FLAG flag, uint8_t address>() {
-        if (testFlags(interrupts, flag)) {
+    auto handleInterrupt = [&, this]<Interrupts::INTERRUPT_FLAG Flag, uint8_t Address>() {
+        if (testFlags(interrupts, Flag)) {
+            /* noop ticks */
+            systemTick();
+            systemTick();
             IME = INTERRUPT_MASTER_FLAG::DISABLED;
-            clearFlags(IF, flag);
-            write(Memory::IF, IF);
-            restart(address);
+            clearFlags(IF, Flag);
+            write<false>(Memory::IF, IF);
+            restart<Address>();
             return true;
         }
         return false;
