@@ -3,8 +3,28 @@
 #include <cstdint>
 #include <iostream>
 #include <print>
+#include <span>
 
-void TilePrinter::printTileData(const uint8_t bgPaletteMap, const std::array<uint8_t, TILE_DATA_SIZE>& tileData) {
+void TilePrinter::printVRAM(const uint8_t bgPaletteMap, const std::array<uint8_t, VRAM_SIZE>& vram) {
+    std::span<const uint8_t, TILE_DATA_SIZE> tileData = std::span(vram).subspan<0, TILE_DATA_SIZE>();
+    outputTileData(bgPaletteMap, tileData);
+}
+
+void TilePrinter::flushTiles() {
+    std::string divider(16 * (16 + 3), '-');
+    std::println(outputBuffer, "{}", idLine.str());
+    idLine.clear();
+    idLine.seekp(0);
+    std::println(outputBuffer, "{}", divider);
+    for (auto&& row : tileRows) {
+        std::println(outputBuffer, "{}", row.str());
+        row.clear();
+        row.seekp(0);
+    }
+    std::println(outputBuffer, "{}", divider);
+}
+
+void TilePrinter::outputTileData(const uint8_t bgPaletteMap, std::span<const uint8_t, TILE_DATA_SIZE> tileData) {
     this->bgPaletteMap = bgPaletteMap;
     uint8_t tilesThisLine = 0;
     for (uint16_t i = 0; i < tileData.size(); i += TILE_BYTES) {
@@ -22,20 +42,6 @@ void TilePrinter::printTileData(const uint8_t bgPaletteMap, const std::array<uin
     std::cout.flush();
 }
 
-void TilePrinter::flushTiles() {
-    std::string divider(16 * (16 + 3), '-');
-    std::println(outputBuffer, "{}", idLine.str());
-    idLine.clear();
-    idLine.seekp(0);
-    std::println(outputBuffer, "{}", divider);
-    for (auto&& row : tileRows) {
-        std::println(outputBuffer, "{}", row.str());
-        row.clear();
-        row.seekp(0);
-    }
-    std::println(outputBuffer, "{}", divider);
-}
-
 void TilePrinter::outputTile(std::span<const uint8_t, TILE_BYTES>& tile) {
     for (uint8_t i = 0; i < tile.size(); i += 2) {
         auto& row = tileRows.at(i / 2);
@@ -48,8 +54,8 @@ void TilePrinter::outputRow(std::stringstream& row, std::pair<uint8_t, uint8_t> 
     static constexpr std::array<std::u16string, 4> palette = { u"░░", u"▒▒", u"▓▓", u"██" };
     std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
     for (uint8_t i = 0; i < 8; i++) {
-        bool msb = bitPlane.first & (0x1 << (7 - i));
-        bool lsb = bitPlane.second & (0x1 << (7 - i));
+        bool lsb = bitPlane.first & (0x1 << (7 - i));
+        bool msb = bitPlane.second & (0x1 << (7 - i));
         uint8_t paletteIndex = (msb << 1) | lsb;
         paletteIndex = (bgPaletteMap >> (2 * paletteIndex)) & 0b11;
         auto pixel = convert.to_bytes(palette.at(paletteIndex));

@@ -1,6 +1,5 @@
 #include "DMG.hpp"
 #include <chrono>
-#include <cstdint>
 #include <print>
 #include <thread>
 
@@ -22,13 +21,6 @@ void DMG::run(const std::filesystem::path& romFile) {
     
     while (true) {
         cpu.tick();
-        
-        if (tileStream && !(totalMCycles & (0x3FF))) { // render tiles every 0x3FF cycles
-            auto tileData = ppu.getTileData();
-            uint8_t bgPaletteMap = mmu.read(Memory::BGP);
-            tileStream->write(reinterpret_cast<char*>(&bgPaletteMap), 1);
-            tileStream->write(reinterpret_cast<const char *>(tileData.data()), tileData.size());
-        }
 
         auto totalTCycles = totalMCycles * 4;
 
@@ -41,8 +33,4 @@ void DMG::run(const std::filesystem::path& romFile) {
             std::this_thread::sleep_for(waitTime);
         }
     }
-}
-
-void DMG::setTileOutputStream(std::ostream& os) {
-    tileStream = &os;
 }

@@ -4,12 +4,12 @@
 #include <iostream>
 
 int main() {
-    std::array<uint8_t, TilePrinter::TILE_DATA_SIZE> tileData;
+    std::array<uint8_t, TilePrinter::VRAM_SIZE> vram;
     uint8_t bgPaletteMap = 0b11100100;
     TilePrinter tp;
     while (true) {
         std::cin.read(reinterpret_cast<char *>(&bgPaletteMap), 1);
-        std::cin.read(reinterpret_cast<char *>(tileData.data()), tileData.size());
-        tp.printTileData(bgPaletteMap, tileData);
+        std::cin.read(reinterpret_cast<char *>(vram.data()), vram.size());
+        tp.printVRAM(bgPaletteMap, vram);
     }
 }

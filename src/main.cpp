@@ -6,6 +6,5 @@ int main(int argc, char** argv) {
     const std::filesystem::path romFile = (argc > 1) ? argv[1] : "test.gb";
     std::println(std::cerr, "Running {}", romFile.filename().c_str());
     DMG gb;
-    // gb.setTileOutputStream(std::cerr);
     gb.run(romFile);
 }
