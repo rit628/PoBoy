@@ -6,9 +6,9 @@
 #include <cstdint>
 #include <utility>
 
-using namespace Graphics;
-
 #include "TerminalRenderer.inl"
+
+using namespace Graphics;
 
 PPU::PPU(Interrupts::IMU& imu) : imu(imu) {}
 
@@ -19,6 +19,7 @@ void PPU::tick(uint8_t dots) {
 }
 
 void PPU::tick() {
+    if (disabled()) return;
     switch (mode) {
         using enum MODE;
         case OAM_SCAN:
@@ -26,9 +27,8 @@ void PPU::tick() {
         break;
         
         case PIXEL_TRANSFER:
-            if (lineDotsElapsed >= DOTS_PER_OAM_SCAN_MODE + DOTS_PER_RENDER_STARTUP) [[ likely ]] {
+            if (lineDotsElapsed >= DOTS_PER_OAM_SCAN_MODE + DOTS_PER_RENDER_STARTUP) [[ likely ]]
                 mixer.tick();
-            }
         break;
 
         case HBLANK:
@@ -39,59 +39,84 @@ void PPU::tick() {
             
         break;
     }
-    updateInterrupts();
-    updateMode();
+    updateStatus();
 }
 
-void PPU::updateInterrupts() {
-    uint8_t stat = readSTAT();
-    using enum STAT_FLAG;
-    if (testFlags(stat, LYC_INTERRUPT_ENABLE, LYC_INTERRUPT_BIT)
-     || (testFlags(stat, MODE_2_INTERRUPT_ENABLE) && extractFlags(stat, PPU_MODE_BITS) == 2)
-     || (testFlags(stat, MODE_1_INTERRUPT_ENABLE) && extractFlags(stat, PPU_MODE_BITS) == 1)
-     || (testFlags(stat, MODE_0_INTERRUPT_ENABLE) && extractFlags(stat, PPU_MODE_BITS) == 0))
-    {
-        imu.writeIF(Interrupts::INTERRUPT_FLAG::LCD_STAT);
+bool PPU::disabled() {
+    if (!testFlags(lcdControl, LCDC_FLAG::LCD_AND_PPU_ENABLE)) {
+        frameDotsElapsed = 0;
+        lineDotsElapsed = 0;
+        currentLine = 0;
+        return true;
     }
+    return false;
 }
 
-void PPU::updateMode() {
+void PPU::updateStatus() {
     lineDotsElapsed++;
     frameDotsElapsed++;
 
     auto incrementLine = [this]() {
         lineDotsElapsed = 0;
         currentLine++;
+        using enum STAT_FLAG;
+        if (testFlags(readSTAT(), LYC_INTERRUPT_ENABLE, LYC_INTERRUPT_BIT)) {
+            imu.writeIF(Interrupts::INTERRUPT_FLAG::LCD_STAT);
+        }
+    };
+
+    auto updateMode = [this]<MODE mode>() {
+        this->mode = mode;
+        uint8_t stat = readSTAT();
+        using enum STAT_FLAG;
+        constexpr uint8_t modeNumber = std::to_underlying(mode);
+        if constexpr (modeNumber == 0) {
+            if (testFlags(stat, MODE_0_INTERRUPT_ENABLE))
+                imu.writeIF(Interrupts::INTERRUPT_FLAG::LCD_STAT);
+        }
+        else if constexpr (modeNumber == 1) {
+            if (testFlags(stat, MODE_1_INTERRUPT_ENABLE))
+                imu.writeIF(Interrupts::INTERRUPT_FLAG::LCD_STAT);
+        }
+        else if constexpr (modeNumber == 2) {
+            if (testFlags(stat, MODE_2_INTERRUPT_ENABLE))
+                imu.writeIF(Interrupts::INTERRUPT_FLAG::LCD_STAT);
+        }
     };
     
     switch (mode) {
         using enum MODE;
         case OAM_SCAN:
             if (lineDotsElapsed >= DOTS_PER_OAM_SCAN_MODE) [[ unlikely ]] {
-                mode = PIXEL_TRANSFER;
+                updateMode.operator()<PIXEL_TRANSFER>();
                 mixer.resetFifos();
             }
         break;
         
         case PIXEL_TRANSFER:
-            if (mixer.atLineEnd()) [[ unlikely ]] mode = HBLANK;
+            if (mixer.atLineEnd()) [[ unlikely ]]
+                updateMode.operator()<HBLANK>();
         break;
 
         case HBLANK:
             if (lineDotsElapsed >= DOTS_PER_LINE) [[ unlikely ]] {
-                mode = OAM_SCAN;
+                updateMode.operator()<OAM_SCAN>();
                 incrementLine();
             }
+            
             if (frameDotsElapsed >= DOTS_PER_LCD_SCAN) [[ unlikely ]] {
-                mode = VBLANK;
+                updateMode.operator()<VBLANK>();
+                imu.writeIF(Interrupts::INTERRUPT_FLAG::VBLANK);
                 renderFrame(mixer.extractFrame());
             }
         break;
 
         case VBLANK:
-            if (lineDotsElapsed >= DOTS_PER_LINE) [[ unlikely ]] incrementLine();
+            if (lineDotsElapsed >= DOTS_PER_LINE) [[ unlikely ]]
+                incrementLine();
+            
             if (frameDotsElapsed >= DOTS_PER_FRAME) [[ unlikely ]] {
-                mode = OAM_SCAN;
+                updateMode.operator()<OAM_SCAN>();
                 frameDotsElapsed = 0;
                 currentLine = 0;
             }
@@ -100,12 +125,12 @@ void PPU::updateMode() {
 }
 
 uint8_t PPU::readVRAM(uint16_t address) {
-    if (mode == MODE::PIXEL_TRANSFER && testFlags(lcdControl, LCDC_FLAG::LCD_AND_PPU_ENABLE)) return 0xFF;
+    if (mode == MODE::PIXEL_TRANSFER && !disabled()) return 0xFF;
     return vram.at(address);
 }
 
 void PPU::writeVRAM(uint16_t address, uint8_t value) {
-    if (mode == MODE::PIXEL_TRANSFER && testFlags(lcdControl, LCDC_FLAG::LCD_AND_PPU_ENABLE)) return;
+    if (mode == MODE::PIXEL_TRANSFER && !disabled()) return;
     vram.at(address) = value;
 }
 
@@ -178,7 +203,9 @@ void PPU::writeBGP(uint8_t value) {
 }
 
 uint8_t PPU::readSTAT() {
-    return interruptMask | (lineCompare == currentLine) << 2 | std::to_underlying(mode);
+    return interruptMask
+        | (lineCompare == currentLine % FRAME_LINES) << 2
+        | std::to_underlying(mode);
 }
 
 void PPU::writeSTAT(uint8_t value) {

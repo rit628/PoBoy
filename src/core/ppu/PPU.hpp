@@ -49,8 +49,8 @@ namespace Graphics {
             std::span<const uint8_t, 2 * TILE_MAP_SIZE> getTileMaps();
     
         private:
-            void updateInterrupts();
-            void updateMode();
+            bool disabled();
+            void updateStatus();
 
             Interrupts::IMU& imu;
     
