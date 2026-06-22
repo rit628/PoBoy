@@ -24,13 +24,12 @@ namespace {
             }
         };
 
+        std::println(std::cout, "\033[H");
         for (auto&& byte : framebuffer) {
             for (uint8_t pixelBit = 0; pixelBit < 8; pixelBit += BITS_PER_PIXEL) {
                 renderPixel((byte >> pixelBit) & 0b11); // shift down and grab bottom two bits
             }  
         }
-        
-        std::println(std::cout, "\033[H");
         std::cout.flush();
     }
 
