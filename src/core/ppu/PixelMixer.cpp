@@ -1,5 +1,6 @@
 #include "PixelMixer.hpp"
 #include "BackgroundFetcher.hpp"
+#include "FlagOps.hpp"
 #include "GraphicsConstants.hpp"
 #include <cstdint>
 
@@ -14,8 +15,11 @@ PixelMixer::PixelMixer(const uint8_t& lcdc
                      , const uint8_t& wy
                      , std::span<const uint8_t, TILE_DATA_SIZE> tileData
                      , std::span<const uint8_t, 2 * TILE_MAP_SIZE> tileMaps)
-                     : backgroundFetcher(lcdc
-                                       , bgp
+                     : lcdControl(lcdc)
+                     , bgPalette(bgp)
+                     , scrollX(scx)
+                     , backgroundFetcher(lcdc
+                                       , currentColumn
                                        , ly
                                        , scx
                                        , scy
@@ -26,14 +30,14 @@ PixelMixer::PixelMixer(const uint8_t& lcdc
                      {}
 
 void PixelMixer::tick() {
-    if (!backgroundFetcher.fifoEmpty()) {
-        addPixel(backgroundFetcher.fifoPop());
-    }
+    addPixel(backgroundFetcher.fifoPop());
     backgroundFetcher.tick();
 }
 
 void PixelMixer::resetFifos() {
     backgroundFetcher.reset();
+    pixelsToDiscard = scrollX & 0b111;
+    currentColumn = 0;
 }
 
 std::array<uint8_t, FRAMEBUFFER_SIZE> PixelMixer::extractFrame() {
@@ -48,13 +52,20 @@ uint16_t PixelMixer::getCurrentPixel() {
 }
 
 bool PixelMixer::atLineEnd() {
-    return backgroundFetcher.getXCoordinate() > LCD_WIDTH;
+    return currentColumn == LCD_WIDTH + PIXEL_OVERSCAN;
 }
 
 void PixelMixer::addPixel(const Pixel& pixel) {
-    uint8_t colorIndex = pixel.color;
+    if (pixelsToDiscard > 0) {
+        pixelsToDiscard--;
+        return;
+    }
+    if (currentColumn++ < PIXEL_OVERSCAN) return;
+    uint8_t paletteIndex = (bgPalette >> (2 * pixel.color)) & 0b11; // apply background palette 
     framebuffer.at(currentByte) &= 0xFF - (0b11 << currentBit); // clear former bits
-    framebuffer.at(currentByte) |= colorIndex << currentBit;    // overwrite
-    currentBit = (currentBit + 2) & 0b111; // increment bit by 2 mod 8
+    if (testFlags(lcdControl, LCDC_FLAG::BACKGROUND_AND_WINDOW_ENABLE)) {
+        framebuffer.at(currentByte) |= paletteIndex << currentBit;  // overwrite
+    }
+    currentBit = (currentBit + 2) & 0b111;  // increment bit by 2 mod 8
     currentByte += !currentBit;
 }

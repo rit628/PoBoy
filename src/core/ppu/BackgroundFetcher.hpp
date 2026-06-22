@@ -12,7 +12,7 @@ namespace Graphics {
             enum class STATE { GET_TILE, GET_TILE_DATA_LO, GET_TILE_DATA_HI, SLEEP, PUSH };
 
             BackgroundFetcher(const uint8_t& lcdControl
-                            , const uint8_t& bgPalette
+                            , const uint8_t& XPos
                             , const uint8_t& yPos
                             , const uint8_t& scrollX
                             , const uint8_t& scrollY
@@ -25,9 +25,10 @@ namespace Graphics {
             void reset();
             Pixel fifoPop();
             bool fifoEmpty();
-            uint8_t getXCoordinate();
 
         private:
+            uint16_t getTileRowAddress();
+            
             void getTile();
             void getTileDataLo();
             void getTileDataHi();
@@ -40,9 +41,8 @@ namespace Graphics {
             uint8_t fifoFront = pixelFifo.size();
             
             const uint8_t& lcdControl;  // LCDC register reference
-            const uint8_t& bgPalette;   // BGP register reference
 
-            uint8_t xPos = 0;
+            const uint8_t& xPos;            // LX (internal) register reference
             const uint8_t& yPos;            // LY register reference
             const uint8_t& scrollX;         // SCX register reference
             const uint8_t& scrollY;         // SCY register reference
@@ -51,8 +51,7 @@ namespace Graphics {
             
 
             uint8_t tileId = 0;
-            uint16_t tileAddress = 0;
-            uint8_t tileBitPlaneLo = 0, tileBitPlaneHi = 0;
+            uint8_t rowBitPlaneLo = 0, rowBitPlaneHi = 0;
             std::span<const uint8_t, TILE_DATA_SIZE> tileData;
             std::span<const uint8_t, 2 * TILE_MAP_SIZE> tileMaps;
     };

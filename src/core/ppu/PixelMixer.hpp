@@ -28,11 +28,17 @@ namespace Graphics {
     
         private:
             void addPixel(const Pixel& pixel);
-    
+            
+            const uint8_t& lcdControl;      // LCDC register reference
+            const uint8_t& bgPalette;       // BGP register reference
+            const uint8_t& scrollX;         // SCX register reference
+            uint8_t pixelsToDiscard = 0;
+
             BackgroundFetcher backgroundFetcher;
             std::array<uint8_t, FRAMEBUFFER_SIZE> framebuffer{};
             uint16_t currentByte = 0;
             uint8_t currentBit = 0;
+            uint8_t currentColumn = 0;
     };
 
 }
