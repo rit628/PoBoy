@@ -30,18 +30,20 @@ PixelMixer::PixelMixer(const uint8_t& lcdc
                      {}
 
 void PixelMixer::tick() {
-    addPixel(backgroundFetcher.fifoPop());
+    if (!backgroundFetcher.fifoEmpty()) {
+        addPixel(backgroundFetcher.fifoPop());
+    }
     backgroundFetcher.tick();
 }
 
-void PixelMixer::resetFifos() {
-    backgroundFetcher.reset();
+void PixelMixer::scanlineReset() {
+    backgroundFetcher.scanlineReset();
     pixelsToDiscard = scrollX & 0b111;
     currentColumn = 0;
 }
 
 std::array<uint8_t, FRAMEBUFFER_SIZE> PixelMixer::extractFrame() {
-    resetFifos();
+    backgroundFetcher.frameReset();
     currentByte = 0;
     currentBit = 0;
     return framebuffer;

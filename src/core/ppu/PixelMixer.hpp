@@ -21,7 +21,7 @@ namespace Graphics {
                      , std::span<const uint8_t, 2 * TILE_MAP_SIZE> tileMaps);
 
             void tick();
-            void resetFifos();
+            void scanlineReset();
             std::array<uint8_t, FRAMEBUFFER_SIZE> extractFrame();
             uint16_t getCurrentPixel();
             bool atLineEnd();

@@ -89,7 +89,7 @@ void PPU::updateStatus() {
         case OAM_SCAN:
             if (lineDotsElapsed >= DOTS_PER_OAM_SCAN_MODE) [[ unlikely ]] {
                 updateMode.operator()<PIXEL_TRANSFER>();
-                mixer.resetFifos();
+                mixer.scanlineReset();
             }
         break;
         

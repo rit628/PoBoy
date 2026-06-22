@@ -30,7 +30,6 @@ namespace Graphics {
     constexpr uint8_t  BITS_PER_PIXEL               = 2;
     constexpr uint8_t  PIXELS_PER_BYTE              = 8 / BITS_PER_PIXEL;
     constexpr uint16_t FRAMEBUFFER_SIZE             = (LCD_HEIGHT * LCD_WIDTH) / PIXELS_PER_BYTE;
-    constexpr uint8_t  PIXEL_OVERSCAN               = 8;
 
     constexpr uint8_t FRAME_LINES                   = 154;
     constexpr uint8_t VBLANK_LINES                  = 10;
@@ -53,6 +52,8 @@ namespace Graphics {
     constexpr uint8_t  TILE_MAP_HEIGHT              = 32;
     constexpr uint16_t TILE_MAP_SIZE                = TILE_MAP_WIDTH * TILE_MAP_HEIGHT;
 
+    constexpr uint8_t PIXEL_OVERSCAN                = 8;
     constexpr uint8_t WINDOW_X_OFFSET               = 7;
+    constexpr uint8_t ADJUSTED_WINDOW_X_OFFSET      = PIXEL_OVERSCAN - WINDOW_X_OFFSET;
 
 }
