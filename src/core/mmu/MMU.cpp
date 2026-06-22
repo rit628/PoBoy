@@ -34,6 +34,10 @@ uint8_t MMU::read(uint16_t address) {
     }
     if (address < IO_END) {
         switch (address) {
+            case P1:
+                return 0xFF;
+            break;
+            
             case BANK:
                 return bootRomDisabled;
             break;
