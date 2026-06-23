@@ -1,6 +1,5 @@
 #pragma once
 #include "BackgroundFetcher.hpp"
-#include "Pixel.hpp"
 #include "GraphicsConstants.hpp"
 #include <array>
 #include <cstdint>

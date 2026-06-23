@@ -1,7 +1,6 @@
 #include "BackgroundFetcher.hpp"
 #include "FlagOps.hpp"
 #include "GraphicsConstants.hpp"
-#include "Pixel.hpp"
 #include <cstdint>
 
 using namespace Graphics;
@@ -26,33 +25,6 @@ BackgroundFetcher::BackgroundFetcher(const uint8_t& lcdControl
                                    , tileMaps(tileMaps)
                                    {}
 
-void BackgroundFetcher::tick() {
-    updateFetcherMode();
-    switch (state) {
-        using enum STATE;
-        case GET_TILE:
-            getTile();
-        break;
-
-        case GET_TILE_DATA_LO:
-            getTileDataLo();
-        break;
-
-        case GET_TILE_DATA_HI:
-            getTileDataHi();
-        break;
-        
-        case SLEEP:
-            sleep();
-        break;
-
-        case PUSH:
-            push();
-        break;
-    }
-    onSecondDot = !onSecondDot;
-}
-
 void BackgroundFetcher::frameReset() {
     scanlineReset();
     windowYCondition = false;
@@ -61,35 +33,24 @@ void BackgroundFetcher::frameReset() {
 
 void BackgroundFetcher::scanlineReset() {
     resetState();
-    fifoFront = 0;  // treat fifo as filled to account for overscan
+    pixelFifo.fill();  // fill fifo to account for overscan
     renderingWindow = false;
     currentWindowColumn = 0;
     windowXCondition = false;
     windowYCondition = windowYCondition || yPos == windowY;
 }
 
-Pixel BackgroundFetcher::fifoPop() {
-    return pixelFifo.at(fifoFront++);
-}
-
-bool BackgroundFetcher::fifoEmpty() {
-    return fifoFront == pixelFifo.size();
-}
-
-void BackgroundFetcher::resetState() {
-    fifoFront = pixelFifo.size();   // empty fifo
-    state = STATE::GET_TILE;
-    onSecondDot = false;
-}
-
-void BackgroundFetcher::updateFetcherMode() {
+void BackgroundFetcher::preTick() {
+    /* Update Fetcher Mode */
     windowXCondition = windowXCondition || (xPos == windowX + ADJUSTED_WINDOW_X_OFFSET);
     bool windowEnabled = testFlags(lcdControl, LCDC_FLAG::WINDOW_ENABLE);
     bool inWindow = windowEnabled && windowXCondition && windowYCondition;
     if (!renderingWindow && inWindow) {
         renderingWindow = true;
         currentWindowLine++;    // increment here to emulate mid scanline window rendering bug
-        resetState();   // clear remaining pixels of last background tile
+        /* clear remaining pixels of last background tile and restart operation */
+        pixelFifo.clear();
+        resetState();   
     }
     else if (renderingWindow && !inWindow) {    // may not be necessary but handles mid scanline window disabling
         renderingWindow = false;
@@ -112,7 +73,6 @@ uint16_t BackgroundFetcher::getTileRowAddress() {
 }
 
 void BackgroundFetcher::getTile() {
-    if (!onSecondDot) return; // wait for one dot
     uint8_t selectedTileMap = 0;
     uint8_t yCoordinate = 0;
     uint8_t xCoordinate = 0;
@@ -129,38 +89,27 @@ void BackgroundFetcher::getTile() {
     }
     uint16_t tileIdAddress = selectedTileMap * TILE_MAP_SIZE + yCoordinate * TILE_MAP_WIDTH + xCoordinate;
     tileId = tileMaps[tileIdAddress];
-    state = STATE::GET_TILE_DATA_LO;
 }
 
 void BackgroundFetcher::getTileDataLo() {
-    if (!onSecondDot) return; // wait for one dot
     rowBitPlaneLo = tileData[getTileRowAddress()];
-    state = STATE::GET_TILE_DATA_HI;
 }
 
 void BackgroundFetcher::getTileDataHi() {
-    if (!onSecondDot) return; // wait for one dot
     rowBitPlaneHi = tileData[getTileRowAddress() + 1];
-    state = STATE::SLEEP;
 }
 
 void BackgroundFetcher::sleep() {
-    if (!onSecondDot) return; // wait for one dot
-    state = STATE::PUSH;
-    push();
+    if (pixelFifo.empty()) state = STATE::PUSH;
 }
 
 void BackgroundFetcher::push() {
-    if (!fifoEmpty()) return;
-    /* refill pixel fifo */
-    for (uint8_t i = 0; i < pixelFifo.size(); i++) {
+    for (uint8_t i = 0; i < pixelFifo.capacity(); i++) {
         bool lsb = rowBitPlaneLo & (0x1 << (7 - i));
         bool msb = rowBitPlaneHi & (0x1 << (7 - i));
         Pixel pixel;
         pixel.color = (msb << 1) | lsb;
-        pixelFifo.at(i) = pixel;
+        pixelFifo.push(pixel);
     }
-    fifoFront = 0;
     if (renderingWindow) currentWindowColumn += 8;
-    state = STATE::GET_TILE;
 }
