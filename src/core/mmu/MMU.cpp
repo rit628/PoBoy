@@ -94,6 +94,14 @@ uint8_t MMU::read(uint16_t address) {
                 return ppu.readBGP();
             break;
 
+            case OBP0:
+                return ppu.readOBP0();
+            break;
+
+            case OBP1:
+                return ppu.readOBP1();
+            break;
+
             case STAT:
                 return ppu.readSTAT();
             break;
@@ -189,6 +197,14 @@ void MMU::write(uint16_t address, uint8_t value) {
 
             case BGP:
                 ppu.writeBGP(value);
+            break;
+
+            case OBP0:
+                ppu.writeOBP0(value);
+            break;
+
+            case OBP1:
+                ppu.writeOBP1(value);
             break;
 
             case STAT:

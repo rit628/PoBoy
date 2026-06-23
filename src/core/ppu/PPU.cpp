@@ -23,7 +23,7 @@ void PPU::tick() {
     switch (mode) {
         using enum MODE;
         case OAM_SCAN:
-            // for now we only render background
+            scanOAM();
         break;
         
         case PIXEL_TRANSFER:
@@ -40,6 +40,16 @@ void PPU::tick() {
         break;
     }
     updateStatus();
+}
+
+void PPU::scanOAM() {
+    if (lineDotsElapsed % 2 > 0) return;    // oam scan tick every 2 dots
+    uint8_t spriteIndex = lineDotsElapsed / 2 * SPRITE_BYTES;
+    uint8_t yPos = oam.at(spriteIndex++);
+    uint8_t xPos = oam.at(spriteIndex++);
+    uint8_t tileNumber = oam.at(spriteIndex++);
+    uint8_t spriteFlags = oam.at(spriteIndex++);
+    mixer.addSprite(yPos, xPos, tileNumber, spriteFlags);
 }
 
 bool PPU::disabled() {
@@ -87,10 +97,8 @@ void PPU::updateStatus() {
     switch (mode) {
         using enum MODE;
         case OAM_SCAN:
-            if (lineDotsElapsed >= DOTS_PER_OAM_SCAN_MODE) [[ unlikely ]] {
+            if (lineDotsElapsed >= DOTS_PER_OAM_SCAN_MODE) [[ unlikely ]]
                 updateMode.operator()<PIXEL_TRANSFER>();
-                mixer.scanlineReset();
-            }
         break;
         
         case PIXEL_TRANSFER:
@@ -102,6 +110,7 @@ void PPU::updateStatus() {
             if (lineDotsElapsed >= DOTS_PER_LINE) [[ unlikely ]] {
                 updateMode.operator()<OAM_SCAN>();
                 incrementLine();
+                mixer.scanlineReset();
             }
             
             if (frameDotsElapsed >= DOTS_PER_LCD_SCAN) [[ unlikely ]] {
@@ -119,6 +128,7 @@ void PPU::updateStatus() {
                 updateMode.operator()<OAM_SCAN>();
                 frameDotsElapsed = 0;
                 currentLine = 0;
+                mixer.scanlineReset();
             }
         break;
     }
@@ -200,6 +210,22 @@ uint8_t PPU::readBGP() {
 
 void PPU::writeBGP(uint8_t value) {
     backgroundPalette = value;
+}
+
+uint8_t PPU::readOBP0() {
+    return spritePalette0;
+}
+
+void PPU::writeOBP0(uint8_t value) {
+    spritePalette0 = value;
+}
+
+uint8_t PPU::readOBP1() {
+    return spritePalette1;
+}
+
+void PPU::writeOBP1(uint8_t value) {
+    spritePalette1 = value;
 }
 
 uint8_t PPU::readSTAT() {

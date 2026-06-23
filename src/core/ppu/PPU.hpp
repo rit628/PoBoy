@@ -42,6 +42,10 @@ namespace Graphics {
             void writeLCDC(uint8_t value);
             uint8_t readBGP();
             void writeBGP(uint8_t value);
+            uint8_t readOBP0();
+            void writeOBP0(uint8_t value);
+            uint8_t readOBP1();
+            void writeOBP1(uint8_t value);
             uint8_t readSTAT();
             void writeSTAT(uint8_t value);
     
@@ -49,6 +53,7 @@ namespace Graphics {
             std::span<const uint8_t, 2 * TILE_MAP_SIZE> getTileMaps();
     
         private:
+            void scanOAM();
             bool disabled();
             void updateStatus();
 
@@ -67,12 +72,16 @@ namespace Graphics {
             uint8_t windowX = 0;            // WX register
             uint8_t windowY = 0;            // WY register
             uint8_t backgroundPalette = 0;  // BGP register
+            uint8_t spritePalette0 = 0;     // OBP0 register
+            uint8_t spritePalette1 = 0;     // OBP1 register
             /* STAT register components */
             uint8_t interruptMask = 0;      // STAT bits 6-3
             MODE mode = MODE::OAM_SCAN;     // STAT bits 1-0
 
             PixelMixer mixer{lcdControl
                            , backgroundPalette
+                           , spritePalette0
+                           , spritePalette1
                            , currentLine
                            , scrollX
                            , scrollY

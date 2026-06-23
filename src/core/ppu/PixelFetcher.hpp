@@ -20,6 +20,7 @@ namespace Graphics {
             Pixel fifoPop();
             bool fifoEmpty();
             void resetState();
+            bool asleep();
 
         protected:
             template<typename Self>

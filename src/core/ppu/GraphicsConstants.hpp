@@ -10,8 +10,8 @@ namespace Graphics {
         WINDOW_ENABLE                       = 0b00100000,
         BACKGROUND_AND_WINDOW_DATA_AREA     = 0b00010000,   // 0 = 0x8800-0x97FF (signed); 1 = 0x8000–0x8FFF (unsigned)
         BACKGROUND_TILEMAP_AREA             = 0b00001000,   // 0 = 0x9800–0x9BFF; 1 = 0x9C00–0x9FFF
-        OBJECT_SIZE_MODIFIER                = 0b00000100,
-        OBJECT_ENABLE                       = 0b00000010,
+        SPRITE_SIZE_MODIFIER                = 0b00000100,
+        SPRITE_ENABLE                       = 0b00000010,
         BACKGROUND_AND_WINDOW_ENABLE        = 0b00000001
     };
 
@@ -23,6 +23,16 @@ namespace Graphics {
         MODE_0_INTERRUPT_ENABLE     = 0b00001000,
         LYC_INTERRUPT_BIT           = 0b00000100,
         PPU_MODE_BITS               = 0b00000011
+    };
+
+    /*  Sprite Attributes */
+    enum class SPRITE_FLAG : uint8_t {
+        OBJ_TO_BG_PRIORITY  = 0b10000000,
+        Y_FLIP              = 0b01000000,
+        X_FLIP              = 0b00100000,
+        PALETTE_NUMBER      = 0b00010000,
+        CGB_BANK            = 0b00001000,
+        CGB_PALETTE         = 0b00000111,
     };
 
     constexpr uint8_t  LCD_WIDTH                    = 160;
@@ -41,7 +51,12 @@ namespace Graphics {
     constexpr uint16_t DOTS_PER_RENDER_STARTUP      = 4;
 
     constexpr uint16_t VRAM_SIZE                    = 0x2000;
-    constexpr uint8_t  OAM_SIZE                     = 0xA0;
+
+    constexpr uint8_t SPRITE_COUNT                  = 40;
+    constexpr uint8_t SPRITE_BYTES                  = 4;
+    constexpr uint8_t OAM_SIZE                      = SPRITE_COUNT * SPRITE_BYTES;
+    constexpr uint8_t MAX_SPRITES_PER_LINE          = 10;
+    constexpr uint8_t SPRITE_Y_OFFSET               = 16;
 
     constexpr uint16_t TILE_COUNT                   = 384;
     constexpr uint16_t TILE_BYTES                   = 16;

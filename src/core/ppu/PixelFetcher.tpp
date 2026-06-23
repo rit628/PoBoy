@@ -44,6 +44,10 @@ namespace Graphics {
         onSecondDot = false;
     }
 
+    inline bool PixelFetcher::asleep() {
+        return state == STATE::SLEEP;
+    }
+
     template<typename Self>
     inline void PixelFetcher::preTick(this Self&& self) {
         self.preTick();

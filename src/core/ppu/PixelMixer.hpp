@@ -1,9 +1,9 @@
 #pragma once
 #include "BackgroundFetcher.hpp"
+#include "SpriteFetcher.hpp"
 #include "GraphicsConstants.hpp"
 #include <array>
 #include <cstdint>
-
 
 namespace Graphics {
 
@@ -11,6 +11,8 @@ namespace Graphics {
         public:
             PixelMixer(const uint8_t& lcdc
                      , const uint8_t& bgp
+                     , const uint8_t& obp0
+                     , const uint8_t& obp1
                      , const uint8_t& ly
                      , const uint8_t& scx
                      , const uint8_t& scy
@@ -24,16 +26,24 @@ namespace Graphics {
             std::array<uint8_t, FRAMEBUFFER_SIZE> extractFrame();
             uint16_t getCurrentPixel();
             bool atLineEnd();
+            void addSprite(uint8_t yPos, uint8_t xPos, uint8_t tileNumber, uint8_t spriteFlags);
     
         private:
-            void addPixel(const Pixel& pixel);
+            uint8_t applyPalette(uint8_t palette, uint8_t colorIndex);
+            void mixPixel(const Pixel& backgroundPixel);
+            void emitBackgroundPixel(const Pixel& pixel);
+            void emitSpritePixel(const Pixel& pixel);
+            void emitPixel(uint8_t colorIndex);
             
             const uint8_t& lcdControl;      // LCDC register reference
             const uint8_t& bgPalette;       // BGP register reference
+            const uint8_t& spritePalette0;  // OBP0 register reference
+            const uint8_t& spritePalette1;  // OBP1 register reference
             const uint8_t& scrollX;         // SCX register reference
             uint8_t pixelsToDiscard = 0;
 
             BackgroundFetcher backgroundFetcher;
+            SpriteFetcher spriteFetcher;
             std::array<uint8_t, FRAMEBUFFER_SIZE> framebuffer{};
             uint16_t currentByte = 0;
             uint8_t currentBit = 0;
