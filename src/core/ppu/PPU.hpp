@@ -26,6 +26,7 @@ namespace Graphics {
             void writeVRAM(uint16_t address, uint8_t value);
             uint8_t readOAM(uint16_t address);
             void writeOAM(uint16_t address, uint8_t value);
+            void dmaTransferOAM(std::span<const uint8_t, OAM_SIZE> sourceRange);
 
             uint8_t readLY();
             uint8_t readLYC();

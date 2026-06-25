@@ -2,6 +2,7 @@
 #include "FlagOps.hpp"
 #include "GraphicsConstants.hpp"
 #include "IMU.hpp"
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <utility>
@@ -57,6 +58,8 @@ bool PPU::disabled() {
         frameDotsElapsed = 0;
         lineDotsElapsed = 0;
         currentLine = 0;
+        mode = MODE::OAM_SCAN;
+        mixer.scanlineReset();
         return true;
     }
     return false;
@@ -145,11 +148,19 @@ void PPU::writeVRAM(uint16_t address, uint8_t value) {
 }
 
 uint8_t PPU::readOAM(uint16_t address) {
+    using enum MODE;
+    if ((mode == PIXEL_TRANSFER || mode == OAM_SCAN) && !disabled()) return 0xFF;
     return oam.at(address);
 }
 
 void PPU::writeOAM(uint16_t address, uint8_t value) {
+    using enum MODE;
+    if ((mode == PIXEL_TRANSFER || mode == OAM_SCAN) && !disabled()) return;
     oam.at(address) = value;
+}
+
+void PPU::dmaTransferOAM(std::span<const uint8_t, OAM_SIZE> sourceRange) {
+    std::copy(sourceRange.begin(), sourceRange.end(), oam.begin());
 }
 
 uint8_t PPU::readLY() {

@@ -14,9 +14,9 @@ namespace Memory {
         public:
             MMU(Interrupts::IMU& imu, Graphics::PPU& ppu);
     
-            const RomMetadata& loadRom(const std::filesystem::path& romFile);
             uint8_t read(uint16_t address);
             void write(uint16_t address, uint8_t value);
+            const RomMetadata& loadRom(const std::filesystem::path& romFile);
             
         private:
             void readRomMetadata();
@@ -36,6 +36,7 @@ namespace Memory {
             std::array<uint8_t, HRAM_SIZE> hram{};
             std::array<uint8_t, IO_SIZE> io{};  // for now until all io registers are implemented
             bool bootRomDisabled = false;       // BANK register
+            uint8_t dmaSourceAddress = 0;       // DMA register
     };
 
 }

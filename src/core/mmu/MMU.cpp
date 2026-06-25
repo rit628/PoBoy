@@ -1,9 +1,12 @@
 #include "MMU.hpp"
+#include "GraphicsConstants.hpp"
 #include "IMU.hpp"
 #include "MemoryConstants.hpp"
+#include <array>
 #include <cstdint>
 #include <iostream>
 #include <print>
+#include <ranges>
 
 using namespace Memory;
 
@@ -42,12 +45,8 @@ uint8_t MMU::read(uint16_t address) {
                 return bootRomDisabled;
             break;
 
-            case LY:
-                return ppu.readLY();
-            break;
-
-            case LYC:
-                return ppu.readLYC();
+            case DMA:
+                return dmaSourceAddress;
             break;
 
             case IF:
@@ -68,6 +67,14 @@ uint8_t MMU::read(uint16_t address) {
 
             case TAC:
                 return imu.readTAC();
+            break;
+
+            case LY:
+                return ppu.readLY();
+            break;
+
+            case LYC:
+                return ppu.readLYC();
             break;
 
             case SCX:
@@ -146,13 +153,20 @@ void MMU::write(uint16_t address, uint8_t value) {
                 bootRomDisabled = bootRomDisabled || value;
             break;
 
+            case DMA:
+                // for now this will be emulated as an instant transfer for simplicity and compatibility with most games
+                // timings and bus conflicts can be dealt with later if desired
+                dmaSourceAddress = value;
+                std::array<uint8_t, Graphics::OAM_SIZE> sourceRange;
+                for (auto&& [i, byte] : std::ranges::views::enumerate(sourceRange)) {
+                    byte = read((dmaSourceAddress << 8) | i);
+                } 
+                ppu.dmaTransferOAM(sourceRange);
+            break;
+
             case SB:
                 // for debugging
                 std::print(std::cerr, "{:c}", std::min(uint8_t(0x7F), value));
-            break;
-
-            case LYC:
-                ppu.writeLYC(value);
             break;
 
             case IF:
@@ -173,6 +187,10 @@ void MMU::write(uint16_t address, uint8_t value) {
 
             case TAC:
                 imu.writeTAC(value);
+            break;
+
+            case LYC:
+                ppu.writeLYC(value);
             break;
 
             case SCX:
