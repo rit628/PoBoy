@@ -88,15 +88,26 @@ void SpriteFetcher::push() {
     pixel.palette = testFlags(fetchedSprite->spriteFlags, SPRITE_FLAG::PALETTE_NUMBER);
     pixel.backgroundPriority = testFlags(fetchedSprite->spriteFlags, SPRITE_FLAG::OBJ_TO_BG_PRIORITY);
     bool xFlip = testFlags(fetchedSprite->spriteFlags, SPRITE_FLAG::X_FLIP);
-    auto bitMask = [xFlip](uint8_t pixelIndex) -> uint8_t {
-        return 0x1 << ((xFlip) ? pixelIndex : 7 - pixelIndex);
+    auto getPixelColor = [this, xFlip](uint8_t pixelIndex) -> uint8_t {
+        uint8_t mask = 0x1 << ((xFlip) ? pixelIndex : 7 - pixelIndex);
+        bool lsb = rowBitPlaneLo & mask;
+        bool msb = rowBitPlaneHi & mask;
+        return (msb << 1) | lsb;
     };
+
+    /* drawing priority replacement for transparent sprites */
+    for (uint8_t i = 0; i < pixelFifo.size(); i++) {
+        pixel.color = getPixelColor(i);
+        auto& currentPixel = pixelFifo.at(i);
+        if (currentPixel.color == 0) currentPixel = pixel;
+    }
+
+    /* push remaining pixels */
     for (uint8_t i = pixelFifo.size(); i < pixelFifo.capacity(); i++) {
-        bool lsb = rowBitPlaneLo & bitMask(i);
-        bool msb = rowBitPlaneHi & bitMask(i);
-        pixel.color = (msb << 1) | lsb;
+        pixel.color =  getPixelColor(i);
         pixelFifo.push(pixel);
     }
+
     /* discard fetched sprite */
     fetchedSprite->xPos = UINT8_MAX;
     fetchedSprite = nullptr;

@@ -11,6 +11,7 @@ class StaticQueue {
     public:
         void push(const T& element) noexcept;
         T pop() noexcept;
+        T& at(size_t index) noexcept;
         bool empty() const noexcept;
         bool full() const noexcept;
         size_t size() const noexcept;
@@ -41,6 +42,12 @@ template<typename T, size_t N> requires PowerOfTwo<N>
 T StaticQueue<T, N>::pop() noexcept {
     if (empty()) return T();
     return queue[mask(front++)];
+}
+
+template<typename T, size_t N> requires PowerOfTwo<N>
+T& StaticQueue<T, N>::at(size_t index) noexcept {
+    if (index >= size()) return queue[front];
+    return queue[mask(front + index)];
 }
 
 template<typename T, size_t N> requires PowerOfTwo<N>
