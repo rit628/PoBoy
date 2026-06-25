@@ -21,10 +21,6 @@ namespace Processing {
             enum class STATE : uint8_t { RUNNING, HALTED, BUGGED };
             enum class INTERRUPT_MASTER_FLAG : uint8_t { DISABLED = 0, ENABLED = 1, ENABLE_PENDING = 2 };
     
-            template<bool Tick = true>
-            uint8_t read(uint16_t address);
-            template<bool Tick = true>
-            void write(uint16_t address, uint8_t value);
             void handleInterrupts();
             void handleHaltBug();
     
@@ -45,6 +41,11 @@ namespace Processing {
             #undef FLAG_VALUE
             #undef OPERAND
             #undef OPCODE_END
+
+            template<bool Tick = true>
+            uint8_t read(uint16_t address);
+            template<bool Tick = true>
+            void write(uint16_t address, uint8_t value);
     
             uint8_t getCarry();
             uint8_t getHalfCarry();

@@ -8,6 +8,26 @@
 namespace Processing {
 
     template<bool FlatMemory>
+    template<bool Tick>
+    inline uint8_t CPU<FlatMemory>::read(uint16_t address) {
+        uint8_t result = 0;
+        if constexpr (FlatMemory) result = mmu.at(address);
+        else result = mmu.read(address);
+
+        if constexpr (Tick) systemTick();
+        return result;
+    }
+
+    template<bool FlatMemory>
+    template<bool Tick>
+    inline void CPU<FlatMemory>::write(uint16_t address, uint8_t value) {
+        if constexpr (FlatMemory) mmu.at(address) = value;
+        else mmu.write(address, value);
+
+        if constexpr (Tick) systemTick();
+    }
+
+    template<bool FlatMemory>
     inline uint8_t CPU<FlatMemory>::getCarry() {
         using enum REGISTER_FLAG;
         return (F & std::to_underlying(C)) >> 4; // 1 if C is set else 0

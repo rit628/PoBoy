@@ -124,26 +124,6 @@ void CPU<FlatMemory>::tick() {
 }
 
 template<bool FlatMemory>
-template<bool Tick>
-uint8_t CPU<FlatMemory>::read(uint16_t address) {
-    uint8_t result = 0;
-    if constexpr (FlatMemory) result = mmu.at(address);
-    else result = mmu.read(address);
-
-    if constexpr (Tick) systemTick();
-    return result;
-}
-
-template<bool FlatMemory>
-template<bool Tick>
-void CPU<FlatMemory>::write(uint16_t address, uint8_t value) {
-    if constexpr (FlatMemory) mmu.at(address) = value;
-    else mmu.write(address, value);
-
-    if constexpr (Tick) systemTick();
-}
-
-template<bool FlatMemory>
 void CPU<FlatMemory>::handleInterrupts() {
     static constexpr uint8_t VBLANK_INTERRUPT_ADDRESS      = 0x40;
     static constexpr uint8_t LCD_STAT_INTERRUPT_ADDRESS    = 0x48;
