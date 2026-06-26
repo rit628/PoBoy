@@ -37,6 +37,8 @@ namespace Memory {
             std::array<uint8_t, IO_SIZE> io{};  // for now until all io registers are implemented
             bool bootRomDisabled = false;       // BANK register
             uint8_t dmaSourceAddress = 0;       // DMA register
+            
+            std::string serialBuffer = "";  // for debugging
     };
 
 }

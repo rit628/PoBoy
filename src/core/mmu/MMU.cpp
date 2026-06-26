@@ -169,8 +169,12 @@ void MMU::write(uint16_t address, uint8_t value) {
             break;
 
             case SB:
-                // for debugging
-                std::print(std::cerr, "{:c}", std::min(uint8_t(0x7F), value));
+                serialBuffer += static_cast<char>(std::min(uint8_t(0x7F), value));
+            break;
+
+            case SC:
+                std::print(std::cerr, "{}", serialBuffer);
+                serialBuffer.clear();
             break;
 
             case IF:
