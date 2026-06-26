@@ -4,6 +4,7 @@
 #include "IMU.hpp"
 #include <array>
 #include <cstdint>
+#include <functional>
 #include <span>
 
 namespace Graphics {
@@ -17,7 +18,7 @@ namespace Graphics {
                 VBLANK = 1
             };
 
-            PPU(Interrupts::IMU& imu);
+            PPU(Interrupts::IMU& imu, std::function<void(std::array<uint8_t, FRAMEBUFFER_SIZE>&)> renderFrame);
             
             void tick(uint8_t dots);
             void tick();
@@ -59,6 +60,7 @@ namespace Graphics {
             void updateStatus();
 
             Interrupts::IMU& imu;
+            std::function<void(std::array<uint8_t, FRAMEBUFFER_SIZE>&)> renderFrame;   // use std::function for simplicity
     
             std::array<uint8_t, VRAM_SIZE> vram{};
             std::array<uint8_t, OAM_SIZE> oam{};

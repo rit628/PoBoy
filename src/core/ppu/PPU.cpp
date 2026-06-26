@@ -7,11 +7,10 @@
 #include <cstdint>
 #include <utility>
 
-#include "TerminalRenderer.inl"
-
 using namespace Graphics;
 
-PPU::PPU(Interrupts::IMU& imu) : imu(imu) {}
+PPU::PPU(Interrupts::IMU& imu, std::function<void(std::array<uint8_t, FRAMEBUFFER_SIZE>&)> renderFrame)
+        : imu(imu), renderFrame(renderFrame) {}
 
 void PPU::tick(uint8_t dots) {
     for (uint8_t i = 0; i < dots; i++) {

@@ -3,6 +3,13 @@
 #include <print>
 #include <thread>
 
+DMG::DMG(std::function<void(std::array<uint8_t, Graphics::FRAMEBUFFER_SIZE>&)> renderFrame)
+        : imu()
+        , ppu(imu, renderFrame)
+        , mmu(imu, ppu)
+        , cpu(mmu, std::bind(&DMG::systemTick, std::ref(*this)))
+        {}
+
 void DMG::systemTick() {
     imu.tick(4);
     ppu.tick(4);

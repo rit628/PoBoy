@@ -9,6 +9,7 @@
 
 class DMG {
     public:
+        DMG(std::function<void(std::array<uint8_t, Graphics::FRAMEBUFFER_SIZE>&)> renderFrame);
         void systemTick();
         void run(const std::filesystem::path& romFile);
 
@@ -16,7 +17,7 @@ class DMG {
         uint64_t totalMCycles = 0;
 
         Interrupts::IMU imu;
-        Graphics::PPU ppu{imu};
-        Memory::MMU mmu{imu, ppu};
-        Processing::CPU<> cpu{mmu, std::bind(&DMG::systemTick, std::ref(*this))};
+        Graphics::PPU ppu;
+        Memory::MMU mmu;
+        Processing::CPU<> cpu;
 };

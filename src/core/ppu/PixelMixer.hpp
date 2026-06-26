@@ -23,7 +23,7 @@ namespace Graphics {
 
             void tick();
             void scanlineReset();
-            std::array<uint8_t, FRAMEBUFFER_SIZE> extractFrame();
+            std::array<uint8_t, FRAMEBUFFER_SIZE>& extractFrame();
             uint16_t getCurrentPixel();
             bool atLineEnd();
             void addSprite(uint8_t yPos, uint8_t xPos, uint8_t tileNumber, uint8_t spriteFlags);
