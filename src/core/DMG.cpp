@@ -17,27 +17,32 @@ void DMG::systemTick() {
 }
 
 void DMG::run(const std::filesystem::path& romFile) {
-    static constexpr double DMG_CLOCK_MHZ = 4.194304;
-    static constexpr auto DMG_CLOCK_US = std::chrono::duration<double, std::micro>(1.0 / DMG_CLOCK_MHZ);
-    
+    initialize(romFile);
+    while (true) emuLoop();
+}
+
+void DMG::run(std::stop_token stoken, const std::filesystem::path& romFile) {
+    initialize(romFile);
+    while (!stoken.stop_requested()) emuLoop();
+}
+
+void DMG::initialize(const std::filesystem::path& romFile) {
     mmu.loadRom(romFile);
-
-    using clock = std::chrono::steady_clock;
-    auto start = clock::now();
+    start = clock::now();
     totalMCycles = 0;
-    
-    while (true) {
-        cpu.tick();
+}
 
-        auto totalTCycles = totalMCycles * 4;
+void DMG::emuLoop() {
+    cpu.tick();
 
-        auto now = clock::now();
-        auto elapsed = std::chrono::duration<double, std::micro>(now - start);
-        auto expectedElapsed = totalTCycles * DMG_CLOCK_US;
+    auto totalTCycles = totalMCycles * 4;
 
-        if (elapsed < expectedElapsed) {
-            auto waitTime = expectedElapsed - elapsed;
-            std::this_thread::sleep_for(waitTime);
-        }
+    auto now = clock::now();
+    auto elapsed = std::chrono::duration<double, std::micro>(now - start);
+    auto expectedElapsed = totalTCycles * DMG_CLOCK_US;
+
+    if (elapsed < expectedElapsed) {
+        auto waitTime = expectedElapsed - elapsed;
+        std::this_thread::sleep_for(waitTime);
     }
 }

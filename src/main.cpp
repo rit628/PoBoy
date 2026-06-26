@@ -1,16 +1,47 @@
+#define SDL_MAIN_USE_CALLBACKS
 #include "DMG.hpp"
-#include "InputReader.hpp"
-#include "TerminalRenderer.hpp"
+#include "GUI.hpp"
+#include <SDL3/SDL_main.h>
+#include <SDL3/SDL_init.h>
+#include <functional>
 #include <iostream>
 #include <print>
 #include <thread>
 
-int main(int argc, char** argv) {
+
+struct AppState {
+    GUI<> gui;
+    DMG gb{   std::bind(&GUI<>::readInput, std::ref(gui))
+          , std::bind(&GUI<>::renderFrame, std::ref(gui), std::placeholders::_1)};
+    std::jthread emulatorThread;
+};
+
+SDL_AppResult SDL_AppInit(void** appstate, int argc, char** argv) {
     const std::filesystem::path romFile = (argc > 1) ? argv[1] : "test.gb";
     std::println(std::cerr, "Running {}", romFile.filename().c_str());
-    InputReader inputReader;
-    std::thread inputThread(std::bind(&InputReader::run, std::ref(inputReader)));
-    inputThread.detach();
-    DMG gb{std::bind(&InputReader::readInput, std::ref(inputReader)), renderFrame};
-    gb.run(romFile);
+    auto* app = new AppState();
+    auto& gb = app->gb;
+    app->emulatorThread = std::jthread(
+    [&gb](std::stop_token stoken, const std::filesystem::path& romFile) {
+        gb.run(stoken, romFile);
+    }, romFile);
+    *appstate = app;
+    return SDL_APP_CONTINUE;
+}
+
+SDL_AppResult SDL_AppIterate(void* appstate [[maybe_unused ]]) {
+    return SDL_APP_CONTINUE;
+}
+
+SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
+    auto& gui = static_cast<AppState*>(appstate)->gui;
+    switch (event->type) {
+        case SDL_EVENT_QUIT: return SDL_APP_SUCCESS;
+    }
+    gui.handleInput(event);
+    return SDL_APP_CONTINUE;
+}
+
+void SDL_AppQuit(void* appstate, SDL_AppResult result [[maybe_unused ]]) {
+    delete static_cast<AppState*>(appstate);
 }
