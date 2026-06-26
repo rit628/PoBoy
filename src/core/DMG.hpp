@@ -9,7 +9,7 @@
 
 class DMG {
     public:
-        DMG(std::function<void(std::array<uint8_t, Graphics::FRAMEBUFFER_SIZE>&)> renderFrame);
+        DMG(std::function<uint8_t()> readInput, std::function<void(std::array<uint8_t, Graphics::FRAMEBUFFER_SIZE>&)> renderFrame);
         void systemTick();
         void run(const std::filesystem::path& romFile);
 

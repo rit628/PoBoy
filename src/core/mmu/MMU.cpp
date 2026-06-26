@@ -36,17 +36,17 @@ uint8_t MMU::read(uint16_t address) {
         return 0xFF; // oam bug
     }
     if (address < IO_END) {
-        switch (address) {
-            case P1:
-                return 0xFF;
-            break;
-            
+        switch (address) {            
             case BANK:
                 return bootRomDisabled;
             break;
 
             case DMA:
                 return dmaSourceAddress;
+            break;
+
+            case SB:
+                return 0xFF;
             break;
 
             case IF:
@@ -111,6 +111,10 @@ uint8_t MMU::read(uint16_t address) {
 
             case STAT:
                 return ppu.readSTAT();
+            break;
+
+            case P1:
+                return imu.readP1();
             break;
 
             default:
@@ -227,6 +231,10 @@ void MMU::write(uint16_t address, uint8_t value) {
 
             case STAT:
                 ppu.writeSTAT(value);
+            break;
+
+            case P1:
+                imu.writeP1(value);
             break;
 
             default:

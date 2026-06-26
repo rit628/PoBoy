@@ -1,3 +1,4 @@
+#pragma once
 #include "GraphicsConstants.hpp"
 #include <array>
 #include <cstdint>

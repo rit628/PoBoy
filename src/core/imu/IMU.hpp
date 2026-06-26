@@ -1,19 +1,16 @@
 #pragma once
+#include "InterruptConstants.hpp"
+#include "Joypad.hpp"
 #include "SystemTimer.hpp"
 #include <cstdint>
+#include <functional>
 
 namespace Interrupts {
-
-    enum class INTERRUPT_FLAG : uint8_t {
-        JOYPAD      = 0b00010000,
-        SERIAL      = 0b00001000,
-        TIMER       = 0b00000100,
-        LCD_STAT    = 0b00000010,
-        VBLANK      = 0b00000001
-    };
     
     class IMU {
         public:
+            IMU(std::function<uint8_t()> readInput);
+
             uint8_t readIF();
             void writeIF(uint8_t value);
             void writeIF(INTERRUPT_FLAG flag);
@@ -30,12 +27,16 @@ namespace Interrupts {
             void writeTMA(uint8_t value);
             uint8_t readTAC();
             void writeTAC(uint8_t value);
+
+            uint8_t readP1();
+            void writeP1(uint8_t value);
     
         private:
             uint8_t interruptFlags = 0b11100000; // IF register
             uint8_t interruptEnable = 0;        // IE register
     
-            SystemTimer timer{*this};
+            SystemTimer timer;
+            Joypad joypad;
     };
 
 }

@@ -3,8 +3,8 @@
 #include <print>
 #include <thread>
 
-DMG::DMG(std::function<void(std::array<uint8_t, Graphics::FRAMEBUFFER_SIZE>&)> renderFrame)
-        : imu()
+DMG::DMG(std::function<uint8_t()> readInput, std::function<void(std::array<uint8_t, Graphics::FRAMEBUFFER_SIZE>&)> renderFrame)
+        : imu(readInput)
         , ppu(imu, renderFrame)
         , mmu(imu, ppu)
         , cpu(mmu, std::bind(&DMG::systemTick, std::ref(*this)))

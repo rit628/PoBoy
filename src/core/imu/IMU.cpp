@@ -3,6 +3,11 @@
 
 using namespace Interrupts;
 
+IMU::IMU(std::function<uint8_t()> readInput)
+        : timer(*this)
+        , joypad(*this, readInput)
+        {}
+
 uint8_t IMU::readIF() {
     return interruptFlags;
 }
@@ -28,9 +33,9 @@ void IMU::writeIE(INTERRUPT_FLAG flag) {
     setFlags(interruptEnable, flag);
 }
 
-
 void IMU::tick(uint8_t tCycles) {
     timer.tick(tCycles);
+    joypad.tick(tCycles);
 }
 
 uint8_t IMU::readDIV() {
@@ -63,4 +68,12 @@ uint8_t IMU::readTAC() {
 
 void IMU::writeTAC(uint8_t value) {
     timer.writeTAC(value);
+}
+
+uint8_t IMU::readP1() {
+    return joypad.readP1();
+}
+
+void IMU::writeP1(uint8_t value) {
+    joypad.writeP1(value);
 }
