@@ -1,12 +1,14 @@
 #pragma once
-#include "HeaderInfo.hpp"
+#include "CartridgeConstants.hpp"
+#include "StaticString.hpp"
+#include <cstdint>
 
 namespace Memory {
 
     struct RomMetadata {
-        boost::static_string<TITLE_SIZE> title;
-        boost::static_string<MANUFACTURER_CODE_SIZE> manufacturerCode;
-        boost::static_string<LICENSEE_CODE_SIZE> licenseeCode;
+        StaticString<Cartridge::TITLE_SIZE> title;
+        StaticString<Cartridge::MANUFACTURER_CODE_SIZE> manufacturerCode;
+        StaticString<Cartridge::LICENSEE_CODE_SIZE> licenseeCode;
         uint8_t cgbFlag = 0;
         uint8_t sgbFlag = 0;
         uint8_t cartridgeType = 0;

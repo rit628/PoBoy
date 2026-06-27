@@ -264,6 +264,7 @@ const RomMetadata& MMU::loadRom(const std::filesystem::path& romFile) {
 }
 
 void MMU::readRomMetadata() {
+    using namespace Cartridge;
     rom.seekg(HEADER_START);
     rom.seekg(ENTRYPOINT_SIZE, std::ios::cur); // skip entrypoint instructions
     rom.seekg(NINTENDO_LOGO_SIZE, std::ios::cur); // skip bootrom nintendo logo data
@@ -274,13 +275,13 @@ void MMU::readRomMetadata() {
     metadata.sgbFlag = rom.get();
     metadata.cartridgeType = rom.get();
     uint8_t encodedSize = rom.get();
-    metadata.romSize = getRomSize(encodedSize);
+    metadata.romSize = decodeRomSize(encodedSize);
     encodedSize = rom.get();
-    metadata.ramSize = getRamSize(encodedSize);
+    metadata.ramSize = decodeRamSize(encodedSize);
     metadata.destinationCode = rom.get();
     uint8_t oldLicenseeCode = rom.get();
     if (oldLicenseeCode != NEW_LICENSEE_CODE_FLAG) {
-        metadata.licenseeCode[0] = oldLicenseeCode;
+        metadata.licenseeCode.at(0) = static_cast<char>(oldLicenseeCode);
         metadata.licenseeCode.resize(1);
     }
     metadata.romVersion = rom.get();

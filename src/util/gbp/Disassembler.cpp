@@ -1,12 +1,10 @@
 #include "Disassembler.hpp"
-#include "HeaderInfo.hpp"
+#include "CartridgeConstants.hpp"
 #include "Opcodes.hpp"
 #include "StaticString.hpp"
 #include <array>
 #include <bitset>
-#include <cstddef>
 #include <cstdint>
-#include <ios>
 #include <iostream>
 #include <istream>
 #include <print>
@@ -28,6 +26,7 @@ void Disassembler::readEntrypoint(std::istream& rom) {
 }
 
 void Disassembler::readLogo(std::istream& rom) {
+    using namespace Cartridge;
     std::array<uint8_t, NINTENDO_LOGO_SIZE> logoEncoding;
     rom.read(reinterpret_cast<char*>(logoEncoding.data()), NINTENDO_LOGO_SIZE);
 
@@ -60,6 +59,7 @@ void Disassembler::readLogo(std::istream& rom) {
 }
 
 void Disassembler::readHeader(std::istream& rom) {
+    using namespace Cartridge;
     rom.seekg(HEADER_START);
 
     readEntrypoint(rom);
@@ -81,26 +81,26 @@ void Disassembler::readHeader(std::istream& rom) {
     std::println("SGB Flag: 0x{:02X}", sgbFlag);
 
     cartridgeType = rom.get();
-    std::println("Cartridge Type: {}", getCartridgeType(cartridgeType));
+    std::println("Cartridge Type: {}", decodeCartridgeType(cartridgeType));
 
     uint8_t encodedSize = rom.get();
-    romSize = getRomSize(encodedSize);
+    romSize = decodeRomSize(encodedSize);
     std::println("Rom Size: {}", romSize);
 
     encodedSize = rom.get();
-    ramSize = getRamSize(encodedSize);
+    ramSize = decodeRamSize(encodedSize);
     std::println("Ram Size: {}", ramSize);
     
     destinationCode = rom.get();
-    std::println("Region: {}", getRegion(destinationCode));
+    std::println("Region: {}", decodeRegion(destinationCode));
     
     uint8_t oldLicenseeCode = rom.get();
     if (oldLicenseeCode != NEW_LICENSEE_CODE_FLAG) {
         std::println("Using Old Licensee Code");
-        licenseeCode[0] = oldLicenseeCode;
+        licenseeCode.at(0) = oldLicenseeCode;
         licenseeCode.resize(1);
     }
-    std::println("Licensee: {}", getLicensee(licenseeCode));
+    std::println("Licensee: {}", decodeLicensee(licenseeCode));
 
     romVersion = rom.get();
     std::println("Rom Version: 0x{:02X}", romVersion);
