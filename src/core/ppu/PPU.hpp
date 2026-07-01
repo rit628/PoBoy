@@ -78,7 +78,7 @@ namespace Graphics {
             uint8_t spritePalette0 = 0;     // OBP0 register
             uint8_t spritePalette1 = 0;     // OBP1 register
             /* STAT register components */
-            uint8_t interruptMask = 0;      // STAT bits 6-3
+            uint8_t interruptMask = 0x80;   // STAT bits 6-3
             MODE mode = MODE::OAM_SCAN;     // STAT bits 1-0
 
             PixelMixer mixer{lcdControl

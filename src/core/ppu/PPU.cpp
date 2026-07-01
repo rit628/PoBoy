@@ -239,6 +239,7 @@ void PPU::writeOBP1(uint8_t value) {
 }
 
 uint8_t PPU::readSTAT() {
+    if (disabled()) return interruptMask;   // bits 0-2 return 0 when lcd is off
     return interruptMask
         | (lineCompare == currentLine % FRAME_LINES) << 2
         | std::to_underlying(mode);

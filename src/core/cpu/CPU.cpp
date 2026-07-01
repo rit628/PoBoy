@@ -31,7 +31,7 @@
         } \
     } 
     #define DEBUG_PRINT_NEWLINE() \
-    std::println();
+    std::println(std::cerr);
     #define DEBUG_PRINT_INTERRUPT(interruptType) \
     std::println(std::cerr, "{} INTERRUPT: RST {:#04x}", #interruptType, interruptType##_INTERRUPT_ADDRESS);
 #else
