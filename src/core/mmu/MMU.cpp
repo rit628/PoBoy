@@ -10,18 +10,28 @@
 
 using namespace Memory;
 
-MMU::MMU(Interrupts::IMU& imu, Graphics::PPU& ppu) : imu(imu), ppu(ppu) {}
+MMU::MMU(Interrupts::IMU& imu, Graphics::PPU& ppu)
+        : imu(imu), ppu(ppu) {}
+
+CartridgeMetadata MMU::loadRom(const std::filesystem::path& romFile) {
+    return cartridge.loadRom(romFile);
+}
 
 uint8_t MMU::read(uint16_t address) {
-    if (address < ROM_BANKS_END) {
-        if (!bootRomDisabled && address < BOOTROM_SIZE) return bootrom.at(address);
-        return romBanks.at(address - ROM_BANKS_START);
+    if (!bootRomDisabled && address < BOOTROM_SIZE) {
+        return bootrom.at(address);
+    }
+    if (address < ROM_BANK_0_END) {
+        return cartridge.readBank0(address - ROM_BANK_0_START);
+    }
+    if (address < ROM_BANK_1_END) {
+        return cartridge.readBank1(address - ROM_BANK_1_START);
     }
     if (address < VRAM_END) {
         return ppu.readVRAM(address - VRAM_START);
     }
     if (address < CARTRIDGE_RAM_END) {
-        return cram.at(address - CARTRIDGE_RAM_START);
+        return cartridge.readSRAM(address - CARTRIDGE_RAM_START);
     }
     if (address < WRAM_END) {
         return wram.at(address - WRAM_START);
@@ -36,91 +46,7 @@ uint8_t MMU::read(uint16_t address) {
         return 0xFF; // oam bug
     }
     if (address < IO_END) {
-        switch (address) {            
-            case BANK:
-                return bootRomDisabled;
-            break;
-
-            case DMA:
-                return dmaSourceAddress;
-            break;
-
-            case SB:
-                return 0xFF;
-            break;
-
-            case IF:
-                return imu.readIF();
-            break;
-            
-            case DIV:
-                return imu.readDIV();
-            break;
-
-            case TIMA:
-                return imu.readTIMA();
-            break;
-
-            case TMA:
-                return imu.readTMA();
-            break;
-
-            case TAC:
-                return imu.readTAC();
-            break;
-
-            case LY:
-                return ppu.readLY();
-            break;
-
-            case LYC:
-                return ppu.readLYC();
-            break;
-
-            case SCX:
-                return ppu.readSCX();
-            break;
-
-            case SCY:
-                return ppu.readSCY();
-            break;
-
-            case WX:
-                return ppu.readWX();
-            break;
-
-            case WY:
-                return ppu.readWY();
-            break;
-
-            case LCDC:
-                return ppu.readLCDC();
-            break;
-
-            case BGP:
-                return ppu.readBGP();
-            break;
-
-            case OBP0:
-                return ppu.readOBP0();
-            break;
-
-            case OBP1:
-                return ppu.readOBP1();
-            break;
-
-            case STAT:
-                return ppu.readSTAT();
-            break;
-
-            case P1:
-                return imu.readP1();
-            break;
-
-            default:
-                return io.at(address - IO_START);
-            break;
-        }
+        return readIO(address);
     }
     if (address < HRAM_END) {
         return hram.at(address - HRAM_START);
@@ -129,14 +55,20 @@ uint8_t MMU::read(uint16_t address) {
 }
 
 void MMU::write(uint16_t address, uint8_t value) {
-    if (address < ROM_BANKS_END) {
-        return; // ROM is not writeable
+    if (!bootRomDisabled && address < BOOTROM_SIZE) {
+        return; // bootrom is not writeable
+    }
+    if (address < ROM_BANK_0_END) {
+        cartridge.writeBank0(address - ROM_BANK_0_START, value);
+    }
+    else if (address < ROM_BANK_1_END) {
+        cartridge.writeBank1(address - ROM_BANK_1_START, value);
     }
     else if (address < VRAM_END) {
         ppu.writeVRAM(address - VRAM_START, value);
     }
     else if (address < CARTRIDGE_RAM_END) {
-        cram.at(address - CARTRIDGE_RAM_START) = value;
+        cartridge.writeSRAM(address - CARTRIDGE_RAM_START, value);
     }
     else if (address < WRAM_END) {
         wram.at(address - WRAM_START) = value;
@@ -151,100 +83,7 @@ void MMU::write(uint16_t address, uint8_t value) {
         return; // oam bug
     }
     else if (address < IO_END) {
-        switch (address) {
-            case BANK:
-                // bootrom can only be unmapped
-                bootRomDisabled = bootRomDisabled || value;
-            break;
-
-            case DMA:
-                // for now this will be emulated as an instant transfer for simplicity and compatibility with most games
-                // timings and bus conflicts can be dealt with later if desired
-                dmaSourceAddress = value;
-                std::array<uint8_t, Graphics::OAM_SIZE> sourceRange;
-                for (auto&& [i, byte] : std::ranges::views::enumerate(sourceRange)) {
-                    byte = read((dmaSourceAddress << 8) | i);
-                } 
-                ppu.dmaTransferOAM(sourceRange);
-            break;
-
-            case SB:
-                serialBuffer += static_cast<char>(std::min(uint8_t(0x7F), value));
-            break;
-
-            case SC:
-                std::print(std::cerr, "{}", serialBuffer);
-                serialBuffer.clear();
-            break;
-
-            case IF:
-                imu.writeIF(value);
-            break;
-
-            case DIV:
-                imu.writeDIV(value);
-            break;
-
-            case TIMA:
-                imu.writeTIMA(value);
-            break;
-
-            case TMA:
-                imu.writeTMA(value);
-            break;
-
-            case TAC:
-                imu.writeTAC(value);
-            break;
-
-            case LYC:
-                ppu.writeLYC(value);
-            break;
-
-            case SCX:
-                ppu.writeSCX(value);
-            break;
-
-            case SCY:
-                ppu.writeSCY(value);
-            break;
-
-            case WX:
-                ppu.writeWX(value);
-            break;
-
-            case WY:
-                ppu.writeWY(value);
-            break;
-
-            case LCDC:
-                ppu.writeLCDC(value);
-            break;
-
-            case BGP:
-                ppu.writeBGP(value);
-            break;
-
-            case OBP0:
-                ppu.writeOBP0(value);
-            break;
-
-            case OBP1:
-                ppu.writeOBP1(value);
-            break;
-
-            case STAT:
-                ppu.writeSTAT(value);
-            break;
-
-            case P1:
-                imu.writeP1(value);
-            break;
-
-            default:
-                io.at(address - IO_START) = value;
-            break;
-        }
+        writeIO(address, value);
     }
     else if (address < HRAM_END) {
         hram.at(address - HRAM_START) = value;
@@ -254,37 +93,187 @@ void MMU::write(uint16_t address, uint8_t value) {
     }
 }
 
-const RomMetadata& MMU::loadRom(const std::filesystem::path& romFile) {
-    rom.open(romFile);
-    readRomMetadata();
-    rom.seekg(0);
-    rom.read(reinterpret_cast<char*>(romBanks.data()), ROM_BANK_SIZE * 2);
-    bootRomDisabled = false;
-    return metadata;
+uint8_t MMU::readIO(uint16_t registerAddress) {
+    switch (registerAddress) {            
+        case BANK:
+            return bootRomDisabled;
+        break;
+
+        case DMA:
+            return dmaSourceAddress;
+        break;
+
+        case SB:
+            return 0xFF;
+        break;
+
+        case IF:
+            return imu.readIF();
+        break;
+        
+        case DIV:
+            return imu.readDIV();
+        break;
+
+        case TIMA:
+            return imu.readTIMA();
+        break;
+
+        case TMA:
+            return imu.readTMA();
+        break;
+
+        case TAC:
+            return imu.readTAC();
+        break;
+
+        case LY:
+            return ppu.readLY();
+        break;
+
+        case LYC:
+            return ppu.readLYC();
+        break;
+
+        case SCX:
+            return ppu.readSCX();
+        break;
+
+        case SCY:
+            return ppu.readSCY();
+        break;
+
+        case WX:
+            return ppu.readWX();
+        break;
+
+        case WY:
+            return ppu.readWY();
+        break;
+
+        case LCDC:
+            return ppu.readLCDC();
+        break;
+
+        case BGP:
+            return ppu.readBGP();
+        break;
+
+        case OBP0:
+            return ppu.readOBP0();
+        break;
+
+        case OBP1:
+            return ppu.readOBP1();
+        break;
+
+        case STAT:
+            return ppu.readSTAT();
+        break;
+
+        case P1:
+            return imu.readP1();
+        break;
+
+        default:
+            return io.at(registerAddress - IO_START);
+        break;
+    }
 }
 
-void MMU::readRomMetadata() {
-    using namespace Cartridge;
-    rom.seekg(HEADER_START);
-    rom.seekg(ENTRYPOINT_SIZE, std::ios::cur); // skip entrypoint instructions
-    rom.seekg(NINTENDO_LOGO_SIZE, std::ios::cur); // skip bootrom nintendo logo data
-    readInto(rom, metadata.title);
-    metadata.manufacturerCode = metadata.title.substr(metadata.title.size() - 5, metadata.manufacturerCode.capacity());
-    metadata.cgbFlag = metadata.title.at(metadata.title.size() - 1);
-    readInto(rom, metadata.licenseeCode);
-    metadata.sgbFlag = rom.get();
-    metadata.cartridgeType = rom.get();
-    uint8_t encodedSize = rom.get();
-    metadata.romSize = decodeRomSize(encodedSize);
-    encodedSize = rom.get();
-    metadata.ramSize = decodeRamSize(encodedSize);
-    metadata.destinationCode = rom.get();
-    uint8_t oldLicenseeCode = rom.get();
-    if (oldLicenseeCode != NEW_LICENSEE_CODE_FLAG) {
-        metadata.licenseeCode.at(0) = static_cast<char>(oldLicenseeCode);
-        metadata.licenseeCode.resize(1);
+void MMU::writeIO(uint16_t registerAddress, uint8_t value) {
+    switch (registerAddress) {
+        case BANK:
+            // bootrom can only be unmapped
+            bootRomDisabled = bootRomDisabled || value;
+        break;
+
+        case DMA:
+            // for now this will be emulated as an instant transfer for simplicity and compatibility with most games
+            // timings and bus conflicts can be dealt with later if desired
+            dmaSourceAddress = value;
+            std::array<uint8_t, Graphics::OAM_SIZE> sourceRange;
+            for (auto&& [i, byte] : std::ranges::views::enumerate(sourceRange)) {
+                byte = read((dmaSourceAddress << 8) | i);
+            } 
+            ppu.dmaTransferOAM(sourceRange);
+        break;
+
+        case SB:
+            serialBuffer += static_cast<char>(std::min(uint8_t(0x7F), value));
+        break;
+
+        case SC:
+            std::print(std::cerr, "{}", serialBuffer);
+            serialBuffer.clear();
+        break;
+
+        case IF:
+            imu.writeIF(value);
+        break;
+
+        case DIV:
+            imu.writeDIV(value);
+        break;
+
+        case TIMA:
+            imu.writeTIMA(value);
+        break;
+
+        case TMA:
+            imu.writeTMA(value);
+        break;
+
+        case TAC:
+            imu.writeTAC(value);
+        break;
+
+        case LYC:
+            ppu.writeLYC(value);
+        break;
+
+        case SCX:
+            ppu.writeSCX(value);
+        break;
+
+        case SCY:
+            ppu.writeSCY(value);
+        break;
+
+        case WX:
+            ppu.writeWX(value);
+        break;
+
+        case WY:
+            ppu.writeWY(value);
+        break;
+
+        case LCDC:
+            ppu.writeLCDC(value);
+        break;
+
+        case BGP:
+            ppu.writeBGP(value);
+        break;
+
+        case OBP0:
+            ppu.writeOBP0(value);
+        break;
+
+        case OBP1:
+            ppu.writeOBP1(value);
+        break;
+
+        case STAT:
+            ppu.writeSTAT(value);
+        break;
+
+        case P1:
+            imu.writeP1(value);
+        break;
+
+        default:
+            io.at(registerAddress - IO_START) = value;
+        break;
     }
-    metadata.romVersion = rom.get();
-    metadata.headerChecksum = rom.get();
-    readInto(rom, metadata.globalChecksum);
 }

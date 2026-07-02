@@ -1,5 +1,4 @@
 #include "Disassembler.hpp"
-#include "CartridgeConstants.hpp"
 #include "Opcodes.hpp"
 #include "StaticString.hpp"
 #include <array>
@@ -26,7 +25,7 @@ void Disassembler::readEntrypoint(std::istream& rom) {
 }
 
 void Disassembler::readLogo(std::istream& rom) {
-    using namespace Cartridge;
+    using namespace Memory;
     std::array<uint8_t, NINTENDO_LOGO_SIZE> logoEncoding;
     rom.read(reinterpret_cast<char*>(logoEncoding.data()), NINTENDO_LOGO_SIZE);
 
@@ -59,8 +58,8 @@ void Disassembler::readLogo(std::istream& rom) {
 }
 
 void Disassembler::readHeader(std::istream& rom) {
-    using namespace Cartridge;
-    rom.seekg(HEADER_START);
+    using namespace Memory;
+    rom.seekg(CARTRIDGE_HEADER_START);
 
     readEntrypoint(rom);
     

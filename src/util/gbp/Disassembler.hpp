@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
+#include "MemoryConstants.hpp"
 #include "StaticString.hpp"
-#include "CartridgeConstants.hpp"
 
 class Disassembler {
     public:
@@ -15,9 +15,9 @@ class Disassembler {
         void readPrefixedInstruction(std::istream& rom);
 
         uint16_t entrypointJumpAddress = 0x0150;
-        StaticString<Cartridge::TITLE_SIZE> title;
-        StaticString<Cartridge::MANUFACTURER_CODE_SIZE> manufacturerCode;
-        StaticString<Cartridge::LICENSEE_CODE_SIZE> licenseeCode;
+        StaticString<Memory::TITLE_SIZE> title;
+        StaticString<Memory::MANUFACTURER_CODE_SIZE> manufacturerCode;
+        StaticString<Memory::LICENSEE_CODE_SIZE> licenseeCode;
         uint8_t cgbFlag = 0;
         uint8_t sgbFlag = 0;
         uint8_t cartridgeType = 0;
