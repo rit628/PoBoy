@@ -8,9 +8,9 @@ namespace Memory {
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
     MBC<RamType, AdditionalHardware>::MBC(std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize)
                                          : rom(rom), encodedRomSize(encodedRomSize), encodedRamSize(encodedRamSize)
+                                         , bank0(rom.subspan<0, ROM_BANK_SIZE>()), bank1(rom.subspan<ROM_BANK_1_START, ROM_BANK_SIZE>())
+                                         , sramBank(rom.subspan<0, SRAM_BANK_SIZE>()) // just to avoid ub
     {
-        bank0 = rom.subspan<0, ROM_BANK_SIZE>();
-        bank1 = rom.subspan<ROM_BANK_1_START, ROM_BANK_SIZE>();
         if constexpr (RamType != SRAM_TYPE::NONE) {
             sram.resize(decodeRamSize(encodedRamSize), 0xFF);
             sramBank = std::span(sram).subspan<0, SRAM_BANK_SIZE>();
@@ -98,8 +98,10 @@ namespace Memory {
         uint8_t selectedBank1 = bankHiBits | romBankNumber;
         this->bank1 = this->rom.subspan(ROM_BANK_SIZE * selectedBank1).template first<ROM_BANK_SIZE>();
 
-        uint8_t selectedRamBank = (modeFlag) ? ramBankNumber : 0;
-        this->sramBank = std::span(this->sram).subspan(SRAM_BANK_SIZE * selectedRamBank).template first<SRAM_BANK_SIZE>();
+        if constexpr (RamType != SRAM_TYPE::NONE) {
+            uint8_t selectedRamBank = (modeFlag) ? ramBankNumber : 0;
+            this->sramBank = std::span(this->sram).subspan(SRAM_BANK_SIZE * selectedRamBank).template first<SRAM_BANK_SIZE>();
+        }
     }
 
 }

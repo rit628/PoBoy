@@ -30,8 +30,8 @@ namespace Memory {
             bool ramEnabled = false;
 
             std::vector<uint8_t> sram;
-            std::span<uint8_t, ROM_BANK_SIZE> bank0{rom}, bank1{rom};
-            std::span<uint8_t, SRAM_BANK_SIZE> sramBank{sram};
+            std::span<uint8_t, ROM_BANK_SIZE> bank0, bank1;
+            std::span<uint8_t, SRAM_BANK_SIZE> sramBank;
     };
 
     template<SRAM_TYPE RamType = SRAM_TYPE::NONE, MBC_HARDWARE AdditionalHardware = MBC_HARDWARE::NONE>
