@@ -90,6 +90,22 @@ void Cartridge::setMBC(MBC_TYPE mbcType, uint8_t encodedRomSize, uint8_t encoded
             mbc.emplace<MBC3<SRAM_TYPE::BATTERY_BUFFERED, MBC_HARDWARE::RTC>>(rom, encodedRomSize, encodedRamSize);
         break;
 
+        case MBC_TYPE::MBC5:
+            mbc.emplace<MBC5<>>(rom, encodedRomSize, encodedRamSize);
+        break;
+        case MBC_TYPE::MBC5_RAM:
+            mbc.emplace<MBC5<SRAM_TYPE::UNBUFFERED>>(rom, encodedRomSize, encodedRamSize);
+        break;
+        case MBC_TYPE::MBC5_RAM_BATTERY:
+            mbc.emplace<MBC5<SRAM_TYPE::BATTERY_BUFFERED>>(rom, encodedRomSize, encodedRamSize);
+        break;
+        case MBC_TYPE::MBC5_RUMBLE:
+            mbc.emplace<MBC5<SRAM_TYPE::NONE, MBC_HARDWARE::RUMBLE>>(rom, encodedRomSize, encodedRamSize);
+        break;
+        case MBC_TYPE::MBC5_RUMBLE_RAM_BATTERY:
+            mbc.emplace<MBC5<SRAM_TYPE::BATTERY_BUFFERED, MBC_HARDWARE::RUMBLE>>(rom, encodedRomSize, encodedRamSize);
+        break;
+
         default: break;
     }
 }

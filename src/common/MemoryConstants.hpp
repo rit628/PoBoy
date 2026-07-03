@@ -107,27 +107,32 @@ namespace Memory {
 
     enum class MBC_TYPE : uint8_t {
         MBC0                            = 0x00,
+        MBC0_RAM                        = 0x08,
+        MBC0_RAM_BATTERY                = 0x09,
+
         MBC1                            = 0x01,
         MBC1_RAM                        = 0x02,
         MBC1_RAM_BATTERY                = 0x03,
-        MBC2                            = 0x05,
-        MBC2_BATTERY                    = 0x06,
-        MBC0_RAM                        = 0x08,
-        MBC0_RAM_BATTERY                = 0x09,
         MMM01                           = 0x0B,
         MMM01_RAM                       = 0x0C,
         MMM01_RAM_BATTERY               = 0x0D,
-        MBC3_RTC                        = 0x0F,
-        MBC3_RTC_RAM_BATTERY            = 0x10,
+
+        MBC2                            = 0x05,
+        MBC2_BATTERY                    = 0x06,
+
         MBC3                            = 0x11,
         MBC3_RAM                        = 0x12,
         MBC3_RAM_BATTERY                = 0x13,
+        MBC3_RTC                        = 0x0F,
+        MBC3_RTC_RAM_BATTERY            = 0x10,
+
         MBC5                            = 0x19,
         MBC5_RAM                        = 0x1A,
         MBC5_RAM_BATTERY                = 0x1B,
         MBC5_RUMBLE                     = 0x1C,
         MBC5_RUMBLE_RAM                 = 0x1D,
         MBC5_RUMBLE_RAM_BATTERY         = 0x1E,
+
         MBC6                            = 0x20,
         MBC7_ACCELEROMETER_RAM_BATTERY  = 0x22,
         POCKET_CAMERA                   = 0xFC,
@@ -174,27 +179,32 @@ namespace Memory {
         switch (code) {
             using enum MBC_TYPE;
             case MBC0: return "ROM ONLY";
+            case MBC0_RAM: return "ROM+RAM";
+            case MBC0_RAM_BATTERY: return "ROM+RAM+BATTERY";
+
             case MBC1: return "MBC1";
             case MBC1_RAM: return "MBC1+RAM";
             case MBC1_RAM_BATTERY: return "MBC1+RAM+BATTERY";
-            case MBC2: return "MBC2";
-            case MBC2_BATTERY: return "MBC2+BATTERY";
-            case MBC0_RAM: return "ROM+RAM";
-            case MBC0_RAM_BATTERY: return "ROM+RAM+BATTERY";
             case MMM01: return "MMM01";
             case MMM01_RAM: return "MMM01+RAM";
             case MMM01_RAM_BATTERY: return "MMM01+RAM+BATTERY";
-            case MBC3_RTC: return "MBC3+RTC";
-            case MBC3_RTC_RAM_BATTERY: return "MBC3+RTC+RAM+BATTERY";
+
+            case MBC2: return "MBC2";
+            case MBC2_BATTERY: return "MBC2+BATTERY";
+
             case MBC3: return "MBC3";
             case MBC3_RAM: return "MBC3+RAM";
             case MBC3_RAM_BATTERY: return "MBC3+RAM+BATTERY";
+            case MBC3_RTC: return "MBC3+RTC";
+            case MBC3_RTC_RAM_BATTERY: return "MBC3+RTC+RAM+BATTERY";
+
             case MBC5: return "MBC5";
             case MBC5_RAM: return "MBC5+RAM";
             case MBC5_RAM_BATTERY: return "MBC5+RAM+BATTERY";
             case MBC5_RUMBLE: return "MBC5+RUMBLE";
             case MBC5_RUMBLE_RAM: return "MBC5+RUMBLE+RAM";
             case MBC5_RUMBLE_RAM_BATTERY: return "MBC5+RUMBLE+RAM+BATTERY";
+            
             case MBC6: return "MBC6";
             case MBC7_ACCELEROMETER_RAM_BATTERY: return "MBC7+ACCELEROMETER+RAM+BATTERY";
             case POCKET_CAMERA: return "POCKET CAMERA";
