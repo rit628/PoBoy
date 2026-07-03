@@ -12,6 +12,7 @@ namespace Memory {
         public:
             MMU(Interrupts::IMU& imu, Graphics::PPU& ppu);
     
+            void tick(uint8_t tCycles);
             CartridgeMetadata loadRom(const std::filesystem::path& romFile);
             uint8_t read(uint16_t address);
             void write(uint16_t address, uint8_t value);

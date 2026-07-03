@@ -117,7 +117,7 @@ namespace Memory {
         MMM01                           = 0x0B,
         MMM01_RAM                       = 0x0C,
         MMM01_RAM_BATTERY               = 0x0D,
-        MBC3_RTC_BATTERY                = 0x0F,
+        MBC3_RTC                        = 0x0F,
         MBC3_RTC_RAM_BATTERY            = 0x10,
         MBC3                            = 0x11,
         MBC3_RAM                        = 0x12,
@@ -184,7 +184,7 @@ namespace Memory {
             case MMM01: return "MMM01";
             case MMM01_RAM: return "MMM01+RAM";
             case MMM01_RAM_BATTERY: return "MMM01+RAM+BATTERY";
-            case MBC3_RTC_BATTERY: return "MBC3+RTC+BATTERY";
+            case MBC3_RTC: return "MBC3+RTC";
             case MBC3_RTC_RAM_BATTERY: return "MBC3+RTC+RAM+BATTERY";
             case MBC3: return "MBC3";
             case MBC3_RAM: return "MBC3+RAM";

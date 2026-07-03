@@ -1,5 +1,6 @@
 #pragma once
 #include "MemoryConstants.hpp"
+#include <array>
 #include <cstdint>
 #include <span>
 #include <variant>
@@ -19,15 +20,16 @@ namespace Memory {
             uint8_t readBank1(uint16_t address);
             template<typename Self>
             void writeBank1(this Self&& self, uint16_t address, uint8_t value);
-            uint8_t readSRAM(uint16_t address);
-            void writeSRAM(uint16_t address, uint8_t value);
+            template<typename Self>
+            uint8_t readSRAM(this Self&& self, uint16_t address);
+            template<typename Self>
+            void writeSRAM(this Self&& self, uint16_t address, uint8_t value);
 
         protected:
             MBC(std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize);
 
             std::span<uint8_t> rom;
             uint8_t encodedRomSize = 0, encodedRamSize = 0;
-            bool ramEnabled = false;
 
             std::vector<uint8_t> sram;
             std::span<uint8_t, ROM_BANK_SIZE> bank0, bank1;
@@ -41,8 +43,9 @@ namespace Memory {
             MBC0(std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize);
 
         private:
-            void handleWrite(uint16_t address, uint8_t value);
-
+            void handleBankWrite(uint16_t address, uint8_t value);
+            uint8_t readMappedHardware(uint16_t address);
+            void writeMappedHardware(uint16_t address, uint8_t value);
     };
 
     template<SRAM_TYPE RamType = SRAM_TYPE::NONE, MBC_HARDWARE AdditionalHardware = MBC_HARDWARE::NONE>
@@ -57,13 +60,45 @@ namespace Memory {
             static constexpr uint16_t RAM_BANK_SWITCH_REGION_END    = 0x6000;
             static constexpr uint16_t MODE_FLAG_REGION_END          = 0x8000;
 
-            void handleWrite(uint16_t address, uint8_t value);
+            void handleBankWrite(uint16_t address, uint8_t value);
+            uint8_t readMappedHardware(uint16_t address);
+            void writeMappedHardware(uint16_t address, uint8_t value);
             void updateBanks();
 
             uint8_t romBankNumber = 1;
             uint8_t ramBankNumber = 1;
+            bool ramEnabled = false;
             bool modeFlag = false;
+    };
 
+    template<SRAM_TYPE RamType = SRAM_TYPE::NONE, MBC_HARDWARE AdditionalHardware = MBC_HARDWARE::NONE>
+    class MBC3 : public MBC<RamType, AdditionalHardware> {
+        friend class MBC<RamType, AdditionalHardware>;
+        public:
+            MBC3(std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize);
+            void tick();
+
+        private:
+            static constexpr uint16_t ENABLE_RAM_AND_RTC_REGISTER_REGION_END        = 0x2000;
+            static constexpr uint16_t ROM_BANK_SWITCH_REGION_END                    = 0x4000;
+            static constexpr uint16_t RAM_BANK_AND_RTC_REGISTER_SWITCH_REGION_END   = 0x6000;
+            static constexpr uint16_t RTC_DATA_LATCH_REGION_END                     = 0x8000;
+            static constexpr uint32_t CYCLES_PER_SECOND                             = 4194304; // synced with soc clock
+            static constexpr uint8_t  RTC_HALT_BIT                                  = 0x40;
+
+            void handleBankWrite(uint16_t address, uint8_t value);
+            uint8_t readMappedHardware(uint16_t address);
+            void writeMappedHardware(uint16_t address, uint8_t value);
+
+            uint8_t romBankNumber = 1;
+            uint8_t ramBankNumber = 1;
+            bool ramEnabled = false;
+
+            uint32_t cycleCount = 0;
+            bool latchPrimed = false;
+            uint8_t selectedRegister = 0;
+            std::array<uint8_t, 5> rtcRegisters{}, rtcRegisterLatches{}; // rtcS, rtcM, rtcH, rtcDL, rtcDH
+            static constexpr std::array<uint8_t, 5> rtcMasks = {0x3F, 0x3F, 0x1F, 0xFF, 0xC1};
     };
     
     using MemoryBankController = std::variant<MBC0<>
@@ -71,7 +106,12 @@ namespace Memory {
                                             , MBC0<SRAM_TYPE::BATTERY_BUFFERED>
                                             , MBC1<>
                                             , MBC1<SRAM_TYPE::UNBUFFERED>
-                                            , MBC1<SRAM_TYPE::BATTERY_BUFFERED>>;
+                                            , MBC1<SRAM_TYPE::BATTERY_BUFFERED>
+                                            , MBC3<>
+                                            , MBC3<SRAM_TYPE::UNBUFFERED>
+                                            , MBC3<SRAM_TYPE::BATTERY_BUFFERED>
+                                            , MBC3<SRAM_TYPE::NONE, MBC_HARDWARE::RTC>
+                                            , MBC3<SRAM_TYPE::BATTERY_BUFFERED, MBC_HARDWARE::RTC>>;
 
 }
 

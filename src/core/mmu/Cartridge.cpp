@@ -6,6 +6,17 @@
 
 using namespace Memory;
 
+template<class... Ts>
+struct overloaded : Ts... { using Ts::operator()...; };
+
+void Cartridge::tick() {
+    using enum MBC_HARDWARE;
+    std::visit(overloaded {
+        []<SRAM_TYPE R> (MBC3<R, RTC>&& mbc) { mbc.tick(); },
+        [](auto&&) {}
+    }, mbc);
+}
+
 CartridgeMetadata Cartridge::loadRom(const std::filesystem::path& romFile) {
     std::ifstream romData(romFile);
     auto metadata = readRomMetadata(romData);
@@ -44,23 +55,39 @@ CartridgeMetadata Cartridge::readRomMetadata(std::ifstream& romData) {
 void Cartridge::setMBC(MBC_TYPE mbcType, uint8_t encodedRomSize, uint8_t encodedRamSize) {
     switch (mbcType) {
         case MBC_TYPE::MBC0:
-            mbc = MBC0<>(rom, encodedRomSize, encodedRamSize);
+            mbc.emplace<MBC0<>>(rom, encodedRomSize, encodedRamSize);
         break;
         case MBC_TYPE::MBC0_RAM:
-            mbc = MBC0<SRAM_TYPE::UNBUFFERED>(rom, encodedRomSize, encodedRamSize);
+            mbc.emplace<MBC0<SRAM_TYPE::UNBUFFERED>>(rom, encodedRomSize, encodedRamSize);
         break;
         case MBC_TYPE::MBC0_RAM_BATTERY:
-            mbc = MBC0<SRAM_TYPE::BATTERY_BUFFERED>(rom, encodedRomSize, encodedRamSize);
+            mbc.emplace<MBC0<SRAM_TYPE::BATTERY_BUFFERED>>(rom, encodedRomSize, encodedRamSize);
         break;
 
         case MBC_TYPE::MBC1:
-            mbc = MBC1<>(rom, encodedRomSize, encodedRamSize);
+            mbc.emplace<MBC1<>>(rom, encodedRomSize, encodedRamSize);
         break;
         case MBC_TYPE::MBC1_RAM:
-            mbc = MBC1<SRAM_TYPE::UNBUFFERED>(rom, encodedRomSize, encodedRamSize);
+            mbc.emplace<MBC1<SRAM_TYPE::UNBUFFERED>>(rom, encodedRomSize, encodedRamSize);
         break;
         case MBC_TYPE::MBC1_RAM_BATTERY:
-            mbc = MBC1<SRAM_TYPE::BATTERY_BUFFERED>(rom, encodedRomSize, encodedRamSize);
+            mbc.emplace<MBC1<SRAM_TYPE::BATTERY_BUFFERED>>(rom, encodedRomSize, encodedRamSize);
+        break;
+        
+        case MBC_TYPE::MBC3:
+            mbc.emplace<MBC3<>>(rom, encodedRomSize, encodedRamSize);
+        break;
+        case MBC_TYPE::MBC3_RAM:
+            mbc.emplace<MBC3<SRAM_TYPE::UNBUFFERED>>(rom, encodedRomSize, encodedRamSize);
+        break;
+        case MBC_TYPE::MBC3_RAM_BATTERY:
+            mbc.emplace<MBC3<SRAM_TYPE::BATTERY_BUFFERED>>(rom, encodedRomSize, encodedRamSize);
+        break;
+        case MBC_TYPE::MBC3_RTC:
+            mbc.emplace<MBC3<SRAM_TYPE::NONE, MBC_HARDWARE::RTC>>(rom, encodedRomSize, encodedRamSize);
+        break;
+        case MBC_TYPE::MBC3_RTC_RAM_BATTERY:
+            mbc.emplace<MBC3<SRAM_TYPE::BATTERY_BUFFERED, MBC_HARDWARE::RTC>>(rom, encodedRomSize, encodedRamSize);
         break;
 
         default: break;

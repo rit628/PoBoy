@@ -10,6 +10,7 @@ namespace Memory {
 
     class Cartridge {
         public:
+            void tick();
             CartridgeMetadata loadRom(const std::filesystem::path& romFile);
 
             uint8_t readBank0(uint16_t address);
