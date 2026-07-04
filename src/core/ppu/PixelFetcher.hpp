@@ -36,7 +36,6 @@ namespace Graphics {
             template<typename Self>
             void executePush(this Self&& self);
 
-        protected:
             STATE state = STATE::GET_TILE;
             bool onSecondDot = false;
 

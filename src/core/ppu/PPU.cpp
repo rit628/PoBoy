@@ -53,15 +53,19 @@ void PPU::scanOAM() {
 }
 
 bool PPU::disabled() {
-    if (!testFlags(lcdControl, LCDC_FLAG::LCD_AND_PPU_ENABLE)) {
+    bool lcdDisabled = !testFlags(lcdControl, LCDC_FLAG::LCD_AND_PPU_ENABLE);
+    if (lcdDisabled && mode == MODE::VBLANK) { // lcd can only be disabled during vblank
+        /* reset ppu state and render blank frame to emulate lcd shutting off */
         frameDotsElapsed = 0;
         lineDotsElapsed = 0;
         currentLine = 0;
         mode = MODE::OAM_SCAN;
         mixer.scanlineReset();
-        return true;
+        auto& frame = mixer.extractFrame();
+        frame.fill(0);
+        renderFrame(frame);
     }
-    return false;
+    return lcdDisabled;
 }
 
 void PPU::updateStatus() {
