@@ -2,12 +2,15 @@
 #include "MBC.hpp"
 #include "MemoryConstants.hpp"
 #include <cstdint>
+#include <filesystem>
+#include <fstream>
 
 namespace Memory {
 
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
-    MBC<RamType, AdditionalHardware>::MBC(std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize)
-                                         : rom(rom)
+    MBC<RamType, AdditionalHardware>::MBC(std::filesystem::path romFile, std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize)
+                                         : saveFile(romFile.replace_extension("sav"))
+                                         , rom(rom)
                                          , romBankCount(decodeRomBankCount(encodedRomSize))
                                          , ramBankCount(decodeRamBankCount(encodedRamSize))
                                          , bank0(rom.subspan<0, ROM_BANK_SIZE>())
@@ -17,8 +20,25 @@ namespace Memory {
         if constexpr (hasSRAM()) {
             auto ramSize = decodeRamSize(encodedRamSize);
             sram.resize(ramSize, 0xFF);
-            if (ramSize < SRAM_BANK_SIZE) return; // prevent span ub for mbc2 and roms with header mismatch
-            sramBank = std::span(sram).subspan<0, SRAM_BANK_SIZE>();
+            if (ramSize >= SRAM_BANK_SIZE) { // prevent span ub for mbc2 and roms with header mismatch
+                sramBank = std::span(sram).subspan<0, SRAM_BANK_SIZE>();
+            }
+        }
+        if constexpr (RamType == SRAM_TYPE::BATTERY_BUFFERED) {
+            if (std::filesystem::exists(saveFile)) {
+                std::ifstream saveData{saveFile};
+                saveData.read(reinterpret_cast<char*>(sram.data()), sram.size());
+                saveData.close();
+            }
+        }
+    }
+
+    template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
+    MBC<RamType, AdditionalHardware>::~MBC() {
+        if constexpr (RamType == SRAM_TYPE::BATTERY_BUFFERED) {
+            std::ofstream saveData{saveFile};
+            saveData.write(reinterpret_cast<char*>(sram.data()), sram.size());
+            saveData.close();
         }
     }
 
@@ -104,8 +124,8 @@ namespace Memory {
 
     /* MBC0 */
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
-    MBC0<RamType, AdditionalHardware>::MBC0(std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize)
-                                     : MBC<RamType, AdditionalHardware>(rom, encodedRomSize, encodedRamSize) {}
+    MBC0<RamType, AdditionalHardware>::MBC0(std::filesystem::path romFile, std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize)
+                                     : MBC<RamType, AdditionalHardware>(romFile, rom, encodedRomSize, encodedRamSize) {}
 
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
     inline void MBC0<RamType, AdditionalHardware>::handleBankWrite(uint16_t, uint8_t) { /* no MBC chip */ }
@@ -122,8 +142,8 @@ namespace Memory {
 
     /* MBC1 */
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
-    MBC1<RamType, AdditionalHardware>::MBC1(std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize)
-                                     : MBC<RamType, AdditionalHardware>(rom, encodedRomSize, encodedRamSize) {}
+    MBC1<RamType, AdditionalHardware>::MBC1(std::filesystem::path romFile, std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize)
+                                     : MBC<RamType, AdditionalHardware>(romFile, rom, encodedRomSize, encodedRamSize) {}
 
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
     inline void MBC1<RamType, AdditionalHardware>::handleBankWrite(uint16_t address, uint8_t value) {
@@ -159,8 +179,8 @@ namespace Memory {
 
     /* MBC2 */
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
-    MBC2<RamType, AdditionalHardware>::MBC2(std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize)
-                                     : MBC<RamType, AdditionalHardware>(rom, encodedRomSize, encodedRamSize)
+    MBC2<RamType, AdditionalHardware>::MBC2(std::filesystem::path romFile, std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize)
+                                     : MBC<RamType, AdditionalHardware>(romFile, rom, encodedRomSize, encodedRamSize)
     { 
         /* mbc2 always comes with 512 half bytes of sram */
         this->sram.resize(512, 0xFF);
@@ -194,8 +214,8 @@ namespace Memory {
 
     /* MBC3 */
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
-    MBC3<RamType, AdditionalHardware>::MBC3(std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize)
-                                     : MBC<RamType, AdditionalHardware>(rom, encodedRomSize, encodedRamSize) {}
+    MBC3<RamType, AdditionalHardware>::MBC3(std::filesystem::path romFile, std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize)
+                                     : MBC<RamType, AdditionalHardware>(romFile, rom, encodedRomSize, encodedRamSize) {}
 
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
     inline constexpr bool MBC3<RamType, AdditionalHardware>::hasRTC() {
@@ -295,8 +315,8 @@ namespace Memory {
 
     /* MBC5 */
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
-    MBC5<RamType, AdditionalHardware>::MBC5(std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize)
-                                     : MBC<RamType, AdditionalHardware>(rom, encodedRomSize, encodedRamSize) {}
+    MBC5<RamType, AdditionalHardware>::MBC5(std::filesystem::path romFile, std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize)
+                                     : MBC<RamType, AdditionalHardware>(romFile, rom, encodedRomSize, encodedRamSize) {}
 
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
     inline void MBC5<RamType, AdditionalHardware>::handleBankWrite(uint16_t address, uint8_t value) {

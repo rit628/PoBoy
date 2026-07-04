@@ -2,6 +2,7 @@
 #include "MemoryConstants.hpp"
 #include <array>
 #include <cstdint>
+#include <filesystem>
 #include <span>
 #include <variant>
 #include <vector>
@@ -26,7 +27,8 @@ namespace Memory {
             void writeSRAM(this Self&& self, uint16_t address, uint8_t value);
 
         protected:
-            MBC(std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize);
+            MBC(std::filesystem::path romFile, std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize);
+            ~MBC();
             static constexpr bool hasSRAM();
             static constexpr bool hasHardware();
             static constexpr bool hasMappedIO();
@@ -35,6 +37,7 @@ namespace Memory {
             void setRamBank(uint16_t bankNumber);
             bool enableRam(uint8_t ramGateRegister);
 
+            std::filesystem::path saveFile;
             std::span<uint8_t> rom;
             uint16_t romBankCount;
             uint8_t ramBankCount;
@@ -49,7 +52,7 @@ namespace Memory {
         using Base = MBC<RamType, AdditionalHardware>;
         friend class MBC<RamType, AdditionalHardware>;
         public:
-            MBC0(std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize);
+            MBC0(std::filesystem::path romFile, std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize);
 
         private:
             void handleBankWrite(uint16_t address, uint8_t value);
@@ -62,7 +65,7 @@ namespace Memory {
         using Base = MBC<RamType, AdditionalHardware>;
         friend class MBC<RamType, AdditionalHardware>;
         public:
-            MBC1(std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize);
+            MBC1(std::filesystem::path romFile, std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize);
 
         private:
             static constexpr uint16_t ENABLE_RAM_REGION_END         = 0x2000;
@@ -85,7 +88,7 @@ namespace Memory {
         using Base = MBC<RamType, AdditionalHardware>;
         friend class MBC<RamType, AdditionalHardware>;
         public:
-            MBC2(std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize);
+            MBC2(std::filesystem::path romFile, std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize);
 
         private:
             static constexpr uint16_t ENABLE_RAM_AND_ROM_BANK_SWITCH_REGION_END = 0x4000;
@@ -103,7 +106,7 @@ namespace Memory {
         using Base = MBC<RamType, AdditionalHardware>;
         friend class MBC<RamType, AdditionalHardware>;
         public:
-            MBC3(std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize);
+            MBC3(std::filesystem::path romFile, std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize);
             static constexpr bool hasRTC();
             void tick() requires (hasRTC());
 
@@ -136,7 +139,7 @@ namespace Memory {
         using Base = MBC<RamType, AdditionalHardware>;
         friend class MBC<RamType, AdditionalHardware>;
         public:
-            MBC5(std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize);
+            MBC5(std::filesystem::path romFile, std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize);
 
         private:
             static constexpr uint16_t ENABLE_RAM_REGION_END         = 0x2000;

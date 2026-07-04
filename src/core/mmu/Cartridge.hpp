@@ -22,10 +22,10 @@ namespace Memory {
     
         private:
             CartridgeMetadata readRomMetadata(std::ifstream& romData);
-            void setMBC(MBC_TYPE mbcType, uint8_t encodedRomSize, uint8_t encodedRamSize);
+            void setMBC(const std::filesystem::path& romFile, MBC_TYPE mbcType, uint8_t encodedRomSize, uint8_t encodedRamSize);
 
             std::vector<uint8_t> rom = std::vector<uint8_t>(2 * ROM_BANK_SIZE, 0xFF);
-            MemoryBankController mbc = MBC0<>(rom, 0, 0);
+            MemoryBankController mbc = MBC0<>("", rom, 0, 0);
 
     };
 

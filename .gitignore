@@ -2,9 +2,10 @@
 logs
 *.log
 
-# Test Roms
+# Test Roms and Save Files
 *.gb
 *.gbc
+*.sav
 
 # SST Tests
 **/sst/*.json
