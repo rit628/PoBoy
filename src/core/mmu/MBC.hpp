@@ -33,9 +33,11 @@ namespace Memory {
             template<uint8_t TargetBank>
             void setRomBank(uint16_t bankNumber);
             void setRamBank(uint16_t bankNumber);
+            bool enableRam(uint8_t ramGateRegister);
 
             std::span<uint8_t> rom;
-            uint8_t encodedRomSize = 0, encodedRamSize = 0;
+            uint16_t romBankCount;
+            uint8_t ramBankCount;
 
             std::vector<uint8_t> sram;
             std::span<uint8_t, ROM_BANK_SIZE> bank0, bank1;
@@ -71,10 +73,9 @@ namespace Memory {
             void handleBankWrite(uint16_t address, uint8_t value);
             uint8_t readMappedIO(uint16_t address) requires (Base::hasMappedIO());
             void writeMappedIO(uint16_t address, uint8_t value) requires (Base::hasMappedIO());
-            void updateBanks();
 
             uint8_t romBankNumber = 1;
-            uint8_t ramBankNumber = 1;
+            uint8_t ramBankNumber = 0;
             bool ramEnabled = false;
             bool modeFlag = false;
     };
@@ -120,7 +121,7 @@ namespace Memory {
             void latchRtcRegisters(uint8_t latchCommand);
 
             uint8_t romBankNumber = 1;
-            uint8_t ramBankNumber = 1;
+            uint8_t ramBankNumber = 0;
             bool ramEnabled = false;
 
             uint32_t cycleCount = 0;
@@ -148,7 +149,7 @@ namespace Memory {
             void writeMappedIO(uint16_t address, uint8_t value) requires (Base::hasMappedIO());
 
             uint16_t romBankNumber = 1;
-            uint8_t ramBankNumber = 1;
+            uint8_t ramBankNumber = 0;
             bool ramEnabled = false;
     };
     
@@ -160,7 +161,7 @@ namespace Memory {
                                             , MBC1<SRAM_TYPE::UNBUFFERED>
                                             , MBC1<SRAM_TYPE::BATTERY_BUFFERED>
                                             
-                                            , MBC2<>
+                                            , MBC2<SRAM_TYPE::UNBUFFERED>
                                             , MBC2<SRAM_TYPE::BATTERY_BUFFERED>
 
                                             , MBC3<>

@@ -117,7 +117,7 @@ namespace Memory {
         MMM01_RAM                       = 0x0C,
         MMM01_RAM_BATTERY               = 0x0D,
 
-        MBC2                            = 0x05,
+        MBC2_RAM                        = 0x05,
         MBC2_RAM_BATTERY                = 0x06,
 
         MBC3                            = 0x11,
@@ -175,6 +175,10 @@ namespace Memory {
         return 0;
     }
 
+    constexpr uint32_t decodeRamBankCount(uint8_t encodedSize) {
+        return decodeRamSize(encodedSize) / SRAM_BANK_SIZE;
+    }
+
     constexpr std::string decodeCartridgeType(MBC_TYPE code) {
         switch (code) {
             using enum MBC_TYPE;
@@ -189,7 +193,7 @@ namespace Memory {
             case MMM01_RAM: return "MMM01+RAM";
             case MMM01_RAM_BATTERY: return "MMM01+RAM+BATTERY";
 
-            case MBC2: return "MBC2";
+            case MBC2_RAM: return "MBC2+RAM";
             case MBC2_RAM_BATTERY: return "MBC2+RAM+BATTERY";
 
             case MBC3: return "MBC3";
