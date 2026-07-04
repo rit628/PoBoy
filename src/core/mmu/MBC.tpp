@@ -12,7 +12,9 @@ namespace Memory {
                                          , sramBank(rom.subspan<0, SRAM_BANK_SIZE>()) // just to prevent some builds from throwing a fit about ub
     {
         if constexpr (hasSRAM()) {
-            sram.resize(decodeRamSize(encodedRamSize), 0xFF);
+            auto ramSize = decodeRamSize(encodedRamSize);
+            sram.resize(ramSize, 0xFF);
+            if (ramSize < SRAM_BANK_SIZE) return; // prevent span ub for mbc2 and roms with header mismatch
             sramBank = std::span(sram).subspan<0, SRAM_BANK_SIZE>();
         }
     }
@@ -43,7 +45,7 @@ namespace Memory {
     template<typename Self>
     inline uint8_t MBC<RamType, AdditionalHardware>::readSRAM(this Self&& self, uint16_t address) {
         if constexpr (hasMappedIO()) {
-            // redundant ram size check for sketchy roms
+            // redundant ram size check for roms with header mismatch
             return (self.encodedRamSize == 0) ? 0xFF : self.readMappedIO(address);
         }
         else {
@@ -55,7 +57,7 @@ namespace Memory {
     template<typename Self>
     inline void MBC<RamType, AdditionalHardware>::writeSRAM(this Self&& self, uint16_t address, uint8_t value) {
         if constexpr (hasMappedIO()) {
-            // redundant ram size check for sketchy roms
+            // redundant ram size check for roms with header mismatch
             return (self.encodedRamSize == 0) ? void() : self.writeMappedIO(address, value);
         }
     }
@@ -116,7 +118,7 @@ namespace Memory {
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
     inline void MBC1<RamType, AdditionalHardware>::handleBankWrite(uint16_t address, uint8_t value) {
         if (address < ENABLE_RAM_REGION_END) {
-            ramEnabled = value & 0x0A;
+            ramEnabled = (value & 0x0A) == 0x0A;
         }
         else if (address < ROM_BANK_SWITCH_REGION_END) {
             uint8_t bankMask = (0xFF >> (7 - this->encodedRomSize)) & 0x1F; // bits 5 and 6 are determined by ram bank number
@@ -153,6 +155,37 @@ namespace Memory {
     inline void MBC1<RamType, AdditionalHardware>::writeMappedIO(uint16_t address, uint8_t value) requires (Base::hasMappedIO()) {
         if (!ramEnabled) return;
         this->sramBank[address] = value;
+    }
+
+    /* MBC2 */
+    template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
+    MBC2<RamType, AdditionalHardware>::MBC2(std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize)
+                                     : MBC<RamType, AdditionalHardware>(rom, encodedRomSize, encodedRamSize) {}
+
+    template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
+    inline void MBC2<RamType, AdditionalHardware>::handleBankWrite(uint16_t address, uint8_t value) {
+        if (address < ENABLE_RAM_AND_ROM_BANK_SWITCH_REGION_END) {
+            bool writeRomBank = (address >> 8) & 1;
+            if (writeRomBank) {
+                romBankNumber = (value > 0) ? value & 0x0F : 1;
+                this->template setRomBank<1>(romBankNumber);
+            }
+            else {
+                ramEnabled = (value & 0x0A) == 0x0A;
+            }
+        }
+    }
+
+    template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
+    inline uint8_t MBC2<RamType, AdditionalHardware>::readMappedIO(uint16_t address) requires (Base::hasMappedIO()) {
+        if (!ramEnabled) return 0xFF;
+        return this->sram[address & 0x1FF] | 0xF0; // mbc2 ram only has 512 4 bit addresses
+    }
+
+    template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
+    inline void MBC2<RamType, AdditionalHardware>::writeMappedIO(uint16_t address, uint8_t value) requires (Base::hasMappedIO()) {
+        if (!ramEnabled) return;
+        this->sram[address & 0x1FF] = value & 0x0F; // mbc2 ram only has 512 4 bit addresses
     }
 
     /* MBC3 */
@@ -192,7 +225,7 @@ namespace Memory {
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
     inline void MBC3<RamType, AdditionalHardware>::handleBankWrite(uint16_t address, uint8_t value) {
         if (address < ENABLE_RAM_AND_RTC_REGISTER_REGION_END) {
-            ramEnabled = value & 0x0A;
+            ramEnabled = (value & 0x0A) == 0x0A;
         }
         else if (address < ROM_BANK_SWITCH_REGION_END) {
             romBankNumber = (value > 0) ? value & 0x7F : 1;
@@ -264,7 +297,7 @@ namespace Memory {
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
     inline void MBC5<RamType, AdditionalHardware>::handleBankWrite(uint16_t address, uint8_t value) {
         if (address < ENABLE_RAM_REGION_END) {
-            ramEnabled = value & 0x0A;
+            ramEnabled = (value & 0x0A) == 0x0A;
         }
         else if (address < ROM_BANK_SWITCH_LO_REGION_END) {
             romBankNumber = (romBankNumber & 0xFF00) | value;

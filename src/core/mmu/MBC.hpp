@@ -80,6 +80,24 @@ namespace Memory {
     };
 
     template<SRAM_TYPE RamType = SRAM_TYPE::NONE, MBC_HARDWARE AdditionalHardware = MBC_HARDWARE::NONE>
+    class MBC2 : public MBC<RamType, AdditionalHardware> {
+        using Base = MBC<RamType, AdditionalHardware>;
+        friend class MBC<RamType, AdditionalHardware>;
+        public:
+            MBC2(std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize);
+
+        private:
+            static constexpr uint16_t ENABLE_RAM_AND_ROM_BANK_SWITCH_REGION_END = 0x4000;
+
+            void handleBankWrite(uint16_t address, uint8_t value);
+            uint8_t readMappedIO(uint16_t address) requires (Base::hasMappedIO());
+            void writeMappedIO(uint16_t address, uint8_t value) requires (Base::hasMappedIO());
+
+            uint8_t romBankNumber = 1;
+            bool ramEnabled = false;
+    };
+
+    template<SRAM_TYPE RamType = SRAM_TYPE::NONE, MBC_HARDWARE AdditionalHardware = MBC_HARDWARE::NONE>
     class MBC3 : public MBC<RamType, AdditionalHardware> {
         using Base = MBC<RamType, AdditionalHardware>;
         friend class MBC<RamType, AdditionalHardware>;
@@ -137,14 +155,20 @@ namespace Memory {
     using MemoryBankController = std::variant<MBC0<>
                                             , MBC0<SRAM_TYPE::UNBUFFERED>
                                             , MBC0<SRAM_TYPE::BATTERY_BUFFERED>
+
                                             , MBC1<>
                                             , MBC1<SRAM_TYPE::UNBUFFERED>
                                             , MBC1<SRAM_TYPE::BATTERY_BUFFERED>
+                                            
+                                            , MBC2<>
+                                            , MBC2<SRAM_TYPE::BATTERY_BUFFERED>
+
                                             , MBC3<>
                                             , MBC3<SRAM_TYPE::UNBUFFERED>
                                             , MBC3<SRAM_TYPE::BATTERY_BUFFERED>
                                             , MBC3<SRAM_TYPE::NONE, MBC_HARDWARE::RTC>
                                             , MBC3<SRAM_TYPE::BATTERY_BUFFERED, MBC_HARDWARE::RTC>
+                                            
                                             , MBC5<>
                                             , MBC5<SRAM_TYPE::UNBUFFERED>
                                             , MBC5<SRAM_TYPE::BATTERY_BUFFERED>

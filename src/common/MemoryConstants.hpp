@@ -118,7 +118,7 @@ namespace Memory {
         MMM01_RAM_BATTERY               = 0x0D,
 
         MBC2                            = 0x05,
-        MBC2_BATTERY                    = 0x06,
+        MBC2_RAM_BATTERY                = 0x06,
 
         MBC3                            = 0x11,
         MBC3_RAM                        = 0x12,
@@ -190,7 +190,7 @@ namespace Memory {
             case MMM01_RAM_BATTERY: return "MMM01+RAM+BATTERY";
 
             case MBC2: return "MBC2";
-            case MBC2_BATTERY: return "MBC2+BATTERY";
+            case MBC2_RAM_BATTERY: return "MBC2+RAM+BATTERY";
 
             case MBC3: return "MBC3";
             case MBC3_RAM: return "MBC3+RAM";
@@ -204,7 +204,7 @@ namespace Memory {
             case MBC5_RUMBLE: return "MBC5+RUMBLE";
             case MBC5_RUMBLE_RAM: return "MBC5+RUMBLE+RAM";
             case MBC5_RUMBLE_RAM_BATTERY: return "MBC5+RUMBLE+RAM+BATTERY";
-            
+
             case MBC6: return "MBC6";
             case MBC7_ACCELEROMETER_RAM_BATTERY: return "MBC7+ACCELEROMETER+RAM+BATTERY";
             case POCKET_CAMERA: return "POCKET CAMERA";

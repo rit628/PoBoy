@@ -73,6 +73,13 @@ void Cartridge::setMBC(MBC_TYPE mbcType, uint8_t encodedRomSize, uint8_t encoded
         case MBC_TYPE::MBC1_RAM_BATTERY:
             mbc.emplace<MBC1<SRAM_TYPE::BATTERY_BUFFERED>>(rom, encodedRomSize, encodedRamSize);
         break;
+
+        case MBC_TYPE::MBC2:
+            mbc.emplace<MBC2<>>(rom, encodedRomSize, encodedRamSize);
+        break;
+        case MBC_TYPE::MBC2_RAM_BATTERY:
+            mbc.emplace<MBC2<SRAM_TYPE::BATTERY_BUFFERED>>(rom, encodedRomSize, encodedRamSize);
+        break;
         
         case MBC_TYPE::MBC3:
             mbc.emplace<MBC3<>>(rom, encodedRomSize, encodedRamSize);
