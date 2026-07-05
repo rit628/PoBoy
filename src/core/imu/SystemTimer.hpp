@@ -26,8 +26,9 @@ namespace Interrupts {
     
             IMU& imu;
     
-            uint16_t systemCounter = 0;
-            uint8_t divider = 0;        // DIV register
+            bool currTimaBit = 0;
+            uint8_t timaReloadTCycle = 4;
+            uint16_t systemCounter = 0; // DIV register (bits 15-8) and clock counter (bits 7-0)
             uint8_t timerCounter = 0;   // TIMA register
             uint8_t timerModulo = 0;    // TMA register
             /* TAC register components */
