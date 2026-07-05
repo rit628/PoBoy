@@ -7,27 +7,6 @@ using namespace Interrupts;
 
 SystemTimer::SystemTimer(IMU& imu) : imu(imu) {}
 
-void SystemTimer::tick(uint8_t tCycles) {
-    for (uint8_t i = 0; i < tCycles; i++) {
-        tick();
-    }
-}
-
-void SystemTimer::tick() {
-    uint16_t overflowBit = timerClocks.at(selectedClock) >> 1;
-    bool nextTimaBit = bool(++systemCounter & overflowBit) && timerEnabled;
-    bool timaTick = currTimaBit > nextTimaBit; // tick on falling edge
-    currTimaBit = nextTimaBit;
-
-    // start reload from TIMA overflow
-    if (timaTick && ++timerCounter == 0) timaReloadTCycle = 0;
-    // TIMA takes 4 cycles to reload
-    if (timaReloadTCycle != 4 && ++timaReloadTCycle == 4) {
-        timerCounter = timerModulo;
-        imu.triggerInterrupt(INTERRUPT_FLAG::TIMER);
-    }
-}
-
 template<uint16_t Register>
 uint8_t SystemTimer::readIO() {
     using namespace Memory;
@@ -53,6 +32,21 @@ template<>
 void SystemTimer::writeIO<Memory::TAC>(uint8_t value) {
     timerEnabled = value & 0b100;
     selectedClock = value & 0b011;
+}
+
+void SystemTimer::tick() {
+    uint16_t overflowBit = timerClocks.at(selectedClock) >> 1;
+    bool nextTimaBit = bool(++systemCounter & overflowBit) && timerEnabled;
+    bool timaTick = currTimaBit > nextTimaBit; // tick on falling edge
+    currTimaBit = nextTimaBit;
+
+    // start reload from TIMA overflow
+    if (timaTick && ++timerCounter == 0) timaReloadTCycle = 0;
+    // TIMA takes 4 cycles to reload
+    if (timaReloadTCycle != 4 && ++timaReloadTCycle == 4) {
+        timerCounter = timerModulo;
+        imu.triggerInterrupt(INTERRUPT_FLAG::TIMER);
+    }
 }
 
 template uint8_t SystemTimer::readIO<Memory::DIV>();

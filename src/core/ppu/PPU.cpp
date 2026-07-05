@@ -13,36 +13,6 @@ using namespace Graphics;
 PPU::PPU(Interrupts::IMU& imu, std::function<void(std::array<uint8_t, FRAMEBUFFER_SIZE>&)> renderFrame)
         : imu(imu), renderFrame(renderFrame) {}
 
-void PPU::tick(uint8_t dots) {
-    for (uint8_t i = 0; i < dots; i++) {
-        tick();
-    }
-}
-
-void PPU::tick() {
-    if (disabled()) return;
-    switch (mode) {
-        using enum MODE;
-        case OAM_SCAN:
-            scanOAM();
-        break;
-        
-        case PIXEL_TRANSFER:
-            if (lineDotsElapsed >= DOTS_PER_OAM_SCAN_MODE + DOTS_PER_RENDER_STARTUP) [[ likely ]]
-                mixer.tick();
-        break;
-
-        case HBLANK:
-            
-        break;
-
-        case VBLANK:
-            
-        break;
-    }
-    updateStatus();
-}
-
 uint8_t PPU::readVRAM(uint16_t address) {
     if (mode == MODE::PIXEL_TRANSFER && !disabled()) return 0xFF;
     return vram.at(address);
@@ -111,6 +81,30 @@ void PPU::writeIO(uint8_t value) {
 template<>
 void PPU::writeIO<Memory::STAT>(uint8_t value) {
     interruptMask = value & 0x78;   // bits 0-2 and 7 are read only
+}
+
+void PPU::tick() {
+    if (disabled()) return;
+    switch (mode) {
+        using enum MODE;
+        case OAM_SCAN:
+            scanOAM();
+        break;
+        
+        case PIXEL_TRANSFER:
+            if (lineDotsElapsed >= DOTS_PER_OAM_SCAN_MODE + DOTS_PER_RENDER_STARTUP) [[ likely ]]
+                mixer.tick();
+        break;
+
+        case HBLANK:
+            
+        break;
+
+        case VBLANK:
+            
+        break;
+    }
+    updateStatus();
 }
 
 void PPU::scanOAM() {

@@ -11,11 +11,13 @@ namespace Interrupts {
         public:
             IMU(std::function<uint8_t()> readInput);
 
-            void tick(uint8_t tCycles);
             template<uint16_t Register>
             uint8_t readIO();
             template<uint16_t Register>
             void writeIO(uint8_t value);
+            
+            void tick();
+
             void triggerInterrupt(INTERRUPT_FLAG flag);
             void enableInterrupt(INTERRUPT_FLAG flag);
     

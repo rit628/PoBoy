@@ -9,12 +9,13 @@ namespace Interrupts {
     class Joypad {
         public:
             Joypad(IMU& imu, std::function<uint8_t()> readInput);
-            void tick(uint8_t tCycles);
-            void tick();
+            
             template<uint16_t Register>
             uint8_t readIO();
             template<uint16_t Register>
             void writeIO(uint8_t value);
+            
+            void tick();
 
         private:
             IMU& imu;

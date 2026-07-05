@@ -10,11 +10,6 @@ IMU::IMU(std::function<uint8_t()> readInput)
         , joypad(*this, readInput)
         {}
 
-void IMU::tick(uint8_t tCycles) {
-    timer.tick(tCycles);
-    joypad.tick(tCycles);
-}
-
 template<uint16_t Register>
 uint8_t IMU::readIO() {
     using namespace Memory;
@@ -35,6 +30,11 @@ void IMU::writeIO(uint8_t value) {
     if constexpr (DIV <= Register && Register <= TAC) return timer.writeIO<Register>(value);
 
     if constexpr (Register == P1) return joypad.writeIO<Register>(value);
+}
+
+void IMU::tick() {
+    timer.tick();
+    joypad.tick();
 }
 
 void IMU::triggerInterrupt(INTERRUPT_FLAG flag) {

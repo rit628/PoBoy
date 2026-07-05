@@ -13,10 +13,8 @@ using namespace Memory;
 MMU::MMU(Interrupts::IMU& imu, Graphics::PPU& ppu)
         : imu(imu), ppu(ppu) {}
 
-void MMU::tick(uint8_t tCycles) {
-    for (uint8_t i = 0; i < tCycles; i++) {
-        cartridge.tick();
-    }
+void MMU::tick() {
+    cartridge.tick();
 }
 
 CartridgeMetadata MMU::loadRom(const std::filesystem::path& romFile) {

@@ -10,12 +10,6 @@ using namespace Interrupts;
 Joypad::Joypad(IMU& imu, std::function<uint8_t()> readInput)
               : imu(imu), readInput(readInput) {}
 
-void Joypad::tick(uint8_t tCycles) {
-    for (uint8_t i = 0; i < tCycles; i++) {
-        tick();
-    }
-}
-
 template<>
 uint8_t Joypad::readIO<Memory::P1>() {
     using enum P1_FLAG;

@@ -1,5 +1,6 @@
 #include "DMG.hpp"
 #include <chrono>
+#include <cstdint>
 #include <print>
 #include <thread>
 
@@ -11,9 +12,11 @@ DMG::DMG(std::function<uint8_t()> readInput, std::function<void(std::array<uint8
         {}
 
 void DMG::systemTick() {
-    mmu.tick(4);
-    imu.tick(4);
-    ppu.tick(4);
+    for (uint8_t i = 0; i < 4; i++) {
+        mmu.tick();
+        imu.tick();
+        ppu.tick();
+    }
     totalMCycles++;
 }
 

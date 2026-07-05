@@ -20,9 +20,6 @@ namespace Graphics {
 
             PPU(Interrupts::IMU& imu, std::function<void(std::array<uint8_t, FRAMEBUFFER_SIZE>&)> renderFrame);
             
-            void tick(uint8_t dots);
-            void tick();
-
             uint8_t readVRAM(uint16_t address);
             void writeVRAM(uint16_t address, uint8_t value);
             uint8_t readOAM(uint16_t address);
@@ -32,6 +29,8 @@ namespace Graphics {
             uint8_t readIO();
             template<uint16_t Register>
             void writeIO(uint8_t value);
+
+            void tick();
     
             std::span<const uint8_t, TILE_DATA_SIZE> getTileData();
             std::span<const uint8_t, 2 * TILE_MAP_SIZE> getTileMaps();

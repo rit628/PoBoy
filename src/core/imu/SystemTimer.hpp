@@ -9,12 +9,13 @@ namespace Interrupts {
     class SystemTimer {
         public:
             SystemTimer(IMU& imu);
-            void tick(uint8_t tCycles);
-            void tick();
+            
             template<uint16_t Register>
             uint8_t readIO();
             template<uint16_t Register>
             void writeIO(uint8_t value);
+            
+            void tick();
 
         private:
             static constexpr std::array<uint16_t, 4> timerClocks = {1024, 16, 64, 256};
