@@ -1,5 +1,6 @@
 #include "SystemTimer.hpp"
 #include "IMU.hpp"
+#include "MemoryConstants.hpp"
 #include <cstdint>
 
 using namespace Interrupts;
@@ -23,39 +24,41 @@ void SystemTimer::tick() {
     // TIMA takes 4 cycles to reload
     if (timaReloadTCycle != 4 && ++timaReloadTCycle == 4) {
         timerCounter = timerModulo;
-        imu.writeIF(INTERRUPT_FLAG::TIMER);
+        imu.triggerInterrupt(INTERRUPT_FLAG::TIMER);
     }
 }
 
-uint8_t SystemTimer::readDIV() {
-    return systemCounter & ~(dividerClock - 1); // DIV is upper byte of system counter
+template<uint16_t Register>
+uint8_t SystemTimer::readIO() {
+    using namespace Memory;
+    if constexpr (Register == DIV)  return systemCounter & 0xFF00; // DIV is upper byte of system counter
+    if constexpr (Register == TIMA) return timerCounter;
+    if constexpr (Register == TMA)  return timerModulo;
 }
 
-void SystemTimer::writeDIV(uint8_t) {
-    systemCounter = 0;
+template<>
+uint8_t SystemTimer::readIO<Memory::TAC>() {
+    return 0xF8 | (timerEnabled << 2) | (selectedClock & 0b011);
 }
 
-uint8_t SystemTimer::readTIMA() {
-    return timerCounter;
+template<uint16_t Register>
+void SystemTimer::writeIO(uint8_t value) {
+    using namespace Memory;
+    if constexpr (Register == DIV)  return void(systemCounter = 0);
+    if constexpr (Register == TIMA) return void(timerCounter = value);
+    if constexpr (Register == TMA)  return void(timerModulo = value);
 }
 
-void SystemTimer::writeTIMA(uint8_t value) {
-    timerCounter = value;
-}
-
-uint8_t SystemTimer::readTMA() {
-    return timerModulo;
-}
-
-void SystemTimer::writeTMA(uint8_t value) {
-    timerModulo = value;
-}
-
-uint8_t SystemTimer::readTAC() {
-    return (timerEnabled << 2) | (selectedClock & 0b011);
-}
-
-void SystemTimer::writeTAC(uint8_t value) {
+template<>
+void SystemTimer::writeIO<Memory::TAC>(uint8_t value) {
     timerEnabled = value & 0b100;
     selectedClock = value & 0b011;
 }
+
+template uint8_t SystemTimer::readIO<Memory::DIV>();
+template uint8_t SystemTimer::readIO<Memory::TIMA>();
+template uint8_t SystemTimer::readIO<Memory::TMA>();
+
+template void SystemTimer::writeIO<Memory::DIV>(uint8_t);
+template void SystemTimer::writeIO<Memory::TIMA>(uint8_t);
+template void SystemTimer::writeIO<Memory::TMA>(uint8_t);

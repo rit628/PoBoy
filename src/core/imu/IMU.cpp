@@ -1,5 +1,7 @@
 #include "IMU.hpp"
 #include "FlagOps.hpp"
+#include "MemoryConstants.hpp"
+#include <cstdint>
 
 using namespace Interrupts;
 
@@ -8,72 +10,53 @@ IMU::IMU(std::function<uint8_t()> readInput)
         , joypad(*this, readInput)
         {}
 
-uint8_t IMU::readIF() {
-    return interruptFlags;
-}
-
-void IMU::writeIF(uint8_t value) {
-    /* upper 3 bits of IF are always 1 */
-    interruptFlags = value | 0b11100000;
-}
-
-void IMU::writeIF(INTERRUPT_FLAG flag) {
-    setFlags(interruptFlags, flag);
-}
-
-uint8_t IMU::readIE() {
-    return interruptEnable;
-}
-
-void IMU::writeIE(uint8_t value) {
-    interruptEnable = value;
-}
-
-void IMU::writeIE(INTERRUPT_FLAG flag) {
-    setFlags(interruptEnable, flag);
-}
-
 void IMU::tick(uint8_t tCycles) {
     timer.tick(tCycles);
     joypad.tick(tCycles);
 }
 
-uint8_t IMU::readDIV() {
-    return timer.readDIV();
+template<uint16_t Register>
+uint8_t IMU::readIO() {
+    using namespace Memory;
+    if constexpr (Register == IF) return interruptFlags | 0xE0; // upper 3 bits of IF are always 1
+    if constexpr (Register == IE) return interruptEnable;
+
+    if constexpr (DIV <= Register && Register <= TAC) return timer.readIO<Register>();
+
+    if constexpr (Register == P1) return joypad.readIO<Register>();
 }
 
-void IMU::writeDIV(uint8_t value) {
-    timer.writeDIV(value);
+template<uint16_t Register>
+void IMU::writeIO(uint8_t value) {
+    using namespace Memory;
+    if constexpr (Register == IF) return void(interruptFlags = value);
+    if constexpr (Register == IE) return void(interruptEnable = value);
+
+    if constexpr (DIV <= Register && Register <= TAC) return timer.writeIO<Register>(value);
+
+    if constexpr (Register == P1) return joypad.writeIO<Register>(value);
 }
 
-uint8_t IMU::readTIMA() {
-    return timer.readTIMA();
+void IMU::triggerInterrupt(INTERRUPT_FLAG flag) {
+    setFlags(interruptFlags, flag);
 }
 
-void IMU::writeTIMA(uint8_t value) {
-    timer.writeTIMA(value);
+void IMU::enableInterrupt(INTERRUPT_FLAG flag) {
+    setFlags(interruptEnable, flag);
 }
 
-uint8_t IMU::readTMA() {
-    return timer.readTMA();
-}
+template uint8_t IMU::readIO<Memory::IF>();
+template uint8_t IMU::readIO<Memory::IE>();
+template uint8_t IMU::readIO<Memory::DIV>();
+template uint8_t IMU::readIO<Memory::TIMA>();
+template uint8_t IMU::readIO<Memory::TMA>();
+template uint8_t IMU::readIO<Memory::TAC>();
+template uint8_t IMU::readIO<Memory::P1>();
 
-void IMU::writeTMA(uint8_t value) {
-    timer.writeTMA(value);
-}
-
-uint8_t IMU::readTAC() {
-    return timer.readTAC();
-}
-
-void IMU::writeTAC(uint8_t value) {
-    timer.writeTAC(value);
-}
-
-uint8_t IMU::readP1() {
-    return joypad.readP1();
-}
-
-void IMU::writeP1(uint8_t value) {
-    joypad.writeP1(value);
-}
+template void IMU::writeIO<Memory::IF>(uint8_t);
+template void IMU::writeIO<Memory::IE>(uint8_t);
+template void IMU::writeIO<Memory::DIV>(uint8_t);
+template void IMU::writeIO<Memory::TIMA>(uint8_t);
+template void IMU::writeIO<Memory::TMA>(uint8_t);
+template void IMU::writeIO<Memory::TAC>(uint8_t);
+template void IMU::writeIO<Memory::P1>(uint8_t);

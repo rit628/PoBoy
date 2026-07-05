@@ -28,28 +28,10 @@ namespace Graphics {
             uint8_t readOAM(uint16_t address);
             void writeOAM(uint16_t address, uint8_t value);
             void dmaTransferOAM(std::span<const uint8_t, OAM_SIZE> sourceRange);
-
-            uint8_t readLY();
-            uint8_t readLYC();
-            void writeLYC(uint8_t value);
-            uint8_t readSCX();
-            void writeSCX(uint8_t value);
-            uint8_t readSCY();
-            void writeSCY(uint8_t value);
-            uint8_t readWX();
-            void writeWX(uint8_t value);
-            uint8_t readWY();
-            void writeWY(uint8_t value);
-            uint8_t readLCDC();
-            void writeLCDC(uint8_t value);
-            uint8_t readBGP();
-            void writeBGP(uint8_t value);
-            uint8_t readOBP0();
-            void writeOBP0(uint8_t value);
-            uint8_t readOBP1();
-            void writeOBP1(uint8_t value);
-            uint8_t readSTAT();
-            void writeSTAT(uint8_t value);
+            template<uint16_t Register>
+            uint8_t readIO();
+            template<uint16_t Register>
+            void writeIO(uint8_t value);
     
             std::span<const uint8_t, TILE_DATA_SIZE> getTileData();
             std::span<const uint8_t, 2 * TILE_MAP_SIZE> getTileMaps();

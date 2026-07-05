@@ -11,8 +11,10 @@ namespace Interrupts {
             Joypad(IMU& imu, std::function<uint8_t()> readInput);
             void tick(uint8_t tCycles);
             void tick();
-            uint8_t readP1();
-            void writeP1(uint8_t value);
+            template<uint16_t Register>
+            uint8_t readIO();
+            template<uint16_t Register>
+            void writeIO(uint8_t value);
 
         private:
             IMU& imu;

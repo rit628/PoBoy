@@ -2,6 +2,7 @@
 #include "FlagOps.hpp"
 #include "GraphicsConstants.hpp"
 #include "IMU.hpp"
+#include "MemoryConstants.hpp"
 #include <algorithm>
 #include <array>
 #include <cstdint>
@@ -42,6 +43,76 @@ void PPU::tick() {
     updateStatus();
 }
 
+uint8_t PPU::readVRAM(uint16_t address) {
+    if (mode == MODE::PIXEL_TRANSFER && !disabled()) return 0xFF;
+    return vram.at(address);
+}
+
+void PPU::writeVRAM(uint16_t address, uint8_t value) {
+    if (mode == MODE::PIXEL_TRANSFER && !disabled()) return;
+    vram.at(address) = value;
+}
+
+uint8_t PPU::readOAM(uint16_t address) {
+    using enum MODE;
+    if ((mode == PIXEL_TRANSFER || mode == OAM_SCAN) && !disabled()) return 0xFF;
+    return oam.at(address);
+}
+
+void PPU::writeOAM(uint16_t address, uint8_t value) {
+    using enum MODE;
+    if ((mode == PIXEL_TRANSFER || mode == OAM_SCAN) && !disabled()) return;
+    oam.at(address) = value;
+}
+
+void PPU::dmaTransferOAM(std::span<const uint8_t, OAM_SIZE> sourceRange) {
+    std::copy(sourceRange.begin(), sourceRange.end(), oam.begin());
+}
+
+template<uint16_t Register>
+uint8_t PPU::readIO() {
+    using namespace Memory;
+    if constexpr (Register == LY)   return currentLine;
+    if constexpr (Register == LYC)  return lineCompare;
+    if constexpr (Register == SCX)  return scrollX;
+    if constexpr (Register == SCY)  return scrollY;
+    if constexpr (Register == WX)   return windowX;
+    if constexpr (Register == WY)   return windowY;
+    if constexpr (Register == LCDC) return lcdControl;
+    if constexpr (Register == BGP)  return backgroundPalette;
+    if constexpr (Register == OBP0) return spritePalette0;
+    if constexpr (Register == OBP1) return spritePalette1;
+}
+
+template<>
+uint8_t PPU::readIO<Memory::STAT>() {
+    if (disabled()) return 0x80 | interruptMask;   // bits 0-2 return 0 when lcd is off
+    return 0x80
+        | interruptMask
+        | (lineCompare == currentLine % FRAME_LINES) << 2
+        | std::to_underlying(mode);
+}
+
+template<uint16_t Register>
+void PPU::writeIO(uint8_t value) {
+    using namespace Memory;
+    if constexpr (Register == LY)   return void();
+    if constexpr (Register == LYC)  return void(lineCompare = value);
+    if constexpr (Register == SCX)  return void(scrollX = value);
+    if constexpr (Register == SCY)  return void(scrollY = value);
+    if constexpr (Register == WX)   return void(windowX = value);
+    if constexpr (Register == WY)   return void(windowY = value);
+    if constexpr (Register == LCDC) return void(lcdControl = value);
+    if constexpr (Register == BGP)  return void(backgroundPalette = value);
+    if constexpr (Register == OBP0) return void(spritePalette0 = value);
+    if constexpr (Register == OBP1) return void(spritePalette1 = value);
+}
+
+template<>
+void PPU::writeIO<Memory::STAT>(uint8_t value) {
+    interruptMask = value & 0x78;   // bits 0-2 and 7 are read only
+}
+
 void PPU::scanOAM() {
     if (lineDotsElapsed % 2 > 0) return;    // oam scan tick every 2 dots
     uint8_t spriteIndex = lineDotsElapsed / 2 * SPRITE_BYTES;
@@ -76,27 +147,27 @@ void PPU::updateStatus() {
         lineDotsElapsed = 0;
         currentLine++;
         using enum STAT_FLAG;
-        if (testFlags(readSTAT(), LYC_INTERRUPT_ENABLE, LYC_INTERRUPT_BIT)) {
-            imu.writeIF(Interrupts::INTERRUPT_FLAG::LCD_STAT);
+        if (testFlags(readIO<Memory::STAT>(), LYC_INTERRUPT_ENABLE, LYC_INTERRUPT_BIT)) {
+            imu.triggerInterrupt(Interrupts::INTERRUPT_FLAG::LCD_STAT);
         }
     };
 
     auto updateMode = [this]<MODE mode>() {
         this->mode = mode;
-        uint8_t stat = readSTAT();
+        uint8_t stat = readIO<Memory::STAT>();
         using enum STAT_FLAG;
         constexpr uint8_t modeNumber = std::to_underlying(mode);
         if constexpr (modeNumber == 0) {
             if (testFlags(stat, MODE_0_INTERRUPT_ENABLE))
-                imu.writeIF(Interrupts::INTERRUPT_FLAG::LCD_STAT);
+                imu.triggerInterrupt(Interrupts::INTERRUPT_FLAG::LCD_STAT);
         }
         else if constexpr (modeNumber == 1) {
             if (testFlags(stat, MODE_1_INTERRUPT_ENABLE))
-                imu.writeIF(Interrupts::INTERRUPT_FLAG::LCD_STAT);
+                imu.triggerInterrupt(Interrupts::INTERRUPT_FLAG::LCD_STAT);
         }
         else if constexpr (modeNumber == 2) {
             if (testFlags(stat, MODE_2_INTERRUPT_ENABLE))
-                imu.writeIF(Interrupts::INTERRUPT_FLAG::LCD_STAT);
+                imu.triggerInterrupt(Interrupts::INTERRUPT_FLAG::LCD_STAT);
         }
     };
     
@@ -121,7 +192,7 @@ void PPU::updateStatus() {
             
             if (frameDotsElapsed >= DOTS_PER_LCD_SCAN) [[ unlikely ]] {
                 updateMode.operator()<VBLANK>();
-                imu.writeIF(Interrupts::INTERRUPT_FLAG::VBLANK);
+                imu.triggerInterrupt(Interrupts::INTERRUPT_FLAG::VBLANK);
                 renderFrame(mixer.extractFrame());
             }
         break;
@@ -140,119 +211,6 @@ void PPU::updateStatus() {
     }
 }
 
-uint8_t PPU::readVRAM(uint16_t address) {
-    if (mode == MODE::PIXEL_TRANSFER && !disabled()) return 0xFF;
-    return vram.at(address);
-}
-
-void PPU::writeVRAM(uint16_t address, uint8_t value) {
-    if (mode == MODE::PIXEL_TRANSFER && !disabled()) return;
-    vram.at(address) = value;
-}
-
-uint8_t PPU::readOAM(uint16_t address) {
-    using enum MODE;
-    if ((mode == PIXEL_TRANSFER || mode == OAM_SCAN) && !disabled()) return 0xFF;
-    return oam.at(address);
-}
-
-void PPU::writeOAM(uint16_t address, uint8_t value) {
-    using enum MODE;
-    if ((mode == PIXEL_TRANSFER || mode == OAM_SCAN) && !disabled()) return;
-    oam.at(address) = value;
-}
-
-void PPU::dmaTransferOAM(std::span<const uint8_t, OAM_SIZE> sourceRange) {
-    std::copy(sourceRange.begin(), sourceRange.end(), oam.begin());
-}
-
-uint8_t PPU::readLY() {
-    return currentLine;
-}
-
-uint8_t PPU::readLYC() {
-    return lineCompare;
-}
-
-void PPU::writeLYC(uint8_t value) {
-    lineCompare = value;
-}
-
-uint8_t PPU::readSCX() {
-    return scrollX;
-}
-
-void PPU::writeSCX(uint8_t value) {
-    scrollX = value;
-}
-
-uint8_t PPU::readSCY() {
-    return scrollY;
-}
-
-void PPU::writeSCY(uint8_t value) {
-    scrollY = value;
-}
-
-uint8_t PPU::readWX() {
-    return windowX;
-}
-
-void PPU::writeWX(uint8_t value) {
-    windowX = value;
-}
-
-uint8_t PPU::readWY() {
-    return windowY;
-}
-
-void PPU::writeWY(uint8_t value) {
-    windowY = value;
-}
-
-uint8_t PPU::readLCDC() {
-    return lcdControl;
-}
-
-void PPU::writeLCDC(uint8_t value) {
-    lcdControl = value;
-}
-
-uint8_t PPU::readBGP() {
-    return backgroundPalette;
-}
-
-void PPU::writeBGP(uint8_t value) {
-    backgroundPalette = value;
-}
-
-uint8_t PPU::readOBP0() {
-    return spritePalette0;
-}
-
-void PPU::writeOBP0(uint8_t value) {
-    spritePalette0 = value;
-}
-
-uint8_t PPU::readOBP1() {
-    return spritePalette1;
-}
-
-void PPU::writeOBP1(uint8_t value) {
-    spritePalette1 = value;
-}
-
-uint8_t PPU::readSTAT() {
-    if (disabled()) return interruptMask;   // bits 0-2 return 0 when lcd is off
-    return interruptMask
-        | (lineCompare == currentLine % FRAME_LINES) << 2
-        | std::to_underlying(mode);
-}
-
-void PPU::writeSTAT(uint8_t value) {
-    interruptMask = value & 0x78;   // bits 0-2 and 7 are read only
-}
-
 std::span<const uint8_t, TILE_DATA_SIZE> PPU::getTileData() {
     return std::span(vram).subspan<0, TILE_DATA_SIZE>();
 }
@@ -260,3 +218,25 @@ std::span<const uint8_t, TILE_DATA_SIZE> PPU::getTileData() {
 std::span<const uint8_t, 2 * TILE_MAP_SIZE> PPU::getTileMaps() {
     return std::span(vram).subspan<TILE_DATA_SIZE, 2 * TILE_MAP_SIZE>();
 }
+
+template uint8_t PPU::readIO<Memory::LY>();
+template uint8_t PPU::readIO<Memory::LYC>();
+template uint8_t PPU::readIO<Memory::SCX>();
+template uint8_t PPU::readIO<Memory::SCY>();
+template uint8_t PPU::readIO<Memory::WX>();
+template uint8_t PPU::readIO<Memory::WY>();
+template uint8_t PPU::readIO<Memory::LCDC>();
+template uint8_t PPU::readIO<Memory::BGP>();
+template uint8_t PPU::readIO<Memory::OBP0>();
+template uint8_t PPU::readIO<Memory::OBP1>();
+
+template void PPU::writeIO<Memory::LY>(uint8_t);
+template void PPU::writeIO<Memory::LYC>(uint8_t);
+template void PPU::writeIO<Memory::SCX>(uint8_t);
+template void PPU::writeIO<Memory::SCY>(uint8_t);
+template void PPU::writeIO<Memory::WX>(uint8_t);
+template void PPU::writeIO<Memory::WY>(uint8_t);
+template void PPU::writeIO<Memory::LCDC>(uint8_t);
+template void PPU::writeIO<Memory::BGP>(uint8_t);
+template void PPU::writeIO<Memory::OBP0>(uint8_t);
+template void PPU::writeIO<Memory::OBP1>(uint8_t);

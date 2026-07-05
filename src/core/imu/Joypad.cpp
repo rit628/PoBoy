@@ -2,6 +2,7 @@
 #include "FlagOps.hpp"
 #include "IMU.hpp"
 #include "InterruptConstants.hpp"
+#include "MemoryConstants.hpp"
 #include <cstdint>
 
 using namespace Interrupts;
@@ -15,17 +16,8 @@ void Joypad::tick(uint8_t tCycles) {
     }
 }
 
-void Joypad::tick() {
-    uint8_t previousJoypadInput = currentJoypadInput;
-    readP1();
-    uint8_t modifiedInputs = previousJoypadInput ^ currentJoypadInput;
-    uint8_t depressedInputs = currentJoypadInput & modifiedInputs;
-    if (depressedInputs != modifiedInputs) {    // button was pressed (input flag bit was unset)
-        imu.writeIF(INTERRUPT_FLAG::JOYPAD);
-    }
-}
-
-uint8_t Joypad::readP1() {
+template<>
+uint8_t Joypad::readIO<Memory::P1>() {
     using enum P1_FLAG;
     if (!testFlags(selectedJoypadInput, SELECT_BUTTONS)) {
         currentJoypadInput = (~readInput() >> 4) & 0x0F; // get upper nibble of joypad input (buttons)
@@ -36,10 +28,21 @@ uint8_t Joypad::readP1() {
     else {
         currentJoypadInput = 0x0F;
     }
-    return selectedJoypadInput | currentJoypadInput; 
+    return 0xC0 | selectedJoypadInput | currentJoypadInput; 
 }
 
-void Joypad::writeP1(uint8_t value) {
+template<>
+void Joypad::writeIO<Memory::P1>(uint8_t value) {
     using enum P1_FLAG;
     selectedJoypadInput = extractFlags(value, SELECT_BUTTONS, SELECT_DPAD);
+}
+
+void Joypad::tick() {
+    uint8_t previousJoypadInput = currentJoypadInput;
+    readIO<Memory::P1>();
+    uint8_t modifiedInputs = previousJoypadInput ^ currentJoypadInput;
+    uint8_t depressedInputs = currentJoypadInput & modifiedInputs;
+    if (depressedInputs != modifiedInputs) {    // button was pressed (input flag bit was unset)
+        imu.triggerInterrupt(INTERRUPT_FLAG::JOYPAD);
+    }
 }

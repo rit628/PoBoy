@@ -11,18 +11,13 @@ namespace Interrupts {
             SystemTimer(IMU& imu);
             void tick(uint8_t tCycles);
             void tick();
-            uint8_t readDIV();
-            void writeDIV(uint8_t value);
-            uint8_t readTIMA();
-            void writeTIMA(uint8_t value);
-            uint8_t readTMA();
-            void writeTMA(uint8_t value);
-            uint8_t readTAC();
-            void writeTAC(uint8_t value);
-    
+            template<uint16_t Register>
+            uint8_t readIO();
+            template<uint16_t Register>
+            void writeIO(uint8_t value);
+
         private:
             static constexpr std::array<uint16_t, 4> timerClocks = {1024, 16, 64, 256};
-            static constexpr uint16_t dividerClock = timerClocks.at(3);
     
             IMU& imu;
     
