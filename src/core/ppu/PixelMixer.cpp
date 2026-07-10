@@ -60,13 +60,7 @@ void PixelMixer::scanlineReset() {
 std::array<uint8_t, FRAMEBUFFER_SIZE>& PixelMixer::extractFrame() {
     backgroundFetcher.frameReset();
     spriteFetcher.reset();
-    currentByte = 0;
-    currentBit = 0;
-    return framebuffer;
-}
-
-uint16_t PixelMixer::getCurrentPixel() {
-    return currentByte * PIXELS_PER_BYTE + currentBit / BITS_PER_PIXEL;
+    return framebuffer.extract();
 }
 
 bool PixelMixer::atLineEnd() {
@@ -114,8 +108,5 @@ void PixelMixer::emitPixel(uint8_t colorIndex) {
         return;
     }
     if (currentColumn++ < PIXEL_OVERSCAN) return;
-    framebuffer.at(currentByte) &= 0xFF - (0b11 << currentBit); // clear former bits
-    framebuffer.at(currentByte) |= colorIndex << currentBit;  // overwrite
-    currentBit = (currentBit + 2) & 0b111;  // increment bit by 2 mod 8
-    currentByte += !currentBit;
+    framebuffer.push(colorIndex);
 }

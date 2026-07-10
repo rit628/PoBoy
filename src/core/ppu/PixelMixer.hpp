@@ -1,5 +1,6 @@
 #pragma once
 #include "BackgroundFetcher.hpp"
+#include "BitBuffer.hpp"
 #include "SpriteFetcher.hpp"
 #include "GraphicsConstants.hpp"
 #include <array>
@@ -24,7 +25,6 @@ namespace Graphics {
             void tick();
             void scanlineReset();
             std::array<uint8_t, FRAMEBUFFER_SIZE>& extractFrame();
-            uint16_t getCurrentPixel();
             bool atLineEnd();
             void addSprite(uint8_t yPos, uint8_t xPos, uint8_t tileNumber, uint8_t spriteFlags);
     
@@ -44,9 +44,7 @@ namespace Graphics {
 
             BackgroundFetcher backgroundFetcher;
             SpriteFetcher spriteFetcher;
-            std::array<uint8_t, FRAMEBUFFER_SIZE> framebuffer{};
-            uint16_t currentByte = 0;
-            uint8_t currentBit = 0;
+            BitBuffer<FRAMEBUFFER_SIZE, BITS_PER_PIXEL> framebuffer;
             uint8_t currentColumn = 0;
     };
 
