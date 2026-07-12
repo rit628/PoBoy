@@ -23,6 +23,12 @@ namespace Audio {
             void mixChannels();
 
         private:
+            template<bool Left>
+            bool getChannelPan(uint8_t channel);
+            template<bool Left>
+            uint8_t getVolume();
+            template<auto Channel>
+            void sample();
             void addSample(float left, float right);
 
             Interrupts::IMU& imu;
@@ -33,6 +39,7 @@ namespace Audio {
             bool audioEnabled = false;          // NR52 register bit 7
 
             uint8_t apuDivider = 0;
+            bool prevDividerBit = 0;
             StaticQueue<float, 1 << 13> samples;
             std::array<float, CHANNEL_COUNT> dacs{};
             PulseChannel channel1;

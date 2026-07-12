@@ -10,4 +10,5 @@ namespace Audio {
     constexpr uint8_t  DIGITAL_SAMPLE_MAX           = (1 << BITS_PER_SAMPLE) - 1;
 
     constexpr uint8_t  CHANNEL_COUNT                = 4;
+    constexpr float    VOLUME_MAX                   = 8.0f;
 }

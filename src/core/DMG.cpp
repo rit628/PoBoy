@@ -15,10 +15,10 @@ DMG::DMG(std::function<uint8_t()> readInput
 
 void DMG::systemTick() {
     for (uint8_t i = 0; i < 4; i++) {
+        imu.tick();
         mmu.tick();
         apu.tick();
         ppu.tick();
-        imu.tick();
     }
     totalMCycles++;
 }

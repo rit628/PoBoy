@@ -22,7 +22,7 @@ namespace Interrupts {
     
             IMU& imu;
     
-            bool currTimaBit = 0;
+            bool prevTimaBit = 0;
             uint8_t timaReloadTCycle = 4;
             uint16_t systemCounter = 0; // DIV register (bits 15-8) and clock counter (bits 7-0)
             uint8_t timerCounter = 0;   // TIMA register

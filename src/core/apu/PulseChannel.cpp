@@ -1,5 +1,4 @@
 #include "PulseChannel.hpp"
-#include "AudioConstants.hpp"
 #include <cstdint>
 #include <utility>
 
@@ -9,77 +8,61 @@ template<uint16_t Register>
 uint8_t PulseChannel::readIO() {
     if constexpr (Register == NRx0) return 0; // for now until sweep implemented
     if constexpr (Register == NRx1) return std::to_underlying(dutyCycle) << 6;
-    if constexpr (Register == NRx2) return initialVolume << 4 | increaseVolume << 3 | envelopePeriod;
+    if constexpr (Register == NRx2) return envelopeGenerator.readRegister();
     if constexpr (Register == NRx3) return 0;
-    if constexpr (Register == NRx4) return lengthEnable << 6;
+    if constexpr (Register == NRx4) return lengthController.getState() << 6;
 }
 
 template<uint16_t Register>
 void PulseChannel::writeIO(uint8_t value) {
     if constexpr (Register == NRx1) {
         dutyCycle = static_cast<DUTY_CYCLE>(value >> 6);
-        initialLengthTimer = value & 0x3F;
-        lengthTimer = LENGTH_MAX - lengthTimer;
+        lengthController.setPeriod(value & 0x3F);
     }
     if constexpr (Register == NRx2) {
-        initialVolume = value >> 4;
-        increaseVolume = value & 0x08;
-        envelopePeriod = value & 0x07;
+        envelopeGenerator.writeRegister(value);
     }
     if constexpr (Register == NRx3) {
         period = (period & 0xFF00) | value;
     }
     if constexpr (Register == NRx4) {
         triggered = value >> 7;
-        lengthEnable = value & 0x40;
+        lengthController.setState(value & 0x40);
         period = (period & 0x00FF) | ((value & 0x07) << 8);
         if (triggered) {
-            if (dacEnabled()) enabled = true;
-            lengthTimer = (!lengthTimer) ? LENGTH_MAX : lengthTimer;
-            resetPeriod();
-            envelopeTimer = envelopePeriod;
-            currentVolume = initialVolume;
+            enabled = true;
+            resetCycleTimer();
+            lengthController.trigger();
+            envelopeGenerator.trigger();
         }
     }
 }
 
-float PulseChannel::tick() {
-    if (--periodTimer == 0) {
-        resetPeriod();
+uint8_t PulseChannel::tick() {
+    if (!enabled) return 0;
+    if (--cycleTimer == 0) {
+        resetCycleTimer();
         bool carry = dutyCyclePositionBit & 0b1;
         dutyCyclePositionBit = (dutyCyclePositionBit >> 1) | (carry << 7);
     }
-    if (!enabled || !dacEnabled()) return 0.0;
     bool hi = DUTY_CYCLE_PATTERNS.at(std::to_underlying(dutyCycle)) & dutyCyclePositionBit;
-    uint8_t digitalSample = hi * currentVolume;
-    float analogSample = (float(digitalSample) / DIGITAL_SAMPLE_MAX) * 2 - 1;
-    return analogSample;
+    return hi * envelopeGenerator.getVolume();
 }
 
-void PulseChannel::lengthTick() {
-    if (!enabled || !lengthEnable) return;
-    if (--lengthTimer == 0) {
-        enabled = false;
-    }
+void PulseChannel::tickLength() {
+    lengthController.tick(enabled);
 }
 
-void PulseChannel::volumeEnvelopeTick() {
-    if (!enabled || envelopePeriod == 0) return;
-    if (--envelopeTimer == 0) {
-        envelopeTimer = envelopePeriod;
-        currentVolume = (increaseVolume) ? 
-                        std::min(currentVolume + 1, int(DIGITAL_SAMPLE_MAX))
-                        :
-                        std::max(currentVolume - 1, 0);
-    }
+void PulseChannel::tickEnvelope() {
+    envelopeGenerator.tick();
 }
 
 bool PulseChannel::dacEnabled() {
-    return ((initialVolume << 1) | increaseVolume) > 0;
+    return (envelopeGenerator.readRegister() & 0xF8) != 0;
 }
 
-void PulseChannel::resetPeriod() {
-    periodTimer = (PERIOD_MAX - period) * T_CYCLES_PER_PERIOD_TICK;
+void PulseChannel::resetCycleTimer() {
+    cycleTimer = (PERIOD_MAX - period) * T_CYCLES_PER_PERIOD_TICK;
 }
 
 template uint8_t PulseChannel::readIO<PulseChannel::NRx0>();

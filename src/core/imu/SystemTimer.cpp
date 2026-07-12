@@ -36,9 +36,9 @@ void SystemTimer::writeIO<Memory::TAC>(uint8_t value) {
 
 void SystemTimer::tick() {
     uint16_t overflowBit = timerClocks.at(selectedClock) >> 1;
-    bool nextTimaBit = bool(++systemCounter & overflowBit) && timerEnabled;
-    bool timaTick = currTimaBit > nextTimaBit; // tick on falling edge
-    currTimaBit = nextTimaBit;
+    bool currTimaBit = bool(++systemCounter & overflowBit) && timerEnabled;
+    bool timaTick = prevTimaBit > currTimaBit; // tick on falling edge
+    prevTimaBit = currTimaBit;
 
     // start reload from TIMA overflow
     if (timaTick && ++timerCounter == 0) timaReloadTCycle = 0;

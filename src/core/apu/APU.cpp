@@ -1,4 +1,5 @@
 #include "APU.hpp"
+#include "AudioConstants.hpp"
 #include "MemoryConstants.hpp"
 #include <cstdint>
 
@@ -28,29 +29,29 @@ void APU::writeIO(uint8_t value) {
 
 void APU::tick() {
     incrementDivider();
-    dacs.at(0) = channel1.tick();
-    dacs.at(1) = channel2.tick();
+    sample<&APU::channel1>();
+    sample<&APU::channel2>();
     mixChannels();
     if (samples.full()) queueAudioData(samples.extract());
 }
 
 void APU::incrementDivider() {
-    static constexpr uint8_t APU_DIV_BIT = 0x08;
-    uint8_t currentTime = imu.readIO<Memory::DIV>();
-    bool currentBit = currentTime++ & APU_DIV_BIT;
-    bool nextBit = currentTime & APU_DIV_BIT;
-    if (currentBit <= nextBit) return; // only increment apu divider and clock channel units on falling edge
+    static constexpr uint8_t APU_DIV_BIT = 0x10;
+    bool currDividerBit = imu.readIO<Memory::DIV>() & APU_DIV_BIT;
+    bool increment = prevDividerBit > currDividerBit;
+    prevDividerBit = currDividerBit;
+    if (!increment) return; // only increment apu divider and tick channel units on falling edge
     apuDivider++; 
     if (!(apuDivider & 0x01)) { // sound length tick every other increment
-        channel1.lengthTick();
-        channel2.lengthTick();
+        channel1.tickLength();
+        channel2.tickLength();
     }
     if (!(apuDivider & 0x03)) { // CH1 freq sweep every 4 increments
     
     }
     if (!(apuDivider & 0x07)) { // envelope sweep every 8 increments
-        // channel1.volumeEnvelopeTick();
-        // channel2.volumeEnvelopeTick();
+        channel1.tickEnvelope();
+        channel2.tickEnvelope();
     }
 }
 
@@ -58,14 +59,37 @@ void APU::mixChannels() {
     if (!audioEnabled) return addSample(0, 0);
     float left = 0, right = 0;
     for (uint8_t i = 0; i < dacs.size(); i++) {
-        left += dacs.at(i);
-        right += dacs.at(i);
+        left += getChannelPan<true>(i) * dacs.at(i);
+        right += getChannelPan<false>(i) * dacs.at(i);
     }
-    left *= ((masterVolumeControl >> 4) & 0x07) + 1;
-    right *= (masterVolumeControl & 0x07) + 1;
-    left /= 4 * 8;
-    right /= 4 * 8;
+    left /= CHANNEL_COUNT;
+    right /= CHANNEL_COUNT;
+    left *= getVolume<true>() / VOLUME_MAX;
+    right *= getVolume<false>() / VOLUME_MAX;
     addSample(left, right);
+}
+
+template<bool Left>
+bool APU::getChannelPan(uint8_t channel) {
+    if constexpr (Left) return (soundPanControl >> 4) & (1 << channel);
+    else return soundPanControl & (1 << channel);
+}
+
+template<bool Left>
+uint8_t APU::getVolume() {
+    if constexpr (Left) return ((masterVolumeControl & 0x70) >> 4) + 1;
+    else return (masterVolumeControl & 0x07) + 1;
+}
+
+template<auto Channel>
+void APU::sample() {
+    uint8_t digitalSample = (this->*Channel).tick();
+    float analogSample = 0.0;
+    if ((this->*Channel).dacEnabled()) {
+        analogSample = -2 * (float(digitalSample) / DIGITAL_SAMPLE_MAX) + 1;
+    }
+    if constexpr (Channel == &APU::channel1) dacs.at(0) = analogSample;
+    if constexpr (Channel == &APU::channel2) dacs.at(1) = analogSample;
 }
 
 void APU::addSample(float left, float right) {
