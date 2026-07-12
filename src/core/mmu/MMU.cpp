@@ -10,6 +10,13 @@
 
 using namespace Memory;
 
+namespace {
+    /* clangd crashes if declared as a static constexpr member of the class */
+    constexpr std::array<uint8_t, BOOTROM_SIZE> BOOTROM = {
+        #embed "bootix_dmg.bin"
+    };
+}
+
 MMU::MMU(Interrupts::IMU& imu, Audio::APU& apu, Graphics::PPU& ppu)
         : imu(imu), apu(apu), ppu(ppu) {}
 
@@ -23,8 +30,8 @@ CartridgeMetadata MMU::loadRom(const std::filesystem::path& romFile) {
 }
 
 uint8_t MMU::read(uint16_t address) {
-    if (!bootRomDisabled && address < BOOTROM_SIZE) {
-        return bootrom.at(address);
+    if (!bootromDisabled && address < BOOTROM_SIZE) {
+        return BOOTROM.at(address);
     }
     if (address < ROM_BANK_0_END) {
         return cartridge.readBank0(address - ROM_BANK_0_START);
@@ -60,7 +67,7 @@ uint8_t MMU::read(uint16_t address) {
 }
 
 void MMU::write(uint16_t address, uint8_t value) {
-    if (!bootRomDisabled && address < BOOTROM_SIZE) {
+    if (!bootromDisabled && address < BOOTROM_SIZE) {
         return; // bootrom is not writeable
     }
     if (address < ROM_BANK_0_END) {
@@ -98,7 +105,7 @@ void MMU::write(uint16_t address, uint8_t value) {
 
 uint8_t MMU::readIO(uint16_t registerAddress) {
     switch (registerAddress) {            
-        case BANK:  return bootRomDisabled;
+        case BANK:  return bootromDisabled;
         case DMA:   return dmaSourceAddress;
         case SB:    return 0xFF;
         
@@ -137,7 +144,7 @@ void MMU::writeIO(uint16_t registerAddress, uint8_t value) {
     switch (registerAddress) {
         case BANK:
             // bootrom can only be unmapped
-            bootRomDisabled = bootRomDisabled || value;
+            bootromDisabled = bootromDisabled || value;
         break;
         case DMA:
             // for now this will be emulated as an instant transfer for simplicity and compatibility with most games

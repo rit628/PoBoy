@@ -21,10 +21,6 @@ namespace Memory {
         private:
             uint8_t readIO(uint16_t registerAddress);
             void writeIO(uint16_t registerAddress, uint8_t value);
-
-            static constexpr std::array<uint8_t, BOOTROM_SIZE> bootrom = {
-                #embed "bootix_dmg.bin"
-            };
     
             Interrupts::IMU& imu;
             Audio::APU& apu;
@@ -34,7 +30,7 @@ namespace Memory {
             std::array<uint8_t, WRAM_SIZE> wram{};
             std::array<uint8_t, HRAM_SIZE> hram{};
             std::array<uint8_t, IO_SIZE> io{};  // for now until all io registers are implemented
-            bool bootRomDisabled = false;       // BANK register
+            bool bootromDisabled = false;       // BANK register
             uint8_t dmaSourceAddress = 0;       // DMA register
             
             std::string serialBuffer = "";  // for debugging
