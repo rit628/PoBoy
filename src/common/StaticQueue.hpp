@@ -21,7 +21,7 @@ class StaticQueue {
         constexpr size_t capacity() const noexcept;
         void clear() noexcept;
         void fill() noexcept;
-        std::span<T> extract() noexcept;
+        std::span<const T> extract() noexcept;
 
     private:
         size_t mask(const size_t value) const noexcept;
@@ -98,7 +98,7 @@ void StaticQueue<T, N>::fill() noexcept {
 }
 
 template<typename T, size_t N> requires PowerOfTwo<N>
-std::span<T> StaticQueue<T, N>::extract() noexcept {
+std::span<const T> StaticQueue<T, N>::extract() noexcept {
     auto result = std::span(queue).subspan(mask(start), size());
     clear();
     return result;

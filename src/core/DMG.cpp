@@ -1,21 +1,24 @@
 #include "DMG.hpp"
 #include <chrono>
 #include <cstdint>
-#include <print>
 #include <thread>
 
-DMG::DMG(std::function<uint8_t()> readInput, std::function<void(std::array<uint8_t, Graphics::FRAMEBUFFER_SIZE>&)> renderFrame)
+DMG::DMG(std::function<uint8_t()> readInput
+       , std::function<void(std::span<const float>)> queueAudioData
+       , std::function<void(std::array<uint8_t, Graphics::FRAMEBUFFER_SIZE>&)> renderFrame)
         : imu(readInput)
         , ppu(imu, renderFrame)
-        , mmu(imu, ppu)
+        , apu(imu, queueAudioData)
+        , mmu(imu, apu, ppu)
         , cpu(mmu, std::bind(&DMG::systemTick, std::ref(*this)))
         {}
 
 void DMG::systemTick() {
     for (uint8_t i = 0; i < 4; i++) {
         mmu.tick();
-        imu.tick();
+        apu.tick();
         ppu.tick();
+        imu.tick();
     }
     totalMCycles++;
 }

@@ -10,8 +10,8 @@
 
 using namespace Memory;
 
-MMU::MMU(Interrupts::IMU& imu, Graphics::PPU& ppu)
-        : imu(imu), ppu(ppu) {}
+MMU::MMU(Interrupts::IMU& imu, Audio::APU& apu, Graphics::PPU& ppu)
+        : imu(imu), apu(apu), ppu(ppu) {}
 
 void MMU::tick() {
     cartridge.tick();
@@ -109,6 +109,14 @@ uint8_t MMU::readIO(uint16_t registerAddress) {
         case TAC:   return imu.readIO<TAC>();
         case P1:    return imu.readIO<P1>();
 
+        case NR50:  return apu.readIO<NR50>();
+        case NR51:  return apu.readIO<NR51>();
+        case NR52:  return apu.readIO<NR52>();
+        case NR21:  return apu.readIO<NR21>();
+        case NR22:  return apu.readIO<NR22>();
+        case NR23:  return apu.readIO<NR23>();
+        case NR24:  return apu.readIO<NR24>();
+
         case LY:    return ppu.readIO<LY>();
         case LYC:   return ppu.readIO<LYC>();
         case SCX:   return ppu.readIO<SCX>();
@@ -155,6 +163,14 @@ void MMU::writeIO(uint16_t registerAddress, uint8_t value) {
         case TMA:   return imu.writeIO<TMA>(value);
         case TAC:   return imu.writeIO<TAC>(value);
         case P1:    return imu.writeIO<P1>(value);
+
+        case NR50:  return apu.writeIO<NR50>(value);
+        case NR51:  return apu.writeIO<NR51>(value);
+        case NR52:  return apu.writeIO<NR52>(value);
+        case NR21:  return apu.writeIO<NR21>(value);
+        case NR22:  return apu.writeIO<NR22>(value);
+        case NR23:  return apu.writeIO<NR23>(value);
+        case NR24:  return apu.writeIO<NR24>(value);
 
         case LYC:   return ppu.writeIO<LYC>(value);
         case SCX:   return ppu.writeIO<SCX>(value);

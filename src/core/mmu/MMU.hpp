@@ -1,4 +1,5 @@
 #pragma once
+#include "APU.hpp"
 #include "MemoryConstants.hpp"
 #include "IMU.hpp"
 #include "Cartridge.hpp"
@@ -10,7 +11,7 @@ namespace Memory {
 
     class MMU {
         public:
-            MMU(Interrupts::IMU& imu, Graphics::PPU& ppu);
+            MMU(Interrupts::IMU& imu, Audio::APU& apu, Graphics::PPU& ppu);
     
             void tick();
             CartridgeMetadata loadRom(const std::filesystem::path& romFile);
@@ -26,6 +27,7 @@ namespace Memory {
             };
     
             Interrupts::IMU& imu;
+            Audio::APU& apu;
             Graphics::PPU& ppu;
 
             Cartridge cartridge;

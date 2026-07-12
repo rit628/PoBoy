@@ -13,7 +13,7 @@ GUI<RendererType>::GUI() {
         throw std::runtime_error("SDL failed to initialize: "s + SDL_GetError());
     }
 
-    static constexpr uint8_t SCALE_FACTOR = 5;
+    static constexpr uint8_t SCALE_FACTOR = 4;
     gameWindow = SDL_CreateWindow("Game Window", SCALE_FACTOR * Graphics::LCD_WIDTH, SCALE_FACTOR * Graphics::LCD_HEIGHT, 0);
     renderer.updateWindow(gameWindow);
 
@@ -35,6 +35,11 @@ void GUI<RendererType>::handleInput(SDL_Event* event) {
 template<typename RendererType>
 void GUI<RendererType>::renderFrame(std::array<uint8_t, Graphics::FRAMEBUFFER_SIZE>& framebuffer) {
     renderer.renderFrame(framebuffer);
+}
+
+template<typename RendererType>
+void GUI<RendererType>::queueAudioData(std::span<const float> data) {
+    audioStreamer.queueAudioData(data);
 }
 
 template<typename RendererType>

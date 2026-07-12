@@ -10,7 +10,7 @@ SystemTimer::SystemTimer(IMU& imu) : imu(imu) {}
 template<uint16_t Register>
 uint8_t SystemTimer::readIO() {
     using namespace Memory;
-    if constexpr (Register == DIV)  return systemCounter & 0xFF00; // DIV is upper byte of system counter
+    if constexpr (Register == DIV)  return systemCounter >> 8; // DIV is upper byte of system counter
     if constexpr (Register == TIMA) return timerCounter;
     if constexpr (Register == TMA)  return timerModulo;
 }

@@ -1,12 +1,14 @@
 #pragma once
 #include "IMU.hpp"
 #include "PPU.hpp"
+#include "APU.hpp"
 #include "MMU.hpp"
 #include "CPU.hpp"
 #include <chrono>
 #include <cstdint>
 #include <filesystem>
 #include <functional>
+#include <span>
 #include <stop_token>
 
 class DMG {
@@ -14,7 +16,9 @@ class DMG {
         static constexpr double DMG_CLOCK_MHZ = 4.194304;
         static constexpr auto DMG_CLOCK_US = std::chrono::duration<double, std::micro>(1.0 / DMG_CLOCK_MHZ);
 
-        DMG(std::function<uint8_t()> readInput, std::function<void(std::array<uint8_t, Graphics::FRAMEBUFFER_SIZE>&)> renderFrame);
+        DMG(std::function<uint8_t()> readInput
+          , std::function<void(std::span<const float>)> queueAudioData
+          , std::function<void(std::array<uint8_t, Graphics::FRAMEBUFFER_SIZE>&)> renderFrame);
         void systemTick();
         void run(const std::filesystem::path& romFile);
         void run(std::stop_token stoken, const std::filesystem::path& romFile);
@@ -29,6 +33,7 @@ class DMG {
 
         Interrupts::IMU imu;
         Graphics::PPU ppu;
+        Audio::APU apu;
         Memory::MMU mmu;
         Processing::CPU<> cpu;
 };
