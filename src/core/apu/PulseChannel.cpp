@@ -7,6 +7,7 @@ using namespace Audio;
 
 template<uint16_t Register>
 uint8_t PulseChannel::readIO() {
+    if constexpr (Register == NRx0) return 0; // for now until sweep implemented
     if constexpr (Register == NRx1) return std::to_underlying(dutyCycle) << 6;
     if constexpr (Register == NRx2) return initialVolume << 4 | increaseVolume << 3 | envelopePeriod;
     if constexpr (Register == NRx3) return 0;
@@ -81,13 +82,13 @@ void PulseChannel::resetPeriod() {
     periodTimer = (PERIOD_MAX - period) * T_CYCLES_PER_PERIOD_TICK;
 }
 
-// template uint8_t PulseChannel::readIO<PulseChannel::NRx0>();
+template uint8_t PulseChannel::readIO<PulseChannel::NRx0>();
 template uint8_t PulseChannel::readIO<PulseChannel::NRx1>();
 template uint8_t PulseChannel::readIO<PulseChannel::NRx2>();
 template uint8_t PulseChannel::readIO<PulseChannel::NRx3>();
 template uint8_t PulseChannel::readIO<PulseChannel::NRx4>();
 
-// template void PulseChannel::writeIO<PulseChannel::NRx0>(uint8_t);
+template void PulseChannel::writeIO<PulseChannel::NRx0>(uint8_t);
 template void PulseChannel::writeIO<PulseChannel::NRx1>(uint8_t);
 template void PulseChannel::writeIO<PulseChannel::NRx2>(uint8_t);
 template void PulseChannel::writeIO<PulseChannel::NRx3>(uint8_t);

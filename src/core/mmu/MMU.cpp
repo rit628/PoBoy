@@ -119,6 +119,11 @@ uint8_t MMU::readIO(uint16_t registerAddress) {
         case NR50:  return apu.readIO<NR50>();
         case NR51:  return apu.readIO<NR51>();
         case NR52:  return apu.readIO<NR52>();
+        case NR10:  return apu.readIO<NR10>();
+        case NR11:  return apu.readIO<NR11>();
+        case NR12:  return apu.readIO<NR12>();
+        case NR13:  return apu.readIO<NR13>();
+        case NR14:  return apu.readIO<NR14>();
         case NR21:  return apu.readIO<NR21>();
         case NR22:  return apu.readIO<NR22>();
         case NR23:  return apu.readIO<NR23>();
@@ -174,6 +179,11 @@ void MMU::writeIO(uint16_t registerAddress, uint8_t value) {
         case NR50:  return apu.writeIO<NR50>(value);
         case NR51:  return apu.writeIO<NR51>(value);
         case NR52:  return apu.writeIO<NR52>(value);
+        case NR10:  return apu.writeIO<NR10>(value);
+        case NR11:  return apu.writeIO<NR11>(value);
+        case NR12:  return apu.writeIO<NR12>(value);
+        case NR13:  return apu.writeIO<NR13>(value);
+        case NR14:  return apu.writeIO<NR14>(value);
         case NR21:  return apu.writeIO<NR21>(value);
         case NR22:  return apu.writeIO<NR22>(value);
         case NR23:  return apu.writeIO<NR23>(value);

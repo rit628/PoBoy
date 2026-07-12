@@ -32,9 +32,10 @@ namespace Audio {
             uint8_t soundPanControl = 0;        // NR51 register
             bool audioEnabled = false;          // NR52 register bit 7
 
-            uint16_t apuDivider = 0;
+            uint8_t apuDivider = 0;
             StaticQueue<float, 1 << 13> samples;
             std::array<float, CHANNEL_COUNT> dacs{};
+            PulseChannel channel1;
             PulseChannel channel2;
     };
 
