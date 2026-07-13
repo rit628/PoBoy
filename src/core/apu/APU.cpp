@@ -2,6 +2,7 @@
 #include "AudioConstants.hpp"
 #include "MemoryConstants.hpp"
 #include <cstdint>
+#include <type_traits>
 
 using namespace Audio;
 
@@ -47,7 +48,7 @@ void APU::incrementDivider() {
         channel2.tickLength();
     }
     if (!(apuDivider & 0x03)) { // CH1 freq sweep every 4 increments
-    
+        channel1.tickSweep();
     }
     if (!(apuDivider & 0x07)) { // envelope sweep every 8 increments
         channel1.tickEnvelope();
@@ -88,8 +89,19 @@ void APU::sample() {
     if ((this->*Channel).dacEnabled()) {
         analogSample = -2 * (float(digitalSample) / DIGITAL_SAMPLE_MAX) + 1;
     }
-    if constexpr (Channel == &APU::channel1) dacs.at(0) = analogSample;
-    if constexpr (Channel == &APU::channel2) dacs.at(1) = analogSample;
+
+    constexpr auto isChannel = [](auto targetChannel) consteval {
+        /* ensure we dont compare different pointer types */
+        if constexpr (std::is_same_v<decltype(Channel), decltype(targetChannel)>) {
+            return Channel == targetChannel;
+        }
+        else {
+            return false;
+        }
+    };
+
+    if constexpr (isChannel(&APU::channel1)) dacs.at(0) = analogSample;
+    if constexpr (isChannel(&APU::channel2)) dacs.at(1) = analogSample;
 }
 
 void APU::addSample(float left, float right) {

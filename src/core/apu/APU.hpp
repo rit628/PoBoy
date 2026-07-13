@@ -42,7 +42,7 @@ namespace Audio {
             bool prevDividerBit = 0;
             StaticQueue<float, 1 << 13> samples;
             std::array<float, CHANNEL_COUNT> dacs{};
-            PulseChannel channel1;
+            SweepChannel channel1;
             PulseChannel channel2;
     };
 

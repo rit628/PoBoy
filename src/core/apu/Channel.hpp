@@ -1,0 +1,48 @@
+#pragma once
+#include "EnvelopeGenerator.hpp"
+#include "LengthController.hpp"
+#include <cstdint>
+
+namespace Audio {
+
+    enum class VOLUME_TYPE : bool { SHIFT, ENVELOPE };
+    enum class TICK_RATE : uint8_t { M_CYCLE = 4, HALF_M_CYCLE = 2 };
+
+    template<VOLUME_TYPE, TICK_RATE>
+    class ChannelBase {};
+
+    template<TICK_RATE TickRate>
+    class ChannelBase<VOLUME_TYPE::ENVELOPE, TickRate> {
+        protected:
+            EnvelopeGenerator envelopeGenerator;  // Manages NRx2 register
+    };
+
+    template<VOLUME_TYPE VolumeType, TICK_RATE TickRate>
+    class Channel : public ChannelBase<VolumeType, TickRate> {
+        public:
+            void tickLength();
+            void tickEnvelope() requires (VolumeType == VOLUME_TYPE::ENVELOPE);
+
+        protected:
+            void resetPeriodTimer();
+
+            static constexpr uint8_t NRx0 = 0;
+            static constexpr uint8_t NRx1 = 1;
+            static constexpr uint8_t NRx2 = 2;
+            static constexpr uint8_t NRx3 = 3;
+            static constexpr uint8_t NRx4 = 4;
+
+            static constexpr uint16_t PERIOD_MAX    = 0x0800;
+
+            bool enabled = false;
+            uint16_t periodTimer = 0;
+            LengthController lengthController;    // Manages NRx1 bits 5-0 and NRx4 bit 6
+
+            /* NRx3 + NRx4 Register Components */
+            uint16_t period = 0;    // NRx3 register (bits 7-0) NRx4 register bits 2-0 (bits 10-8)
+            bool triggered = false; // NRx4 register bit 7
+    };
+
+}
+
+#include "Channel.tpp"

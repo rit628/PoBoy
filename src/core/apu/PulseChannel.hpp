@@ -1,26 +1,21 @@
 #pragma once
-#include "EnvelopeGenerator.hpp"
-#include "LengthController.hpp"
+#include "Channel.hpp"
 #include <array>
 #include <cstdint>
 
 namespace Audio {
 
-    class PulseChannel {
+    class PulseChannel : public Channel<VOLUME_TYPE::ENVELOPE, TICK_RATE::M_CYCLE> {
         public:
-            template<uint16_t Register>
+            template<uint8_t Register>
             uint8_t readIO();
-            template<uint16_t Register>
+            template<uint8_t Register>
             void writeIO(uint8_t value);
 
             uint8_t tick();
-            void tickLength();
-            void tickEnvelope();
             bool dacEnabled();
     
         private:
-            void resetCycleTimer();
-
             enum class DUTY_CYCLE : uint8_t {
                 P12_5   = 0b00,
                 P25     = 0b01,
@@ -35,28 +30,34 @@ namespace Audio {
                 0b01111110   // 75%
             };
 
-            static constexpr uint8_t NRx0 = 0;
-            static constexpr uint8_t NRx1 = 1;
-            static constexpr uint8_t NRx2 = 2;
-            static constexpr uint8_t NRx3 = 3;
-            static constexpr uint8_t NRx4 = 4;
-
-            static constexpr uint16_t PERIOD_MAX                = 0x0800;
-            static constexpr uint8_t  T_CYCLES_PER_PERIOD_TICK  = 4;
-   
-            bool enabled = false;
             uint8_t dutyCyclePositionBit = 1 << 7;
-            uint16_t cycleTimer = 0;
 
             /* NRx1 Register Components */
             DUTY_CYCLE dutyCycle = DUTY_CYCLE::P12_5;   // NRx1 bits 7-6
+    };
 
-            /* NRx3 + NRx4 Register Components */
-            uint16_t period = 0;    // NRx3 register (bits 7-0) NRx4 register bits 2-0 (bits 10-8)
-            bool triggered = false; // NRx4 bit 7
+    class SweepChannel : public PulseChannel {
+        public:
+            template<uint8_t Register>
+            uint8_t readIO();
+            template<uint8_t Register>
+            void writeIO(uint8_t value);
 
-            LengthController lengthController;      // Manages NRx1 bits 5-0 and NRx4 bit 6
-            EnvelopeGenerator envelopeGenerator;  // Manages NRx2 register
+            void tickSweep();
+
+        private:
+            uint16_t computeNewPeriod();
+
+            enum class DIRECTION : bool { INCREASING = 0, DECREASING = 1 };
+            
+            bool sweepEnabled = false;
+            uint8_t sweepTimer = 0;
+            uint16_t shadowPeriod = 0;
+
+            /* NR10 Register Components */
+            uint8_t sweepPeriod = 0;                        // NR10 bits 6-4
+            DIRECTION direction = DIRECTION::INCREASING;    // NR10 bit 3
+            uint8_t step = 0;                               // NR10 bits 2-0
     };
 
 }
