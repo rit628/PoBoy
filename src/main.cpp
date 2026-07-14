@@ -3,6 +3,7 @@
 #include "GUI.hpp"
 #include <SDL3/SDL_main.h>
 #include <SDL3/SDL_init.h>
+#include <SDL3/SDL_hints.h>
 #include <functional>
 #include <iostream>
 #include <print>
@@ -27,6 +28,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char** argv) {
         gb.run(stoken, romFile);
     }, romFile);
     *appstate = app;
+    SDL_SetHint(SDL_HINT_MAIN_CALLBACK_RATE, "waitevent");
     return SDL_APP_CONTINUE;
 }
 
