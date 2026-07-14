@@ -30,9 +30,12 @@ namespace Audio {
             bool getChannelPan(uint8_t channel);
             template<bool Left>
             uint8_t getVolume();
+            float highPassFilter(float sample);
             template<auto Channel>
             void sample();
             void addSample(float left, float right);
+
+            static constexpr float FILTER_CAPACITOR_CHARGE_RATE = 0.999958f;
 
             Interrupts::IMU& imu;
             std::function<void(std::span<const float>)> queueAudioData;
@@ -44,6 +47,7 @@ namespace Audio {
             uint8_t apuDivider = 0;
             bool prevDividerBit = 0;
             StaticQueue<float, 1 << 13> samples;
+            float filterCapacitor = 0.0f;
             std::array<float, CHANNEL_COUNT> dacs{};
             SweepChannel channel1;
             PulseChannel channel2;

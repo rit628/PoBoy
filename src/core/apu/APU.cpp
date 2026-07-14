@@ -99,6 +99,15 @@ uint8_t APU::getVolume() {
     else return (masterVolumeControl & 0x07) + 1;
 }
 
+float APU::highPassFilter(float sample) {
+    float filtered = 0.0;
+    if (channel1.dacEnabled() || channel2.dacEnabled() || channel3.dacEnabled()) {
+        filtered = sample - filterCapacitor;
+        filterCapacitor = sample - filtered * FILTER_CAPACITOR_CHARGE_RATE;
+    }
+    return filtered;
+}
+
 template<auto Channel>
 void APU::sample() {
     uint8_t digitalSample = (this->*Channel).tick();
@@ -123,8 +132,8 @@ void APU::sample() {
 }
 
 void APU::addSample(float left, float right) {
-    samples.push(left);
-    samples.push(right);
+    samples.push(highPassFilter(left));
+    samples.push(highPassFilter(right));
 }
 
 template uint8_t APU::readIO<Memory::NR50>();
