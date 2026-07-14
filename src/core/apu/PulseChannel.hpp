@@ -5,17 +5,19 @@
 
 namespace Audio {
 
-    class PulseChannel : public Channel<VOLUME_TYPE::ENVELOPE, TICK_RATE::M_CYCLE> {
+    class PulseChannel : public Channel<> {
+        friend class Channel<>;
         public:
             template<uint8_t Register>
             uint8_t readIO();
             template<uint8_t Register>
             void writeIO(uint8_t value);
 
-            uint8_t tick();
-            bool dacEnabled();
-    
-        private:
+        protected:
+            void advanceOutput();
+            uint8_t sample();
+            void trigger();
+
             enum class DUTY_CYCLE : uint8_t {
                 P12_5   = 0b00,
                 P25     = 0b01,
@@ -37,6 +39,7 @@ namespace Audio {
     };
 
     class SweepChannel : public PulseChannel {
+        friend class Channel<>;
         public:
             template<uint8_t Register>
             uint8_t readIO();
@@ -47,6 +50,7 @@ namespace Audio {
 
         private:
             uint16_t computeNewPeriod();
+            void trigger();
 
             enum class DIRECTION : bool { INCREASING = 0, DECREASING = 1 };
             

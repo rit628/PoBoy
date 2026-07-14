@@ -3,6 +3,7 @@
 #include "IMU.hpp"
 #include "PulseChannel.hpp"
 #include "StaticQueue.hpp"
+#include "WaveChannel.hpp"
 #include <array>
 #include <cstdint>
 #include <span>
@@ -17,6 +18,8 @@ namespace Audio {
             uint8_t readIO();
             template<uint16_t Register>
             void writeIO(uint8_t value);
+            uint8_t readWaveRAM(uint8_t address);
+            void writeWaveRAM(uint8_t address, uint8_t value);
 
             void tick();
             void incrementDivider();
@@ -44,6 +47,7 @@ namespace Audio {
             std::array<float, CHANNEL_COUNT> dacs{};
             SweepChannel channel1;
             PulseChannel channel2;
+            WaveChannel channel3;
     };
 
 }

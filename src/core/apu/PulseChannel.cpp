@@ -18,44 +18,35 @@ void PulseChannel::writeIO(uint8_t value) {
         dutyCycle = static_cast<DUTY_CYCLE>(value >> 6);
         lengthController.setPeriod(value & 0x3F);
     }
-    if constexpr (Register == NRx2) {
-        envelopeGenerator.writeRegister(value);
+    else if constexpr (Register == NRx2) {
+        writeEnvelope(value);
     }
-    if constexpr (Register == NRx3) {
-        period = (period & 0xFF00) | value;
+    else if constexpr (Register == NRx3) {
+        setPeriodLo(value);
     }
-    if constexpr (Register == NRx4) {
-        triggered = value >> 7;
-        lengthController.setState(value & 0x40);
-        period = (period & 0x00FF) | ((value & 0x07) << 8);
-        if (triggered) {
-            enabled = true;
-            resetPeriodTimer();
-            lengthController.trigger();
-            envelopeGenerator.trigger();
-        }
+    else if constexpr (Register == NRx4) {
+        channelControl(value);
     }
 }
 
-uint8_t PulseChannel::tick() {
-    if (!enabled) return 0;
-    if (--periodTimer == 0) {
-        resetPeriodTimer();
-        bool carry = dutyCyclePositionBit & 0b1;
-        dutyCyclePositionBit = (dutyCyclePositionBit >> 1) | (carry << 7);
-    }
+void PulseChannel::advanceOutput() {
+    bool carry = dutyCyclePositionBit & 0b1;
+    dutyCyclePositionBit = (dutyCyclePositionBit >> 1) | (carry << 7);
+}
+
+uint8_t PulseChannel::sample() {
     bool hi = DUTY_CYCLE_PATTERNS.at(std::to_underlying(dutyCycle)) & dutyCyclePositionBit;
     return hi * envelopeGenerator.getVolume();
 }
 
-bool PulseChannel::dacEnabled() {
-    return (envelopeGenerator.readRegister() & 0xF8) != 0;
+void PulseChannel::trigger() {
+    /* Channel base already does everything necessary */
 }
 
 template<uint8_t Register>
 uint8_t SweepChannel::readIO() {
     if constexpr (Register == NRx0) {
-        return sweepPeriod << 4 | std::to_underlying(direction) | step;
+        return 0x80 | sweepPeriod << 4 | std::to_underlying(direction) | step;
     }
     else return PulseChannel::readIO<Register>();
 }
@@ -67,15 +58,10 @@ void SweepChannel::writeIO(uint8_t value) {
         direction = static_cast<DIRECTION>(value & 0x08);
         step = value & 0x07;
     }
-    else PulseChannel::writeIO<Register>(value);
-    if constexpr (Register == NRx4) { // sweep trigger routine
-        if (triggered) {
-            shadowPeriod = period;
-            sweepTimer = sweepPeriod;
-            sweepEnabled = sweepPeriod > 0 || step > 0;
-            if (step > 0) computeNewPeriod();
-        }
+    else if constexpr (Register == NRx4) {
+        channelControl(value);  // must be called here to ensure correct trigger() call is dispatched
     }
+    else PulseChannel::writeIO<Register>(value);
 }
 
 void SweepChannel::tickSweep() {
@@ -100,6 +86,14 @@ uint16_t SweepChannel::computeNewPeriod() {
         sweepEnabled = false;
     }
     return newPeriod;
+}
+
+void SweepChannel::trigger() {
+    PulseChannel::trigger();
+    shadowPeriod = period;
+    sweepTimer = sweepPeriod;
+    sweepEnabled = sweepPeriod > 0 || step > 0;
+    if (step > 0) computeNewPeriod();
 }
 
 template uint8_t PulseChannel::readIO<PulseChannel::NRx1>();

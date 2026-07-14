@@ -128,6 +128,11 @@ uint8_t MMU::readIO(uint16_t registerAddress) {
         case NR22:  return apu.readIO<NR22>();
         case NR23:  return apu.readIO<NR23>();
         case NR24:  return apu.readIO<NR24>();
+        case NR30:  return apu.readIO<NR30>();
+        case NR31:  return apu.readIO<NR31>();
+        case NR32:  return apu.readIO<NR32>();
+        case NR33:  return apu.readIO<NR33>();
+        case NR34:  return apu.readIO<NR34>();
 
         case LY:    return ppu.readIO<LY>();
         case LYC:   return ppu.readIO<LYC>();
@@ -140,9 +145,11 @@ uint8_t MMU::readIO(uint16_t registerAddress) {
         case OBP0:  return ppu.readIO<OBP0>();
         case OBP1:  return ppu.readIO<OBP1>();
         case STAT:  return ppu.readIO<STAT>();
-
-        default:    return io.at(registerAddress - IO_START);
     }
+    if (WAVEL <= registerAddress && registerAddress <= WAVEH) {
+        return apu.readWaveRAM(registerAddress - WAVEL);
+    }
+    return io.at(registerAddress - IO_START);
 }
 
 void MMU::writeIO(uint16_t registerAddress, uint8_t value) {
@@ -188,6 +195,11 @@ void MMU::writeIO(uint16_t registerAddress, uint8_t value) {
         case NR22:  return apu.writeIO<NR22>(value);
         case NR23:  return apu.writeIO<NR23>(value);
         case NR24:  return apu.writeIO<NR24>(value);
+        case NR30:  return apu.writeIO<NR30>(value);
+        case NR31:  return apu.writeIO<NR31>(value);
+        case NR32:  return apu.writeIO<NR32>(value);
+        case NR33:  return apu.writeIO<NR33>(value);
+        case NR34:  return apu.writeIO<NR34>(value);
 
         case LYC:   return ppu.writeIO<LYC>(value);
         case SCX:   return ppu.writeIO<SCX>(value);
@@ -199,7 +211,9 @@ void MMU::writeIO(uint16_t registerAddress, uint8_t value) {
         case OBP0:  return ppu.writeIO<OBP0>(value);
         case OBP1:  return ppu.writeIO<OBP1>(value);
         case STAT:  return ppu.writeIO<STAT>(value);
-
-        default:    return void(io.at(registerAddress - IO_START) = value);
     }
+    if (WAVEL <= registerAddress && registerAddress <= WAVEH) {
+        return apu.writeWaveRAM(registerAddress - WAVEL, value);
+    }
+    return void(io.at(registerAddress - IO_START) = value);
 }

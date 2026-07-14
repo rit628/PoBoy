@@ -3,28 +3,37 @@
 
 using namespace Audio;
 
-void LengthController::tick(bool& channelEnabled) {
+template<uint16_t TIMER_MAX>
+void LengthController<TIMER_MAX>::tick(bool& channelEnabled) {
     if (!enabled || timer == 0) return;
     if (--timer == 0) channelEnabled = false;
 }
 
-void LengthController::trigger() {
+template<uint16_t TIMER_MAX>
+void LengthController<TIMER_MAX>::trigger() {
     if (timer == 0) timer = TIMER_MAX;
 }
 
-uint8_t LengthController::getPeriod() const {
+template<uint16_t TIMER_MAX>
+uint8_t LengthController<TIMER_MAX>::getPeriod() const {
     return period;
 }
 
-void LengthController::setPeriod(uint8_t value) {
+template<uint16_t TIMER_MAX>
+void LengthController<TIMER_MAX>::setPeriod(uint8_t value) {
     period = value;
     timer = TIMER_MAX - period;
 }
 
-bool LengthController::getState() const {
+template<uint16_t TIMER_MAX>
+bool LengthController<TIMER_MAX>::getState() const {
     return enabled;
 }
 
-void LengthController::setState(bool enable) {
+template<uint16_t TIMER_MAX>
+void LengthController<TIMER_MAX>::setState(bool enable) {
     enabled = enable;
 }
+
+template class Audio::LengthController<64>;
+template class Audio::LengthController<256>;

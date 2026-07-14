@@ -64,7 +64,8 @@ namespace Memory {
     constexpr uint16_t NR50     = 0xFF24;   // Master volume & VIN panning
     constexpr uint16_t NR51     = 0xFF25;   // Sound panning
     constexpr uint16_t NR52     = 0xFF26;   // Sound on/off
-    constexpr uint16_t FF3F     = 0xFF30;   // Wave RAM Storage for one of the sound channels' waveform
+    constexpr uint16_t WAVEL    = 0xFF30;   // Wave RAM Lo Boundary
+    constexpr uint16_t WAVEH    = 0xFF3F;   // Wave RAM Hi Boundary
     constexpr uint16_t LCDC     = 0xFF40;   // LCD control
     constexpr uint16_t STAT     = 0xFF41;   // LCD status
     constexpr uint16_t SCY      = 0xFF42;   // Viewport Y position
