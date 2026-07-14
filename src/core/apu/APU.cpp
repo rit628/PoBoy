@@ -15,6 +15,7 @@ uint8_t APU::readIO() {
     if constexpr (Register == NR51) return soundPanControl;
     if constexpr (Register == NR52) {
         return audioEnabled << 7
+            | channel4.on() << 3
             | channel3.on() << 2
             | channel2.on() << 1
             | channel1.on();
@@ -22,6 +23,7 @@ uint8_t APU::readIO() {
     if constexpr (NR10 <= Register && Register <= NR14) return channel1.readIO<Register - NR10>();
     if constexpr (NR21 <= Register && Register <= NR24) return channel2.readIO<Register - NR21 + 1>();
     if constexpr (NR30 <= Register && Register <= NR34) return channel3.readIO<Register - NR30>();
+    if constexpr (NR41 <= Register && Register <= NR44) return channel4.readIO<Register - NR41 + 1>();
 }
 
 template<uint16_t Register>
@@ -33,6 +35,7 @@ void APU::writeIO(uint8_t value) {
     if constexpr (NR10 <= Register && Register <= NR14) return channel1.writeIO<Register - NR10>(value);
     if constexpr (NR21 <= Register && Register <= NR24) return channel2.writeIO<Register - NR21 + 1>(value);
     if constexpr (NR30 <= Register && Register <= NR34) return channel3.writeIO<Register - NR30>(value);
+    if constexpr (NR41 <= Register && Register <= NR44) return channel4.writeIO<Register - NR41 + 1>(value);
 }
 
 uint8_t APU::readWaveRAM(uint8_t address) {
@@ -48,6 +51,7 @@ void APU::tick() {
     sample<&APU::channel1>();
     sample<&APU::channel2>();
     sample<&APU::channel3>();
+    sample<&APU::channel4>();
     mixChannels();
     if (samples.full()) queueAudioData(samples.extract());
 }
@@ -63,6 +67,7 @@ void APU::incrementDivider() {
         channel1.tickLength();
         channel2.tickLength();
         channel3.tickLength();
+        channel4.tickLength();
     }
     if (!(apuDivider & 0x03)) { // CH1 freq sweep every 4 increments
         channel1.tickSweep();
@@ -70,6 +75,7 @@ void APU::incrementDivider() {
     if (!(apuDivider & 0x07)) { // envelope sweep every 8 increments
         channel1.tickEnvelope();
         channel2.tickEnvelope();
+        channel4.tickEnvelope();
     }
 }
 
@@ -101,7 +107,7 @@ uint8_t APU::getVolume() {
 
 float APU::highPassFilter(float sample) {
     float filtered = 0.0;
-    if (channel1.dacEnabled() || channel2.dacEnabled() || channel3.dacEnabled()) {
+    if (channel1.dacEnabled() || channel2.dacEnabled() || channel3.dacEnabled() || channel4.dacEnabled()) {
         filtered = sample - filterCapacitor;
         filterCapacitor = sample - filtered * FILTER_CAPACITOR_CHARGE_RATE;
     }
@@ -129,6 +135,7 @@ void APU::sample() {
     if constexpr (isChannel(&APU::channel1)) dacs.at(0) = analogSample;
     if constexpr (isChannel(&APU::channel2)) dacs.at(1) = analogSample;
     if constexpr (isChannel(&APU::channel3)) dacs.at(2) = analogSample;
+    if constexpr (isChannel(&APU::channel4)) dacs.at(3) = analogSample;
 }
 
 void APU::addSample(float left, float right) {
@@ -157,6 +164,11 @@ template uint8_t APU::readIO<Memory::NR32>();
 template uint8_t APU::readIO<Memory::NR33>();
 template uint8_t APU::readIO<Memory::NR34>();
 
+template uint8_t APU::readIO<Memory::NR41>();
+template uint8_t APU::readIO<Memory::NR42>();
+template uint8_t APU::readIO<Memory::NR43>();
+template uint8_t APU::readIO<Memory::NR44>();
+
 
 template void APU::writeIO<Memory::NR50>(uint8_t);
 template void APU::writeIO<Memory::NR51>(uint8_t);
@@ -178,3 +190,8 @@ template void APU::writeIO<Memory::NR31>(uint8_t);
 template void APU::writeIO<Memory::NR32>(uint8_t);
 template void APU::writeIO<Memory::NR33>(uint8_t);
 template void APU::writeIO<Memory::NR34>(uint8_t);
+
+template void APU::writeIO<Memory::NR41>(uint8_t);
+template void APU::writeIO<Memory::NR42>(uint8_t);
+template void APU::writeIO<Memory::NR43>(uint8_t);
+template void APU::writeIO<Memory::NR44>(uint8_t);

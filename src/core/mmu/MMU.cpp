@@ -133,6 +133,10 @@ uint8_t MMU::readIO(uint16_t registerAddress) {
         case NR32:  return apu.readIO<NR32>();
         case NR33:  return apu.readIO<NR33>();
         case NR34:  return apu.readIO<NR34>();
+        case NR41:  return apu.readIO<NR41>();
+        case NR42:  return apu.readIO<NR42>();
+        case NR43:  return apu.readIO<NR43>();
+        case NR44:  return apu.readIO<NR44>();
 
         case LY:    return ppu.readIO<LY>();
         case LYC:   return ppu.readIO<LYC>();
@@ -200,6 +204,10 @@ void MMU::writeIO(uint16_t registerAddress, uint8_t value) {
         case NR32:  return apu.writeIO<NR32>(value);
         case NR33:  return apu.writeIO<NR33>(value);
         case NR34:  return apu.writeIO<NR34>(value);
+        case NR41:  return apu.writeIO<NR41>(value);
+        case NR42:  return apu.writeIO<NR42>(value);
+        case NR43:  return apu.writeIO<NR43>(value);
+        case NR44:  return apu.writeIO<NR44>(value);
 
         case LYC:   return ppu.writeIO<LYC>(value);
         case SCX:   return ppu.writeIO<SCX>(value);

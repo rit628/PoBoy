@@ -1,5 +1,4 @@
 #pragma once
-#include "GraphicsConstants.hpp"
 #include <cstdint>
 
 namespace Audio {

@@ -1,6 +1,7 @@
 #pragma once
 #include "AudioConstants.hpp"
 #include "IMU.hpp"
+#include "NoiseChannel.hpp"
 #include "PulseChannel.hpp"
 #include "StaticQueue.hpp"
 #include "WaveChannel.hpp"
@@ -49,9 +50,11 @@ namespace Audio {
             StaticQueue<float, 1 << 13> samples;
             float filterCapacitor = 0.0f;
             std::array<float, CHANNEL_COUNT> dacs{};
+
             SweepChannel channel1;
             PulseChannel channel2;
             WaveChannel channel3;
+            NoiseChannel channel4;
     };
 
 }
