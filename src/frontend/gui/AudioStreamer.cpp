@@ -18,6 +18,10 @@ AudioStreamer::~AudioStreamer() {
 }
 
 void AudioStreamer::queueAudioData(std::span<const float> data) {
+    /* drop old audio buffer in case of desync */
+    if (size_t(SDL_GetAudioStreamQueued(audioStream)) > STREAM_QUEUE_MAX) {
+        SDL_ClearAudioStream(audioStream);
+    }
     /* SDL can handle downsampling */
     SDL_PutAudioStreamData(audioStream, data.data(), sizeof(float) * data.size());
 }
