@@ -11,9 +11,11 @@ class SoftwareRenderer {
         void updateWindow(SDL_Window* window);
         void renderFrame(std::array<uint8_t, Graphics::FRAMEBUFFER_SIZE>& framebuffer);
 
+        static constexpr uint32_t SDL_EVENT_RENDER_FRAME = SDL_EVENT_USER + 1;
+
     private:
-        SDL_Window* renderWindow;
-        SDL_Surface* windowSurface;
-        SDL_Palette* palette;
+        SDL_Window* renderWindow = nullptr;
+        SDL_Surface* windowSurface = nullptr;
+        SDL_Palette* palette = nullptr;
         std::array<SDL_Color, 4> paletteColors;
 };

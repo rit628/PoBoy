@@ -39,6 +39,7 @@ SDL_AppResult SDL_AppIterate(void* appstate [[maybe_unused ]]) {
 SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
     auto& gui = static_cast<AppState*>(appstate)->gui;
     switch (event->type) {
+        case gui.SDL_EVENT_RENDER_FRAME: return SDL_APP_CONTINUE;
         case SDL_EVENT_QUIT: return SDL_APP_SUCCESS;
     }
     gui.handleInput(event);
