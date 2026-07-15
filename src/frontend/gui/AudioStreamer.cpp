@@ -10,7 +10,7 @@ AudioStreamer::AudioStreamer() {
     if (!audioStream || !SDL_ResumeAudioStreamDevice(audioStream)) {
         throw std::runtime_error("Audio streamer failed to initialize: "s + SDL_GetError());
     }
-    SDL_SetAudioStreamGain(audioStream, 0.15f);
+    SDL_SetAudioStreamGain(audioStream, 0.50f);
 }
 
 AudioStreamer::~AudioStreamer() {

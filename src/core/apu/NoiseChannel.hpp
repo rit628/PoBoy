@@ -20,7 +20,7 @@ namespace Audio {
             void resetPeriodTimer();
 
             static constexpr uint32_t BASE_TICK_RATE    = 262144;
-            static constexpr uint8_t  PERIOD_MIN        = (SAMPLE_RATE / BASE_TICK_RATE) >> 1; // account for .5 clock shift
+            static constexpr uint8_t  PERIOD_MIN        = (INTERNAL_SAMPLE_RATE / BASE_TICK_RATE) >> 1; // account for .5 clock shift
             
             uint16_t feedbackRegister = 0;
 

@@ -14,6 +14,6 @@ class AudioStreamer {
         const SDL_AudioSpec streamFormat {
             SDL_AUDIO_F32,
             2,
-            Audio::SAMPLE_RATE
+            Audio::OUTPUT_SAMPLE_RATE
         };
 };

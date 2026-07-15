@@ -1,10 +1,13 @@
 #include "APU.hpp"
 #include "AudioConstants.hpp"
+#include "ConstevalMath.hpp"
 #include "MemoryConstants.hpp"
 #include <cstdint>
 #include <type_traits>
 
 using namespace Audio;
+
+constexpr float FILTER_CAPACITOR_CHARGE_RATE = cpow(0.999958f, cround(SAMPLES_TO_DISCARD));
 
 APU::APU(Interrupts::IMU& imu, std::function<void(std::span<const float>)> queueAudioData) : imu(imu), queueAudioData(queueAudioData) {}
 
@@ -139,6 +142,8 @@ void APU::sample() {
 }
 
 void APU::addSample(float left, float right) {
+    if (++discardedSamples < SAMPLES_TO_DISCARD) return;
+    discardedSamples = 0;
     samples.push(highPassFilter(left));
     samples.push(highPassFilter(right));
 }
