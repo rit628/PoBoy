@@ -1,4 +1,5 @@
 #include "DMG.hpp"
+#include "GraphicsConstants.hpp"
 #include <chrono>
 #include <cstdint>
 #include <thread>
@@ -19,8 +20,9 @@ void DMG::systemTick() {
         mmu.tick();
         apu.tick();
         ppu.tick();
+        cycleCount++;
     }
-    totalMCycles++;
+    if (cycleCount % Graphics::DOTS_PER_FRAME == 0) wait();
 }
 
 Memory::CartridgeMetadata DMG::loadRom(const std::filesystem::path& romFile) {
@@ -29,17 +31,17 @@ Memory::CartridgeMetadata DMG::loadRom(const std::filesystem::path& romFile) {
 
 void DMG::run() {
     initialize();
-    while (true) emuLoop();
+    while (true) cpu.tick();
 }
 
 void DMG::run(std::stop_token stoken) {
     initialize();
-    while (!stoken.stop_requested()) emuLoop();
+    while (!stoken.stop_requested()) cpu.tick();
 }
 
 void DMG::initialize() {
     start = clock::now();
-    totalMCycles = 0;
+    cycleCount = 0;
     cpu.initialize();
     imu.initialize();
     mmu.initialize();
@@ -47,14 +49,10 @@ void DMG::initialize() {
     ppu.initialize();
 }
 
-void DMG::emuLoop() {
-    cpu.tick();
-
-    auto totalTCycles = totalMCycles * 4;
-
+void DMG::wait() {
     auto now = clock::now();
     auto elapsed = std::chrono::duration<double, std::micro>(now - start);
-    auto expectedElapsed = totalTCycles * DMG_CLOCK_US;
+    auto expectedElapsed = cycleCount * DMG_CLOCK_US;
 
     if (elapsed < expectedElapsed) {
         auto waitTime = expectedElapsed - elapsed;

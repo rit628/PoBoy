@@ -27,11 +27,11 @@ class DMG {
 
     private:
         void initialize();
-        void emuLoop();
+        void wait();
 
         using clock = std::chrono::steady_clock;
         clock::time_point start;
-        uint64_t totalMCycles = 0;
+        uint64_t cycleCount = 0;
 
         Interrupts::IMU imu;
         Graphics::PPU ppu;
