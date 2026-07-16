@@ -4,11 +4,13 @@
 #include <SDL3/SDL_rect.h>
 #include <SDL3/SDL_video.h>
 #include <array>
+#include <cstdint>
 
 class SoftwareRenderer {
     public:
         SoftwareRenderer();
         ~SoftwareRenderer();
+        uint8_t getMaxGameScale(size_t width, size_t height);
         void updateWindow(SDL_Window* window);
         void renderFrame(std::array<uint8_t, Graphics::FRAMEBUFFER_SIZE>& framebuffer);
 

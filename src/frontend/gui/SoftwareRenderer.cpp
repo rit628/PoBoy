@@ -28,14 +28,17 @@ SoftwareRenderer::~SoftwareRenderer() {
     SDL_DestroyPalette(palette);
 }
 
+uint8_t SoftwareRenderer::getMaxGameScale(size_t width, size_t height) {
+    uint8_t renderScaleX = width / Graphics::LCD_WIDTH;
+    uint8_t renderScaleY = height / Graphics::LCD_HEIGHT;
+    return std::min(renderScaleX, renderScaleY);
+}
+
 void SoftwareRenderer::updateWindow(SDL_Window* window) {
     renderWindow = window;
     windowSurface = SDL_GetWindowSurface(renderWindow);
     
-    uint8_t renderScaleX = windowSurface->w / Graphics::LCD_WIDTH;
-    uint8_t renderScaleY = windowSurface->h / Graphics::LCD_HEIGHT;
-    uint8_t renderScale = std::min(renderScaleX, renderScaleY);
-
+    uint8_t renderScale = getMaxGameScale(windowSurface->w, windowSurface->h);
     gameScreen.w = Graphics::LCD_WIDTH * renderScale;
     gameScreen.h = Graphics::LCD_HEIGHT * renderScale;
     gameScreen.x = (windowSurface->w - gameScreen.w) / 2;

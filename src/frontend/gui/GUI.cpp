@@ -15,6 +15,11 @@ GUI<RendererType>::GUI() {
 
     gameWindow = SDL_CreateWindow("Game Window", Graphics::LCD_WIDTH, Graphics::LCD_HEIGHT, SDL_WINDOW_RESIZABLE);
     SDL_SetWindowMinimumSize(gameWindow, Graphics::LCD_WIDTH, Graphics::LCD_HEIGHT);
+    auto display = SDL_GetDisplayForWindow(gameWindow);
+    auto* displayMode = SDL_GetDesktopDisplayMode(display);
+    size_t width = displayMode->w / 2, height = displayMode->h / 2;
+    uint8_t scale = renderer.getMaxGameScale(width, height);
+    SDL_SetWindowSize(gameWindow, scale * Graphics::LCD_WIDTH, scale * Graphics::LCD_HEIGHT);
     renderer.updateWindow(gameWindow);
 
     if (!gameWindow) {
