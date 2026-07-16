@@ -1,6 +1,7 @@
 #pragma once
 #include "GraphicsConstants.hpp"
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_rect.h>
 #include <SDL3/SDL_video.h>
 #include <array>
 
@@ -16,6 +17,7 @@ class SoftwareRenderer {
     private:
         SDL_Window* renderWindow = nullptr;
         SDL_Surface* windowSurface = nullptr;
+        SDL_Rect gameScreen{};
         SDL_Palette* palette = nullptr;
         std::array<SDL_Color, 4> paletteColors;
 };

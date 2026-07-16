@@ -13,8 +13,8 @@ GUI<RendererType>::GUI() {
         throw std::runtime_error("SDL failed to initialize: "s + SDL_GetError());
     }
 
-    static constexpr uint8_t SCALE_FACTOR = 2;
-    gameWindow = SDL_CreateWindow("Game Window", SCALE_FACTOR * Graphics::LCD_WIDTH, SCALE_FACTOR * Graphics::LCD_HEIGHT, 0);
+    gameWindow = SDL_CreateWindow("Game Window", Graphics::LCD_WIDTH, Graphics::LCD_HEIGHT, SDL_WINDOW_RESIZABLE);
+    SDL_SetWindowMinimumSize(gameWindow, Graphics::LCD_WIDTH, Graphics::LCD_HEIGHT);
     renderer.updateWindow(gameWindow);
 
     if (!gameWindow) {
@@ -25,6 +25,11 @@ GUI<RendererType>::GUI() {
 template<typename RendererType>
 GUI<RendererType>::~GUI() {
     SDL_DestroyWindow(gameWindow);
+}
+
+template<typename RendererType>
+void GUI<RendererType>::updateWindow() {
+    renderer.updateWindow(gameWindow);
 }
 
 template<typename RendererType>

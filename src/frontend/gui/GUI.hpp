@@ -12,6 +12,7 @@ class GUI {
     public:
         GUI();
         ~GUI();
+        void updateWindow();
         void handleInput(SDL_Event* event);
 
         void renderFrame(std::array<uint8_t, Graphics::FRAMEBUFFER_SIZE>& framebuffer);

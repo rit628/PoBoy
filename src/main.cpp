@@ -1,3 +1,4 @@
+#include <SDL3/SDL_events.h>
 #define SDL_MAIN_USE_CALLBACKS
 #include "DMG.hpp"
 #include "GUI.hpp"
@@ -40,6 +41,10 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
     auto& gui = static_cast<AppState*>(appstate)->gui;
     switch (event->type) {
         case gui.SDL_EVENT_RENDER_FRAME: return SDL_APP_CONTINUE;
+        case SDL_EVENT_WINDOW_RESIZED:
+            gui.updateWindow();
+            return SDL_APP_CONTINUE;
+        break;
         case SDL_EVENT_QUIT: return SDL_APP_SUCCESS;
     }
     gui.handleInput(event);
