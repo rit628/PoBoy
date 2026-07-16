@@ -13,7 +13,7 @@ GUI<RendererType>::GUI() {
         throw std::runtime_error("SDL failed to initialize: "s + SDL_GetError());
     }
 
-    gameWindow = SDL_CreateWindow("Game Window", Graphics::LCD_WIDTH, Graphics::LCD_HEIGHT, SDL_WINDOW_RESIZABLE);
+    gameWindow = SDL_CreateWindow("PoBoy", Graphics::LCD_WIDTH, Graphics::LCD_HEIGHT, SDL_WINDOW_RESIZABLE);
     SDL_SetWindowMinimumSize(gameWindow, Graphics::LCD_WIDTH, Graphics::LCD_HEIGHT);
     auto display = SDL_GetDisplayForWindow(gameWindow);
     auto* displayMode = SDL_GetDesktopDisplayMode(display);
@@ -33,8 +33,22 @@ GUI<RendererType>::~GUI() {
 }
 
 template<typename RendererType>
-void GUI<RendererType>::updateWindow() {
+SDL_Window* GUI<RendererType>::getWindow() {
+    return gameWindow;
+}
+
+template<typename RendererType>
+void GUI<RendererType>::updateWindow(std::string windowName) {
+    if (!windowName.empty()) {
+        SDL_SetWindowTitle(gameWindow, ("PoBoy: " + windowName).c_str());
+    }
     renderer.updateWindow(gameWindow);
+}
+
+template<typename RendererType>
+void GUI<RendererType>::renderInterface() {
+    static std::array<uint8_t, Graphics::FRAMEBUFFER_SIZE> blank{}; // white screen for now until a proper interface is made
+    renderer.renderFrame(blank);
 }
 
 template<typename RendererType>

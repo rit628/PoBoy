@@ -1,5 +1,6 @@
 #pragma once
 #include "IMU.hpp"
+#include "MemoryConstants.hpp"
 #include "PPU.hpp"
 #include "APU.hpp"
 #include "MMU.hpp"
@@ -20,11 +21,12 @@ class DMG {
           , std::function<void(std::span<const float>)> queueAudioData
           , std::function<void(std::array<uint8_t, Graphics::FRAMEBUFFER_SIZE>&)> renderFrame);
         void systemTick();
-        void run(const std::filesystem::path& romFile);
-        void run(std::stop_token stoken, const std::filesystem::path& romFile);
+        Memory::CartridgeMetadata loadRom(const std::filesystem::path& romFile);
+        void run();
+        void run(std::stop_token stoken);
 
     private:
-        void initialize(const std::filesystem::path& romFile);
+        void initialize();
         void emuLoop();
 
         using clock = std::chrono::steady_clock;

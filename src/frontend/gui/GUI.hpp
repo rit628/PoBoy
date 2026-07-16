@@ -6,13 +6,16 @@
 #include <SDL3/SDL.h>
 #include <array>
 #include <cstdint>
+#include <string>
 
 template<typename RendererType = SoftwareRenderer>
 class GUI {
     public:
         GUI();
         ~GUI();
-        void updateWindow();
+        SDL_Window* getWindow();
+        void updateWindow(std::string windowName = "");
+        void renderInterface();
         void handleInput(SDL_Event* event);
 
         void renderFrame(std::array<uint8_t, Graphics::FRAMEBUFFER_SIZE>& framebuffer);

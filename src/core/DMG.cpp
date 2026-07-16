@@ -23,20 +23,28 @@ void DMG::systemTick() {
     totalMCycles++;
 }
 
-void DMG::run(const std::filesystem::path& romFile) {
-    initialize(romFile);
+Memory::CartridgeMetadata DMG::loadRom(const std::filesystem::path& romFile) {
+    return mmu.loadRom(romFile);
+}
+
+void DMG::run() {
+    initialize();
     while (true) emuLoop();
 }
 
-void DMG::run(std::stop_token stoken, const std::filesystem::path& romFile) {
-    initialize(romFile);
+void DMG::run(std::stop_token stoken) {
+    initialize();
     while (!stoken.stop_requested()) emuLoop();
 }
 
-void DMG::initialize(const std::filesystem::path& romFile) {
-    mmu.loadRom(romFile);
+void DMG::initialize() {
     start = clock::now();
     totalMCycles = 0;
+    cpu.initialize();
+    imu.initialize();
+    mmu.initialize();
+    apu.initialize();
+    ppu.initialize();
 }
 
 void DMG::emuLoop() {
