@@ -5,10 +5,10 @@ using namespace Audio;
 
 template<uint8_t Register>
 uint8_t NoiseChannel::readIO() {
-    if constexpr (Register == NRx1) return 0;
+    if constexpr (Register == NRx1) return 0xFF;
     if constexpr (Register == NRx2) return envelopeGenerator.readRegister();
     if constexpr (Register == NRx3) return clockShift << 4 | shortWidthMode << 3 | clockDivider;
-    if constexpr (Register == NRx4) return lengthController.getState() << 6;
+    if constexpr (Register == NRx4) return lengthController.getState() << 6 | 0x3F;
 }
 
 template<uint8_t Register>

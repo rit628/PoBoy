@@ -4,8 +4,6 @@
 #include "MemoryConstants.hpp"
 #include <array>
 #include <cstdint>
-#include <iostream>
-#include <print>
 #include <ranges>
 
 using namespace Memory;
@@ -25,7 +23,6 @@ void MMU::tick() {
 }
 
 CartridgeMetadata MMU::loadRom(const std::filesystem::path& romFile) {
-    io.fill(0xFF);
     return cartridge.loadRom(romFile);
 }
 
@@ -105,9 +102,10 @@ void MMU::write(uint16_t address, uint8_t value) {
 
 uint8_t MMU::readIO(uint16_t registerAddress) {
     switch (registerAddress) {            
-        case BANK:  return bootromDisabled;
+        case BANK:  return 0xFE | bootromDisabled;
         case DMA:   return dmaSourceAddress;
         case SB:    return 0xFF;
+        case SC:    return 0xFF;
         
         case IF:    return imu.readIO<IF>();
         case DIV:   return imu.readIO<DIV>();
@@ -153,7 +151,7 @@ uint8_t MMU::readIO(uint16_t registerAddress) {
     if (WAVEL <= registerAddress && registerAddress <= WAVEH) {
         return apu.readWaveRAM(registerAddress - WAVEL);
     }
-    return io.at(registerAddress - IO_START);
+    return 0xFF;
 }
 
 void MMU::writeIO(uint16_t registerAddress, uint8_t value) {
@@ -172,13 +170,8 @@ void MMU::writeIO(uint16_t registerAddress, uint8_t value) {
             } 
             ppu.dmaTransferOAM(sourceRange);
         break;
-        case SB:
-            serialBuffer += static_cast<char>(std::min(uint8_t(0x7F), value));
-        break;
-        case SC:
-            std::print(std::cerr, "{}", serialBuffer);
-            serialBuffer.clear();
-        break;
+        case SB:    break;
+        case SC:    break;
 
         case IF:    return imu.writeIO<IF>(value);
         case DIV:   return imu.writeIO<DIV>(value);
@@ -223,5 +216,4 @@ void MMU::writeIO(uint16_t registerAddress, uint8_t value) {
     if (WAVEL <= registerAddress && registerAddress <= WAVEH) {
         return apu.writeWaveRAM(registerAddress - WAVEL, value);
     }
-    return void(io.at(registerAddress - IO_START) = value);
 }

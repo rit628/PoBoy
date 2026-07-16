@@ -18,6 +18,7 @@ uint8_t APU::readIO() {
     if constexpr (Register == NR51) return soundPanControl;
     if constexpr (Register == NR52) {
         return audioEnabled << 7
+            | 0x70
             | channel4.on() << 3
             | channel3.on() << 2
             | channel2.on() << 1
