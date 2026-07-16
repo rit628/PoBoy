@@ -12,6 +12,7 @@ namespace Memory {
     class MMU {
         public:
             MMU(Interrupts::IMU& imu, Audio::APU& apu, Graphics::PPU& ppu);
+            void initialize();
     
             void tick();
             CartridgeMetadata loadRom(const std::filesystem::path& romFile);
@@ -27,10 +28,10 @@ namespace Memory {
             Graphics::PPU& ppu;
 
             Cartridge cartridge;
-            std::array<uint8_t, WRAM_SIZE> wram{};
-            std::array<uint8_t, HRAM_SIZE> hram{};
-            bool bootromDisabled = false;       // BANK register
-            uint8_t dmaSourceAddress = 0;       // DMA register
+            std::array<uint8_t, WRAM_SIZE> wram;
+            std::array<uint8_t, HRAM_SIZE> hram;
+            bool bootromDisabled;       // BANK register
+            uint8_t dmaSourceAddress;   // DMA register
     };
 
 }

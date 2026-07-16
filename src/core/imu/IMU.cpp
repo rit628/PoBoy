@@ -8,7 +8,17 @@ using namespace Interrupts;
 IMU::IMU(std::function<uint8_t()> readInput)
         : timer(*this)
         , joypad(*this, readInput)
-        {}
+{
+    initialize();
+}
+
+void IMU::initialize() {
+    interruptFlags = 0;
+    interruptEnable = 0;
+    
+    timer.initialize();
+    joypad.initialize();
+}
 
 template<uint16_t Register>
 uint8_t IMU::readIO() {

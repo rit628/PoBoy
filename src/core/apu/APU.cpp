@@ -9,7 +9,29 @@ using namespace Audio;
 
 constexpr float FILTER_CAPACITOR_CHARGE_RATE = cpow(0.999958f, cround(SAMPLES_TO_DISCARD));
 
-APU::APU(Interrupts::IMU& imu, std::function<void(std::span<const float>)> queueAudioData) : imu(imu), queueAudioData(queueAudioData) {}
+APU::APU(Interrupts::IMU& imu, std::function<void(std::span<const float>)> queueAudioData)
+        : imu(imu), queueAudioData(queueAudioData)
+{
+    initialize();
+}
+
+void APU::initialize() {
+    masterVolumeControl = 0;
+    soundPanControl = 0;
+    audioEnabled = false;
+
+    apuDivider = 0;
+    prevDividerBit = 0;
+    samples.extract();  // empty samples
+    discardedSamples = 0;
+    filterCapacitor = 0.0f;
+    dacs.fill(0);
+
+    channel1.initialize();
+    channel2.initialize();
+    channel3.initialize();
+    channel4.initialize();
+}
 
 template<uint16_t Register>
 uint8_t APU::readIO() {

@@ -9,6 +9,7 @@ namespace Interrupts {
     class SystemTimer {
         public:
             SystemTimer(IMU& imu);
+            void initialize();
             
             template<uint16_t Register>
             uint8_t readIO();
@@ -22,14 +23,16 @@ namespace Interrupts {
     
             IMU& imu;
     
-            bool prevTimaBit = 0;
-            uint8_t timaReloadTCycle = 4;
-            uint16_t systemCounter = 0; // DIV register (bits 15-8) and clock counter (bits 7-0)
-            uint8_t timerCounter = 0;   // TIMA register
-            uint8_t timerModulo = 0;    // TMA register
+            bool prevTimaBit;
+            uint8_t timaReloadTCycle;
+            
+            uint16_t systemCounter; // DIV register (bits 15-8) and clock counter (bits 7-0)
+            uint8_t timerCounter;   // TIMA register
+            uint8_t timerModulo;    // TMA register
+
             /* TAC register components */
-            bool timerEnabled = true;   // TAC bit 2
-            uint8_t selectedClock = 0;  // TAC bits 1-0
+            bool timerEnabled;      // TAC bit 2
+            uint8_t selectedClock;  // TAC bits 1-0
     };
 
 }

@@ -16,7 +16,17 @@ namespace {
 }
 
 MMU::MMU(Interrupts::IMU& imu, Audio::APU& apu, Graphics::PPU& ppu)
-        : imu(imu), apu(apu), ppu(ppu) {}
+        : imu(imu), apu(apu), ppu(ppu)
+{
+    initialize();
+}
+
+void MMU::initialize() {
+    wram.fill(0);
+    hram.fill(0);
+    bootromDisabled = false;
+    dmaSourceAddress = 0;
+}
 
 void MMU::tick() {
     cartridge.tick();

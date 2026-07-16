@@ -9,6 +9,7 @@ namespace Interrupts {
     class Joypad {
         public:
             Joypad(IMU& imu, std::function<uint8_t()> readInput);
+            void initialize();
             
             template<uint16_t Register>
             uint8_t readIO();
@@ -21,8 +22,8 @@ namespace Interrupts {
             IMU& imu;
 
             std::function<uint8_t()> readInput;
-            uint8_t selectedJoypadInput = 0;    // P1 register bits 5-4
-            uint8_t currentJoypadInput = 0x0F;  // P1 register bits 3-0
+            uint8_t selectedJoypadInput;    // P1 register bits 5-4
+            uint8_t currentJoypadInput;     // P1 register bits 3-0
     };
 
 }

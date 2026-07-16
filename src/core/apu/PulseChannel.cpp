@@ -4,6 +4,16 @@
 
 using namespace Audio;
 
+PulseChannel::PulseChannel() {
+    init();
+}
+
+void PulseChannel::init() {
+    dutyCyclePositionBit = 1 << 7;
+
+    dutyCycle = DUTY_CYCLE::P12_5;
+}
+
 template<uint8_t Register>
 uint8_t PulseChannel::readIO() {
     if constexpr (Register == NRx1) return std::to_underlying(dutyCycle) << 6;
@@ -41,6 +51,22 @@ uint8_t PulseChannel::sample() {
 
 void PulseChannel::trigger() {
     /* Channel base already does everything necessary */
+}
+
+SweepChannel::SweepChannel() {
+    init();
+}
+
+void SweepChannel::init() {
+    PulseChannel::init();
+
+    sweepEnabled = false;
+    sweepTimer = 0;
+    shadowPeriod = 0;
+
+    sweepPeriod = 0;
+    direction = DIRECTION::INCREASING;
+    step = 0;
 }
 
 template<uint8_t Register>

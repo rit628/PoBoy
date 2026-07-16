@@ -8,12 +8,14 @@ namespace Audio {
     class PulseChannel : public Channel<> {
         friend class Channel<>;
         public:
+            PulseChannel();
             template<uint8_t Register>
             uint8_t readIO();
             template<uint8_t Register>
             void writeIO(uint8_t value);
 
         protected:
+            void init();
             void advanceOutput();
             uint8_t sample();
             void trigger();
@@ -32,15 +34,16 @@ namespace Audio {
                 0b01111110   // 75%
             };
 
-            uint8_t dutyCyclePositionBit = 1 << 7;
+            uint8_t dutyCyclePositionBit;
 
             /* NRx1 Register Components */
-            DUTY_CYCLE dutyCycle = DUTY_CYCLE::P12_5;   // NRx1 bits 7-6
+            DUTY_CYCLE dutyCycle;   // NRx1 bits 7-6
     };
 
     class SweepChannel : public PulseChannel {
         friend class Channel<>;
         public:
+            SweepChannel();
             template<uint8_t Register>
             uint8_t readIO();
             template<uint8_t Register>
@@ -49,19 +52,20 @@ namespace Audio {
             void tickSweep();
 
         private:
+            void init();
             uint16_t computeNewPeriod();
             void trigger();
 
             enum class DIRECTION : bool { INCREASING = 0, DECREASING = 1 };
             
-            bool sweepEnabled = false;
-            uint8_t sweepTimer = 0;
-            uint16_t shadowPeriod = 0;
+            bool sweepEnabled;
+            uint8_t sweepTimer;
+            uint16_t shadowPeriod;
 
             /* NR10 Register Components */
-            uint8_t sweepPeriod = 0;                        // NR10 bits 6-4
-            DIRECTION direction = DIRECTION::INCREASING;    // NR10 bit 3
-            uint8_t step = 0;                               // NR10 bits 2-0
+            uint8_t sweepPeriod;    // NR10 bits 6-4
+            DIRECTION direction;    // NR10 bit 3
+            uint8_t step;           // NR10 bits 2-0
     };
 
 }

@@ -3,6 +3,18 @@
 
 using namespace Audio;
 
+NoiseChannel::NoiseChannel() {
+    init();
+}
+
+void NoiseChannel::init() {
+    feedbackRegister = 0;
+
+    clockShift = 0;
+    shortWidthMode = false;
+    clockDivider = 0;
+}
+
 template<uint8_t Register>
 uint8_t NoiseChannel::readIO() {
     if constexpr (Register == NRx1) return 0xFF;

@@ -6,6 +6,21 @@
 
 using namespace Audio;
 
+EnvelopeGenerator::EnvelopeGenerator() {
+    initialize();
+}
+
+void EnvelopeGenerator::initialize() {
+    timer = 0;
+    currentVolume = 0;
+    currentPeriod = 0;
+    currentDirection = DIRECTION::DECREASING;
+
+    volume = 0;
+    direction = DIRECTION::DECREASING;
+    period = 0;
+}
+
 void EnvelopeGenerator::tick() {
     if (currentPeriod == 0) return;
     if (--timer == 0) {

@@ -7,6 +7,26 @@
 namespace Audio {
 
     template<VOLUME_TYPE VolumeType, TICK_RATE TickRate>
+    inline Channel<VolumeType, TickRate>::Channel() {
+        initBase();
+    }
+
+    template<VOLUME_TYPE VolumeType, TICK_RATE TickRate>
+    inline void Channel<VolumeType, TickRate>::initBase() {
+        enabled = false;
+        periodTimer = 0;
+        lengthController.initialize();
+        if constexpr (VolumeType == VOLUME_TYPE::ENVELOPE) this->envelopeGenerator.initialize();
+        period = 0;
+    }
+
+    template<VOLUME_TYPE VolumeType, TICK_RATE TickRate>
+    inline void Channel<VolumeType, TickRate>::initialize(this auto&& self) {
+        self.initBase();
+        self.init();
+    }
+
+    template<VOLUME_TYPE VolumeType, TICK_RATE TickRate>
     inline uint8_t Channel<VolumeType, TickRate>::tick(this auto&& self) {
         if (!self.enabled) return 0;
         if (--self.periodTimer == 0) {

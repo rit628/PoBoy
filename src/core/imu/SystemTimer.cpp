@@ -5,7 +5,22 @@
 
 using namespace Interrupts;
 
-SystemTimer::SystemTimer(IMU& imu) : imu(imu) {}
+SystemTimer::SystemTimer(IMU& imu) : imu(imu)
+{
+    initialize();
+}
+
+void SystemTimer::initialize() {
+    prevTimaBit = 0;
+    timaReloadTCycle = 4;
+
+    systemCounter = 0;
+    timerCounter = 0;
+    timerModulo = 0;
+    
+    timerEnabled = true;
+    selectedClock = 0;
+}
 
 template<uint16_t Register>
 uint8_t SystemTimer::readIO() {

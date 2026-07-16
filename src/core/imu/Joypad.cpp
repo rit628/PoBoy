@@ -8,7 +8,15 @@
 using namespace Interrupts;
 
 Joypad::Joypad(IMU& imu, std::function<uint8_t()> readInput)
-              : imu(imu), readInput(readInput) {}
+              : imu(imu), readInput(readInput)
+{
+    initialize();
+}
+
+void Joypad::initialize() {
+    selectedJoypadInput = 0;
+    currentJoypadInput = 0x0F;
+}
 
 template<>
 uint8_t Joypad::readIO<Memory::P1>() {

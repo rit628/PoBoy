@@ -10,6 +10,7 @@ namespace Interrupts {
     class IMU {
         public:
             IMU(std::function<uint8_t()> readInput);
+            void initialize();
 
             template<uint16_t Register>
             uint8_t readIO();
@@ -22,8 +23,8 @@ namespace Interrupts {
             void enableInterrupt(INTERRUPT_FLAG flag);
     
         private:
-            uint8_t interruptFlags = 0;     // IF register
-            uint8_t interruptEnable = 0;    // IE register
+            uint8_t interruptFlags;     // IF register
+            uint8_t interruptEnable;    // IE register
     
             SystemTimer timer;
             Joypad joypad;

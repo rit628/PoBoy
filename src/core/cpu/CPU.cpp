@@ -5,12 +5,12 @@
 #include <array>
 #include <cstdint>
 #include <cstring>
-#include <print>
 
 #define DEBUG_PRINT false
 
 #if DEBUG_PRINT
     #include <iostream>
+    #include <print>
     #define DEBUG_PRINT_OPCODE(code, name) \
     std::print(std::cerr, "{:#06x}: {} {}", PC - 1, #code, #name);
     #define DEBUG_PRINT_ARGS(name, type, bytecount, immediate, postop) \
@@ -45,11 +45,28 @@ using namespace Processing;
 
 template<bool FlatMemory>
 CPU<FlatMemory>::CPU(std::function<void()> systemTick) requires FlatMemory
-                    : systemTick(systemTick) {}
+                    : systemTick(systemTick)
+{
+    initialize();
+}
 
 template<bool FlatMemory>
 CPU<FlatMemory>::CPU(Memory::MMU& mmu, std::function<void()> systemTick) requires (!FlatMemory)
-                    : mmu(mmu), systemTick(systemTick) {}
+                    : mmu(mmu), systemTick(systemTick)
+{
+    initialize();
+}
+
+template<bool FlatMemory>
+void CPU<FlatMemory>::initialize() {
+    PC = 0;
+    SP = 0;
+    AF = 0, BC = 0, DE = 0, HL = 0;
+
+    IME = INTERRUPT_MASTER_FLAG::DISABLED;
+    
+    state = STATE::RUNNING;
+}
 
 template<bool FlatMemory>
 void CPU<FlatMemory>::tick() {

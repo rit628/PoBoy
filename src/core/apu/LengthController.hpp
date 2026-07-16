@@ -6,6 +6,8 @@ namespace Audio {
     template<uint16_t TIMER_MAX>
     class LengthController {
         public:
+            LengthController();
+            void initialize();
             void tick(bool& channelEnabled);
             void trigger();
             uint8_t getPeriod() const;
@@ -14,9 +16,9 @@ namespace Audio {
             void setState(bool enable);
     
         private:
-            uint16_t timer = 0;
-            bool enabled = 0;   // portion of several channel registers
-            uint8_t period = 0; // portion of several channel registers
+            uint16_t timer;
+            bool enabled;   // portion of several channel registers
+            uint8_t period; // portion of several channel registers
     };
 
 }

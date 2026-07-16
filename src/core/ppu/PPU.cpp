@@ -11,7 +11,33 @@
 using namespace Graphics;
 
 PPU::PPU(Interrupts::IMU& imu, std::function<void(std::array<uint8_t, FRAMEBUFFER_SIZE>&)> renderFrame)
-        : imu(imu), renderFrame(renderFrame) {}
+        : imu(imu), renderFrame(renderFrame)
+{
+    initialize();
+}
+
+void PPU::initialize() {
+    vram.fill(0);
+    oam.fill(0);
+    lineDotsElapsed = 0;
+    frameDotsElapsed = 0;
+
+    currentLine = 0;
+    lineCompare = 0;
+    lcdControl = 0;
+    scrollX = 0;
+    scrollY = 0;
+    windowX = 0;
+    windowY = 0;
+    backgroundPalette = 0;
+    spritePalette0 = 0;
+    spritePalette1 = 0;
+
+    interruptMask = 0x80;
+    mode = MODE::OAM_SCAN;
+
+    mixer.extractFrame(); // resets pixel fifos to initial frame state
+}
 
 uint8_t PPU::readVRAM(uint16_t address) {
     if (mode == MODE::PIXEL_TRANSFER && !disabled()) return 0xFF;

@@ -15,6 +15,7 @@ namespace Processing {
         public:
             CPU(std::function<void()> systemTick) requires FlatMemory;
             CPU(Memory::MMU& mmu, std::function<void()> systemTick) requires (!FlatMemory);
+            void initialize();
             void tick();
             
         protected:
@@ -203,9 +204,9 @@ namespace Processing {
             RegisterView D{DE.hi()}, E{DE.lo()}; // general purpose 8bit DE
             RegisterView H{HL.hi()}, L{HL.lo()}; // general purpose 8bit HL
     
-            INTERRUPT_MASTER_FLAG IME = INTERRUPT_MASTER_FLAG::DISABLED; // interrupt master enable flag
+            INTERRUPT_MASTER_FLAG IME; // interrupt master enable flag
             
-            STATE state = STATE::RUNNING;
+            STATE state;
     };
 
 }

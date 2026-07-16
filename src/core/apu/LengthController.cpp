@@ -4,6 +4,18 @@
 using namespace Audio;
 
 template<uint16_t TIMER_MAX>
+LengthController<TIMER_MAX>::LengthController() {
+    initialize();
+}
+
+template<uint16_t TIMER_MAX>
+void LengthController<TIMER_MAX>::initialize() {
+    timer = 0;
+    enabled = false;
+    period = 0;
+}
+
+template<uint16_t TIMER_MAX>
 void LengthController<TIMER_MAX>::tick(bool& channelEnabled) {
     if (!enabled || timer == 0) return;
     if (--timer == 0) channelEnabled = false;

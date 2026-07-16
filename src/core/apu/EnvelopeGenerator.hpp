@@ -5,6 +5,8 @@ namespace Audio {
     
     class EnvelopeGenerator {
         public:
+            EnvelopeGenerator();
+            void initialize();
             void tick();
             void trigger();
             uint8_t readRegister() const;
@@ -15,15 +17,15 @@ namespace Audio {
             enum class DIRECTION : bool { DECREASING = 0, INCREASING = 1 };
 
             /* latched values */
-            uint8_t timer = 0;
-            uint8_t currentVolume = 0;
-            uint8_t currentPeriod = 0;
-            DIRECTION currentDirection = DIRECTION::DECREASING;
+            uint8_t timer;
+            uint8_t currentVolume;
+            uint8_t currentPeriod;
+            DIRECTION currentDirection;
 
             /* NRx2 Register Components */
-            uint8_t volume = 0;                             // NRx2 bits 7-4
-            DIRECTION direction = DIRECTION::DECREASING;    // NRx2 bit 3
-            uint8_t period = 0;                             // NRx2 bits 2-0
+            uint8_t volume;         // NRx2 bits 7-4
+            DIRECTION direction;    // NRx2 bit 3
+            uint8_t period;         // NRx2 bits 2-0
     };
 
 }

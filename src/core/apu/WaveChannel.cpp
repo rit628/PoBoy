@@ -4,6 +4,21 @@
 
 using namespace Audio;
 
+WaveChannel::WaveChannel() {
+    init();
+}
+
+void WaveChannel::init() {
+    waveram.fill(0);
+    currentOutputLevel = 0;
+    waveRamIndex = 0;
+    currentSample = 0;
+
+    dacEnable = false;
+
+    outputLevel = 0;
+}
+
 template<uint8_t Register>
 uint8_t WaveChannel::readIO() {
     if constexpr (Register == NRx0) return dacEnable << 7 | 0x7F;

@@ -14,6 +14,7 @@ namespace Audio {
     class APU {
         public:
             APU(Interrupts::IMU& imu, std::function<void(std::span<const float>)> queueAudioData);
+            void initialize();
 
             template<uint16_t Register>
             uint8_t readIO();
@@ -39,16 +40,16 @@ namespace Audio {
             Interrupts::IMU& imu;
             std::function<void(std::span<const float>)> queueAudioData;
 
-            uint8_t masterVolumeControl = 0;    // NR50 register
-            uint8_t soundPanControl = 0;        // NR51 register
-            bool audioEnabled = false;          // NR52 register bit 7
+            uint8_t masterVolumeControl;    // NR50 register
+            uint8_t soundPanControl;        // NR51 register
+            bool audioEnabled;              // NR52 register bit 7
 
-            uint8_t apuDivider = 0;
-            bool prevDividerBit = 0;
+            uint8_t apuDivider;
+            bool prevDividerBit;
             StaticQueue<float, 1 << 10> samples;
-            uint8_t discardedSamples = 0;
-            float filterCapacitor = 0.0f;
-            std::array<float, CHANNEL_COUNT> dacs{};
+            uint8_t discardedSamples;
+            float filterCapacitor;
+            std::array<float, CHANNEL_COUNT> dacs;
 
             SweepChannel channel1;
             PulseChannel channel2;

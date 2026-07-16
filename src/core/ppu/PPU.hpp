@@ -19,7 +19,8 @@ namespace Graphics {
             };
 
             PPU(Interrupts::IMU& imu, std::function<void(std::array<uint8_t, FRAMEBUFFER_SIZE>&)> renderFrame);
-            
+            void initialize();
+
             uint8_t readVRAM(uint16_t address);
             void writeVRAM(uint16_t address, uint8_t value);
             uint8_t readOAM(uint16_t address);
@@ -50,24 +51,24 @@ namespace Graphics {
             Interrupts::IMU& imu;
             std::function<void(std::array<uint8_t, FRAMEBUFFER_SIZE>&)> renderFrame;   // use std::function for simplicity
     
-            std::array<uint8_t, VRAM_SIZE> vram{};
-            std::array<uint8_t, OAM_SIZE> oam{};
-            uint16_t lineDotsElapsed = 0;
-            uint32_t frameDotsElapsed = 0;
+            std::array<uint8_t, VRAM_SIZE> vram;
+            std::array<uint8_t, OAM_SIZE> oam;
+            uint16_t lineDotsElapsed;
+            uint32_t frameDotsElapsed;
         
-            uint8_t currentLine = 0;        // LY register
-            uint8_t lineCompare = 0;        // LYC register
-            uint8_t lcdControl = 0;         // LCDC register
-            uint8_t scrollX = 0;            // SCX register
-            uint8_t scrollY = 0;            // SCY register
-            uint8_t windowX = 0;            // WX register
-            uint8_t windowY = 0;            // WY register
-            uint8_t backgroundPalette = 0;  // BGP register
-            uint8_t spritePalette0 = 0;     // OBP0 register
-            uint8_t spritePalette1 = 0;     // OBP1 register
+            uint8_t currentLine;        // LY register
+            uint8_t lineCompare;        // LYC register
+            uint8_t lcdControl;         // LCDC register
+            uint8_t scrollX;            // SCX register
+            uint8_t scrollY;            // SCY register
+            uint8_t windowX;            // WX register
+            uint8_t windowY;            // WY register
+            uint8_t backgroundPalette;  // BGP register
+            uint8_t spritePalette0;     // OBP0 register
+            uint8_t spritePalette1;     // OBP1 register
             /* STAT register components */
-            uint8_t interruptMask = 0x80;   // STAT bits 6-3
-            MODE mode = MODE::OAM_SCAN;     // STAT bits 1-0
+            uint8_t interruptMask;  // STAT bits 6-3
+            MODE mode;              // STAT bits 1-0
 
             PixelMixer mixer{lcdControl
                            , backgroundPalette
