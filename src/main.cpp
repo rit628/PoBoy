@@ -20,7 +20,7 @@ struct AppState {
 };
 
 void loadRom(void* userdata, const char * const * filelist, int filter [[ maybe_unused ]]) {
-    if (!filelist) return;
+    if (!filelist || !*filelist) return;
     auto* app = static_cast<AppState*>(userdata);
     const std::filesystem::path romFile = filelist[0];
     if (std::filesystem::exists(romFile)) {
