@@ -15,26 +15,19 @@ namespace Graphics {
         public:
             enum class STATE { GET_TILE, GET_TILE_DATA_LO, GET_TILE_DATA_HI, SLEEP, PUSH };
 
-            template<typename Self>
-            void tick(this Self&& self);
+            void tick(this auto&& self);
             Pixel fifoPop();
             bool fifoEmpty();
             void resetState();
             bool asleep();
 
         protected:
-            template<typename Self>
-            void preTick(this Self&& self);
-            template<typename Self>
-            void executeGetTile(this Self&& self);
-            template<typename Self>
-            void executeGetTileDataLo(this Self&& self);
-            template<typename Self>
-            void executeGetTileDataHi(this Self&& self);
-            template<typename Self>
-            void executeSleep(this Self&& self);
-            template<typename Self>
-            void executePush(this Self&& self);
+            void preTick(this auto&& self);
+            void executeGetTile(this auto&& self);
+            void executeGetTileDataLo(this auto&& self);
+            void executeGetTileDataHi(this auto&& self);
+            void executeSleep(this auto&& self);
+            void executePush(this auto&& self);
 
             STATE state = STATE::GET_TILE;
             bool onSecondDot = false;

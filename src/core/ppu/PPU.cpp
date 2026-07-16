@@ -83,38 +83,129 @@ void PPU::writeIO<Memory::STAT>(uint8_t value) {
     interruptMask = value & 0x78;   // bits 0-2 and 7 are read only
 }
 
-void PPU::tick() {
-    if (disabled()) return;
-    switch (mode) {
-        using enum MODE;
-        case OAM_SCAN:
-            scanOAM();
-        break;
-        
-        case PIXEL_TRANSFER:
-            if (lineDotsElapsed >= DOTS_PER_OAM_SCAN_MODE + DOTS_PER_RENDER_STARTUP) [[ likely ]]
-                mixer.tick();
-        break;
-
-        case HBLANK:
-            
-        break;
-
-        case VBLANK:
-            
-        break;
+void PPU::incrementLine() {
+    lineDotsElapsed = 0;
+    currentLine++;
+    using enum STAT_FLAG;
+    if (testFlags(readIO<Memory::STAT>(), LYC_INTERRUPT_ENABLE, LYC_INTERRUPT_BIT)) {
+        imu.triggerInterrupt(Interrupts::INTERRUPT_FLAG::LCD_STAT);
     }
-    updateStatus();
 }
 
-void PPU::scanOAM() {
-    if (lineDotsElapsed % 2 > 0) return;    // oam scan tick every 2 dots
+template<PPU::MODE Mode>
+void PPU::updateMode() {
+    mode = Mode;
+    uint8_t stat = readIO<Memory::STAT>();
+    using enum STAT_FLAG;
+    constexpr uint8_t modeNumber = std::to_underlying(Mode);
+    if constexpr (modeNumber == 0) {
+        if (testFlags(stat, MODE_0_INTERRUPT_ENABLE))
+            imu.triggerInterrupt(Interrupts::INTERRUPT_FLAG::LCD_STAT);
+    }
+    else if constexpr (modeNumber == 1) {
+        if (testFlags(stat, MODE_1_INTERRUPT_ENABLE))
+            imu.triggerInterrupt(Interrupts::INTERRUPT_FLAG::LCD_STAT);
+    }
+    else if constexpr (modeNumber == 2) {
+        if (testFlags(stat, MODE_2_INTERRUPT_ENABLE))
+            imu.triggerInterrupt(Interrupts::INTERRUPT_FLAG::LCD_STAT);
+    }
+}
+
+template<PPU::MODE Mode>
+void PPU::tick() {
+    /* HBLANK and VBLANK do nothing */
+}
+
+template<>
+void PPU::tick<PPU::MODE::OAM_SCAN>() {
+    if (lineDotsElapsed % 2 > 0) return;  // oam scan tick every 2 dots
     uint8_t spriteIndex = lineDotsElapsed / 2 * SPRITE_BYTES;
     uint8_t yPos = oam.at(spriteIndex++);
     uint8_t xPos = oam.at(spriteIndex++);
     uint8_t tileNumber = oam.at(spriteIndex++);
     uint8_t spriteFlags = oam.at(spriteIndex++);
     mixer.addSprite(yPos, xPos, tileNumber, spriteFlags);
+}
+
+template<>
+void PPU::tick<PPU::MODE::PIXEL_TRANSFER>() {
+    if (lineDotsElapsed >= DOTS_PER_OAM_SCAN_MODE + DOTS_PER_RENDER_STARTUP) [[ likely ]] {
+        mixer.tick();
+    }
+}
+
+template<>
+void PPU::postTick<PPU::MODE::OAM_SCAN>() {
+    using enum MODE;
+    if (lineDotsElapsed >= DOTS_PER_OAM_SCAN_MODE) [[ unlikely ]] {
+        updateMode<PIXEL_TRANSFER>();
+    }
+}
+
+template<>
+void PPU::postTick<PPU::MODE::PIXEL_TRANSFER>() {
+    using enum MODE;
+    if (mixer.atLineEnd()) [[ unlikely ]] {
+        updateMode<HBLANK>();
+    }
+}
+
+template<>
+void PPU::postTick<PPU::MODE::HBLANK>() {
+    using enum MODE;
+    if (lineDotsElapsed >= DOTS_PER_LINE) [[ unlikely ]] {
+        updateMode<OAM_SCAN>();
+        incrementLine();
+        mixer.scanlineReset();
+    }
+    
+    if (frameDotsElapsed >= DOTS_PER_LCD_SCAN) [[ unlikely ]] {
+        updateMode<VBLANK>();
+        imu.triggerInterrupt(Interrupts::INTERRUPT_FLAG::VBLANK);
+        renderFrame(mixer.extractFrame());
+    }
+}
+
+template<>
+void PPU::postTick<PPU::MODE::VBLANK>() {
+    using enum MODE;
+    if (lineDotsElapsed >= DOTS_PER_LINE) [[ unlikely ]]
+        incrementLine();
+    
+    if (currentLine == 153 && lineDotsElapsed == 4) [[ unlikely ]] { // scanline 153 quirk
+        currentLine = 0;
+        using enum STAT_FLAG;
+        if (testFlags(readIO<Memory::STAT>(), LYC_INTERRUPT_ENABLE, LYC_INTERRUPT_BIT)) {
+            imu.triggerInterrupt(Interrupts::INTERRUPT_FLAG::LCD_STAT);
+        }
+    }
+
+    if (frameDotsElapsed >= DOTS_PER_FRAME) [[ unlikely ]] {
+        updateMode<OAM_SCAN>();
+        frameDotsElapsed = 0;
+        currentLine = 0;
+        mixer.scanlineReset();
+    }
+}
+
+template<PPU::MODE Mode>
+void PPU::tickDispatch() {
+    tick<Mode>();
+    lineDotsElapsed++;
+    frameDotsElapsed++;
+    postTick<Mode>();
+}
+
+void PPU::tick() {
+    if (disabled()) return;
+    switch (mode) {
+        using enum MODE;
+        case OAM_SCAN:          return tickDispatch<OAM_SCAN>();
+        case PIXEL_TRANSFER:    return tickDispatch<PIXEL_TRANSFER>();
+        case HBLANK:            return tickDispatch<HBLANK>();
+        case VBLANK:            return tickDispatch<VBLANK>();
+    }
 }
 
 bool PPU::disabled() {
@@ -131,78 +222,6 @@ bool PPU::disabled() {
         renderFrame(frame);
     }
     return lcdDisabled;
-}
-
-void PPU::updateStatus() {
-    lineDotsElapsed++;
-    frameDotsElapsed++;
-
-    auto incrementLine = [this]() {
-        lineDotsElapsed = 0;
-        currentLine++;
-        using enum STAT_FLAG;
-        if (testFlags(readIO<Memory::STAT>(), LYC_INTERRUPT_ENABLE, LYC_INTERRUPT_BIT)) {
-            imu.triggerInterrupt(Interrupts::INTERRUPT_FLAG::LCD_STAT);
-        }
-    };
-
-    auto updateMode = [this]<MODE mode>() {
-        this->mode = mode;
-        uint8_t stat = readIO<Memory::STAT>();
-        using enum STAT_FLAG;
-        constexpr uint8_t modeNumber = std::to_underlying(mode);
-        if constexpr (modeNumber == 0) {
-            if (testFlags(stat, MODE_0_INTERRUPT_ENABLE))
-                imu.triggerInterrupt(Interrupts::INTERRUPT_FLAG::LCD_STAT);
-        }
-        else if constexpr (modeNumber == 1) {
-            if (testFlags(stat, MODE_1_INTERRUPT_ENABLE))
-                imu.triggerInterrupt(Interrupts::INTERRUPT_FLAG::LCD_STAT);
-        }
-        else if constexpr (modeNumber == 2) {
-            if (testFlags(stat, MODE_2_INTERRUPT_ENABLE))
-                imu.triggerInterrupt(Interrupts::INTERRUPT_FLAG::LCD_STAT);
-        }
-    };
-    
-    switch (mode) {
-        using enum MODE;
-        case OAM_SCAN:
-            if (lineDotsElapsed >= DOTS_PER_OAM_SCAN_MODE) [[ unlikely ]]
-                updateMode.operator()<PIXEL_TRANSFER>();
-        break;
-        
-        case PIXEL_TRANSFER:
-            if (mixer.atLineEnd()) [[ unlikely ]]
-                updateMode.operator()<HBLANK>();
-        break;
-
-        case HBLANK:
-            if (lineDotsElapsed >= DOTS_PER_LINE) [[ unlikely ]] {
-                updateMode.operator()<OAM_SCAN>();
-                incrementLine();
-                mixer.scanlineReset();
-            }
-            
-            if (frameDotsElapsed >= DOTS_PER_LCD_SCAN) [[ unlikely ]] {
-                updateMode.operator()<VBLANK>();
-                imu.triggerInterrupt(Interrupts::INTERRUPT_FLAG::VBLANK);
-                renderFrame(mixer.extractFrame());
-            }
-        break;
-
-        case VBLANK:
-            if (lineDotsElapsed >= DOTS_PER_LINE) [[ unlikely ]]
-                incrementLine();
-            
-            if (frameDotsElapsed >= DOTS_PER_FRAME) [[ unlikely ]] {
-                updateMode.operator()<OAM_SCAN>();
-                frameDotsElapsed = 0;
-                currentLine = 0;
-                mixer.scanlineReset();
-            }
-        break;
-    }
 }
 
 std::span<const uint8_t, TILE_DATA_SIZE> PPU::getTileData() {

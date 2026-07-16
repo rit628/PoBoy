@@ -36,9 +36,16 @@ namespace Graphics {
             std::span<const uint8_t, 2 * TILE_MAP_SIZE> getTileMaps();
     
         private:
-            void scanOAM();
+            void incrementLine();
+            template<MODE Mode>
+            void updateMode();
+            template<MODE Mode>
+            void tick();
+            template<MODE Mode>
+            void postTick();
+            template<MODE Mode>
+            void tickDispatch();
             bool disabled();
-            void updateStatus();
 
             Interrupts::IMU& imu;
             std::function<void(std::array<uint8_t, FRAMEBUFFER_SIZE>&)> renderFrame;   // use std::function for simplicity

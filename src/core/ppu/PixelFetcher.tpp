@@ -3,8 +3,7 @@
 
 namespace Graphics {
     
-    template<typename Self>
-    inline void PixelFetcher::tick(this Self&& self) {
+    inline void PixelFetcher::tick(this auto&& self) {
         self.preTick();
         switch (self.state) {
             using enum STATE;
@@ -48,41 +47,35 @@ namespace Graphics {
         return state == STATE::SLEEP;
     }
 
-    template<typename Self>
-    inline void PixelFetcher::preTick(this Self&& self) {
+    inline void PixelFetcher::preTick(this auto&& self) {
         self.preTick();
     }
 
-    template<typename Self>
-    inline void PixelFetcher::executeGetTile(this Self&& self) {
+    inline void PixelFetcher::executeGetTile(this auto&& self) {
         if (!self.onSecondDot) return; // wait for one dot
         self.getTile();
         self.state = STATE::GET_TILE_DATA_LO;
     }
     
-    template<typename Self>
-    inline void PixelFetcher::executeGetTileDataLo(this Self&& self) {
+    inline void PixelFetcher::executeGetTileDataLo(this auto&& self) {
         if (!self.onSecondDot) return; // wait for one dot
         self.getTileDataLo();
         self.state = STATE::GET_TILE_DATA_HI;
     }
     
-    template<typename Self>
-    inline void PixelFetcher::executeGetTileDataHi(this Self&& self) {
+    inline void PixelFetcher::executeGetTileDataHi(this auto&& self) {
         if (!self.onSecondDot) return; // wait for one dot
         self.getTileDataHi();
         self.state = STATE::SLEEP;
         self.executeSleep();
     }
     
-    template<typename Self>
-    inline void PixelFetcher::executeSleep(this Self&& self) {
+    inline void PixelFetcher::executeSleep(this auto&& self) {
         self.sleep();
         if (self.state == STATE::PUSH) self.executePush();
     }
     
-    template<typename Self>
-    inline void PixelFetcher::executePush(this Self&& self) {
+    inline void PixelFetcher::executePush(this auto&& self) {
         self.push();
         self.state = STATE::GET_TILE;
         self.onSecondDot = false;
