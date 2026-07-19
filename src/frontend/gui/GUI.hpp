@@ -22,8 +22,6 @@ class GUI {
         void queueAudioData(std::span<const float> data);
         uint8_t readInput();
 
-        static constexpr uint32_t SDL_EVENT_RENDER_FRAME = RendererType::SDL_EVENT_RENDER_FRAME;
-
     private:
         SDL_Window* gameWindow;
         RendererType renderer;

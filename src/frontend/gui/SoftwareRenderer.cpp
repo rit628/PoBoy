@@ -6,7 +6,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <stdexcept>
-#include <tuple>
 
 SoftwareRenderer::SoftwareRenderer() {
     using namespace std::string_literals;
@@ -46,20 +45,11 @@ void SoftwareRenderer::updateWindow(SDL_Window* window) {
 }
 
 void SoftwareRenderer::renderFrame(std::array<uint8_t, Graphics::FRAMEBUFFER_SIZE>& framebuffer) {
-    if (renderWindow == nullptr) return;
-    using CallbackArgType = std::tuple<decltype(this), decltype(framebuffer)>;
-    CallbackArgType callbackArgs = {this, framebuffer};
-    SDL_Event renderWake;
-    SDL_zero(renderWake);
-    renderWake.type = SDL_EVENT_RENDER_FRAME;
-    SDL_PushEvent(&renderWake);
-    SDL_RunOnMainThread([](void* callbackArgs) -> void {
-        auto&& [self, framebuffer] = *static_cast<CallbackArgType*>(callbackArgs);
-        auto* renderSurface = SDL_CreateSurfaceFrom(Graphics::LCD_WIDTH, Graphics::LCD_HEIGHT, SDL_PIXELFORMAT_INDEX2LSB, framebuffer.data(), Graphics::LCD_WIDTH / Graphics::PIXELS_PER_BYTE);
-        SDL_SetSurfacePalette(renderSurface, self->palette);
-        SDL_FillSurfaceRect(self->windowSurface, NULL, SDL_MapSurfaceRGB(self->windowSurface, 0, 0, 0));
-        SDL_BlitSurfaceScaled(renderSurface, NULL, self->windowSurface, &self->gameScreen, SDL_SCALEMODE_PIXELART);
-        SDL_UpdateWindowSurface(self->renderWindow);
-        SDL_DestroySurface(renderSurface);
-    }, &callbackArgs, true);
+    static constexpr uint8_t PITCH = Graphics::LCD_WIDTH / Graphics::PIXELS_PER_BYTE;
+    auto* renderSurface = SDL_CreateSurfaceFrom(Graphics::LCD_WIDTH, Graphics::LCD_HEIGHT, SDL_PIXELFORMAT_INDEX2LSB, framebuffer.data(), PITCH);
+    SDL_SetSurfacePalette(renderSurface, palette);
+    SDL_FillSurfaceRect(windowSurface, NULL, SDL_MapSurfaceRGB(windowSurface, 0, 0, 0));
+    SDL_BlitSurfaceScaled(renderSurface, NULL, windowSurface, &gameScreen, SDL_SCALEMODE_PIXELART);
+    SDL_UpdateWindowSurface(renderWindow);
+    SDL_DestroySurface(renderSurface);
 }

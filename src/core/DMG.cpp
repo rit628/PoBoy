@@ -14,29 +14,25 @@ DMG::DMG(std::function<uint8_t()> readInput
         , cpu(mmu, std::bind(&DMG::systemTick, std::ref(*this)))
         {}
 
-void DMG::systemTick() {
-    for (uint8_t i = 0; i < 4; i++) {
-        imu.tick();
-        mmu.tick();
-        apu.tick();
-        ppu.tick();
-        cycleCount++;
-    }
-    if (cycleCount % Graphics::DOTS_PER_FRAME == 0) wait();
-}
-
 Memory::CartridgeMetadata DMG::loadRom(const std::filesystem::path& romFile) {
+    initialize();
     return mmu.loadRom(romFile);
 }
 
 void DMG::run() {
-    initialize();
-    while (true) cpu.tick();
+    while (true) frameAdvance();
 }
 
 void DMG::run(std::stop_token stoken) {
-    initialize();
-    while (!stoken.stop_requested()) cpu.tick();
+    while (!stoken.stop_requested()) frameAdvance();
+}
+
+void DMG::frameAdvance() {
+    uint64_t prevCycles = cycleCount;
+    while (cycleCount - prevCycles < Graphics::DOTS_PER_FRAME) {
+        cpu.tick();
+    }
+    wait();
 }
 
 void DMG::initialize() {
@@ -47,6 +43,16 @@ void DMG::initialize() {
     mmu.initialize();
     apu.initialize();
     ppu.initialize();
+}
+
+void DMG::systemTick() {
+    for (uint8_t i = 0; i < 4; i++) {
+        imu.tick();
+        mmu.tick();
+        apu.tick();
+        ppu.tick();
+        cycleCount++;
+    }
 }
 
 void DMG::wait() {
