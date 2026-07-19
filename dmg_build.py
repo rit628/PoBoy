@@ -4,6 +4,7 @@ import argparse
 from subprocess import run
 from multiprocessing import cpu_count
 from pathlib import Path
+from shutil import copy2 as copy
 
 def build(args):
     build_mode = f"-DCMAKE_BUILD_TYPE={args.mode}"
@@ -14,7 +15,7 @@ def build(args):
 
     run(["cmake", "-S", ".", "-B", output_directory, *cmake_args])
     run(["cmake", "--build", output_directory, f"-j{args.cores}", "-t", *args.targets])
-
+    copy(output_directory / Path("compile_commands.json"), Path("build", "compile_commands.json"))
 
 
 parser = argparse.ArgumentParser(description="PoBoy build script", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
