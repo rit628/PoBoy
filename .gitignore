@@ -11,6 +11,7 @@ logs
 **/sst/*.json
 
 # Build artifacts
+.deps
 build/
 CMakeCache.txt
 CMakeFiles/
