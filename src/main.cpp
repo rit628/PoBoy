@@ -1,8 +1,9 @@
 #define SDL_MAIN_USE_CALLBACKS
-#include <SDL3/SDL_dialog.h>
-#include <filesystem>
 #include "DMG.hpp"
 #include "GUI.hpp"
+#include <filesystem>
+#include <SDL3/SDL_dialog.h>
+#include <SDL3/SDL_stdinc.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_main.h>
 #include <SDL3/SDL_init.h>
@@ -27,12 +28,18 @@ void loadRom(void* userdata, const char * const * filelist, int filter [[ maybe_
         auto metadata = gb.loadRom(romFile);
         app->gui.updateWindow(metadata.title.data());
         app->running = true;
+        SDL_SetHint(SDL_HINT_MAIN_CALLBACK_RATE, "0");
+        SDL_Event wakeEvent;
+        SDL_zero(wakeEvent);
+        wakeEvent.type = SDL_EVENT_USER;
+        SDL_PushEvent(&wakeEvent);
     }
 }
 
 SDL_AppResult SDL_AppInit(void** appstate, int argc, char** argv) {
     auto* app = new AppState();
     *appstate = app;
+    SDL_SetHint(SDL_HINT_MAIN_CALLBACK_RATE, "waitevent");
     if (argc > 1) loadRom(app, &argv[1], 0);
     return SDL_APP_CONTINUE;
 }
