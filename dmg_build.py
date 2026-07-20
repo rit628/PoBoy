@@ -11,7 +11,13 @@ def build(args):
     compile_sst = f"-DCOMPILE_SST={"ON" if args.sst else "OFF"}"
     toolchain_file = f"-DCMAKE_TOOLCHAIN_FILE=./cmake/{args.target_platform}.cmake" if args.target_platform != "local" else ""
     output_directory = Path("build", args.target_platform)
-    cmake_args = list(filter(None, [build_mode, toolchain_file, compile_sst]))
+    cmake_args = list(filter(None, [ "-DCMAKE_C_COMPILER=clang"
+                                   , "-DCMAKE_CXX_COMPILER=clang++"
+                                   , "-DCMAKE_LINKER_TYPE=LLD"
+                                   , build_mode
+                                   , toolchain_file
+                                   , compile_sst
+                                   ]))
 
     run(["cmake", "-S", ".", "-B", output_directory, *cmake_args])
     run(["cmake", "--build", output_directory, f"-j{args.cores}", "-t", *args.targets])

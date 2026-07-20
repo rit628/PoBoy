@@ -1,9 +1,5 @@
 cmake_minimum_required(VERSION 4.0)
 
-set(CMAKE_C_COMPILER clang)
-set(CMAKE_CXX_COMPILER clang++)
-set(CMAKE_LINKER_TYPE LLD)
-
 project(PoBoy)
 
 set(CMAKE_CXX_EXTENSIONS OFF)
