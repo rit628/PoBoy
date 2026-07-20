@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <stdexcept>
+#include <array>
 
 Renderer::Renderer() {
     using namespace std::string_literals;
