@@ -5,6 +5,7 @@
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_video.h>
 #include <stdexcept>
+#include <array>
 
 GUI::GUI() {
     using namespace std::string_literals;
