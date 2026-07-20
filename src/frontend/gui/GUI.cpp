@@ -6,9 +6,11 @@
 #include <SDL3/SDL_video.h>
 #include <stdexcept>
 #include <array>
+#include <string>
 
 GUI::GUI() {
-    using namespace std::string_literals;
+    using std::string_literals::operator""s;
+    
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) {
         throw std::runtime_error("SDL failed to initialize: "s + SDL_GetError());
     }

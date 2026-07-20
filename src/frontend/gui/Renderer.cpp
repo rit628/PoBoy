@@ -9,9 +9,11 @@
 #include <cstdint>
 #include <stdexcept>
 #include <array>
+#include <string>
 
 Renderer::Renderer() {
-    using namespace std::string_literals;
+    using std::string_literals::operator""s;
+    
     palette = SDL_CreatePalette(4);
     static constexpr std::array<SDL_Color, 4> paletteColors = {{
         {230, 230, 230, 255},

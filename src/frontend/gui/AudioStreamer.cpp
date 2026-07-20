@@ -2,9 +2,11 @@
 #include <SDL3/SDL_audio.h>
 #include <SDL3/SDL_init.h>
 #include <stdexcept>
+#include <string>
 
 AudioStreamer::AudioStreamer() {
-    using namespace std::string_literals;
+    using std::string_literals::operator""s;
+    
     SDL_Init(SDL_INIT_AUDIO);
     audioStream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &streamFormat, NULL, NULL);
     if (!audioStream || !SDL_ResumeAudioStreamDevice(audioStream)) {
