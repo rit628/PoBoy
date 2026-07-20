@@ -48,11 +48,12 @@ jobs:
           libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev libthai-dev libusb-1.0-0-dev \
           libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev
 
-      - name: Set LLVM Clang as Compiler
+      - name: Configure LLVM Clang
         if: runner.os == 'macOS'
         run: |
-          brew install lld
+          brew install lld@20
           echo "$(brew --prefix llvm@20)/bin" >> $GITHUB_PATH
+          echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> $GITHUB_ENV
 
       - name: Build
         run: python3 dmg_build.py -m release ${{ env.executable }}
