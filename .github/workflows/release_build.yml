@@ -48,6 +48,10 @@ jobs:
           libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev libthai-dev libusb-1.0-0-dev \
           libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev
 
+      - name: Set LLVM Clang as Compiler
+        if: runner.os == 'macOS'
+        run: echo "$(brew --prefix llvm@20)/bin" >> $GITHUB_PATH
+
       - name: Build
         run: python3 dmg_build.py -m release ${{ env.executable }}
 
