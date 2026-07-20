@@ -14,6 +14,8 @@ def build(args):
     cmake_args = list(filter(None, [ "-DCMAKE_C_COMPILER=clang"
                                    , "-DCMAKE_CXX_COMPILER=clang++"
                                    , "-DCMAKE_LINKER_TYPE=LLD"
+                                   , "-G Ninja"
+                                   , "-DCMAKE_COLOR_DIAGNOSTICS=ON"
                                    , build_mode
                                    , toolchain_file
                                    , compile_sst
