@@ -4,7 +4,6 @@
 #include "MemoryConstants.hpp"
 #include <array>
 #include <cstdint>
-#include <ranges>
 
 using namespace Memory;
 
@@ -175,9 +174,9 @@ void MMU::writeIO(uint16_t registerAddress, uint8_t value) {
             // timings and bus conflicts can be dealt with later if desired
             dmaSourceAddress = value;
             std::array<uint8_t, Graphics::OAM_SIZE> sourceRange;
-            for (auto&& [i, byte] : std::ranges::views::enumerate(sourceRange)) {
-                byte = read((dmaSourceAddress << 8) | i);
-            } 
+            for (size_t i = 0; i < sourceRange.size(); i++) {
+                sourceRange.at(i) = read((dmaSourceAddress << 8) | i);
+            }
             ppu.dmaTransferOAM(sourceRange);
         break;
         case SB:    break;
