@@ -50,7 +50,9 @@ jobs:
 
       - name: Set LLVM Clang as Compiler
         if: runner.os == 'macOS'
-        run: echo "$(brew --prefix llvm@20)/bin" >> $GITHUB_PATH
+        run: |
+          brew install lld
+          echo "$(brew --prefix llvm@20)/bin" >> $GITHUB_PATH
 
       - name: Build
         run: python3 dmg_build.py -m release ${{ env.executable }}
