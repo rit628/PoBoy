@@ -1,4 +1,5 @@
 #define SDL_MAIN_USE_CALLBACKS
+#include <array>
 #include "DMG.hpp"
 #include "GUI.hpp"
 #include <filesystem>
@@ -9,7 +10,6 @@
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_hints.h>
 #include <functional>
-
 
 struct AppState {
     GUI gui;
@@ -60,7 +60,11 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
         break;
 
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
-            SDL_ShowOpenFileDialog(loadRom, app, gui.getWindow(), NULL, 0, NULL, false);
+            static constexpr std::array<SDL_DialogFileFilter, 2> filters = {{
+                {"GameBoy and GameBoy Color ROMs", "gb;gbc"},
+                {"All Files", "*"}
+            }};
+            SDL_ShowOpenFileDialog(loadRom, app, gui.getWindow(), filters.data(), filters.size(), NULL, false);
         break;
 
         case SDL_EVENT_QUIT: return SDL_APP_SUCCESS;
