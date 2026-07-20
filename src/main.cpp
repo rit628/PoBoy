@@ -12,10 +12,10 @@
 
 
 struct AppState {
-    GUI<> gui;
-    DMG gb{std::bind(&GUI<>::readInput, std::ref(gui))
-         , std::bind(&GUI<>::queueAudioData, std::ref(gui), std::placeholders::_1)
-         , std::bind(&GUI<>::renderFrame, std::ref(gui), std::placeholders::_1)};
+    GUI gui;
+    DMG gb{std::bind(&GUI::readInput, std::ref(gui))
+         , std::bind(&GUI::queueAudioData, std::ref(gui), std::placeholders::_1)
+         , std::bind(&GUI::renderFrame, std::ref(gui), std::placeholders::_1)};
     bool running = false;
 };
 

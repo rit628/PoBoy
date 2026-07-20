@@ -1,12 +1,11 @@
 #pragma once
 #include "AudioStreamer.hpp"
 #include "InputManager.hpp"
-#include "SoftwareRenderer.hpp"
+#include "Renderer.hpp"
 #include <SDL3/SDL.h>
 #include <cstdint>
 #include <string>
 
-template<typename RendererType = SoftwareRenderer>
 class GUI {
     public:
         GUI();
@@ -22,7 +21,7 @@ class GUI {
 
     private:
         SDL_Window* gameWindow;
-        RendererType renderer;
+        Renderer renderer;
         AudioStreamer audioStreamer;
         InputManager inputManager;
 };
