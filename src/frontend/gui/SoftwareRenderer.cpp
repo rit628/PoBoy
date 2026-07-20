@@ -17,6 +17,8 @@ SoftwareRenderer::SoftwareRenderer() {
         {40, 40, 40, 255}
     }};
     SDL_SetPaletteColors(palette, paletteColors.data(), 0, 4);
+    renderSurface = SDL_CreateSurface(Graphics::LCD_WIDTH, Graphics::LCD_HEIGHT, SDL_PIXELFORMAT_INDEX2LSB);
+    SDL_SetSurfacePalette(renderSurface, palette);
 
     if (!palette) {
         throw std::runtime_error("Software renderer failed to initialize: "s + SDL_GetError());
@@ -24,6 +26,7 @@ SoftwareRenderer::SoftwareRenderer() {
 }
 
 SoftwareRenderer::~SoftwareRenderer() {
+    SDL_DestroySurface(renderSurface);
     SDL_DestroyPalette(palette);
 }
 
@@ -42,14 +45,12 @@ void SoftwareRenderer::updateWindow(SDL_Window* window) {
     gameScreen.h = Graphics::LCD_HEIGHT * renderScale;
     gameScreen.x = (windowSurface->w - gameScreen.w) / 2;
     gameScreen.y = (windowSurface->h - gameScreen.h) / 2;
+
+    SDL_FillSurfaceRect(windowSurface, NULL, SDL_MapSurfaceRGB(windowSurface, 0, 0, 0));
 }
 
-void SoftwareRenderer::renderFrame(std::array<uint8_t, Graphics::FRAMEBUFFER_SIZE>& framebuffer) {
-    static constexpr uint8_t PITCH = Graphics::LCD_WIDTH / Graphics::PIXELS_PER_BYTE;
-    auto* renderSurface = SDL_CreateSurfaceFrom(Graphics::LCD_WIDTH, Graphics::LCD_HEIGHT, SDL_PIXELFORMAT_INDEX2LSB, framebuffer.data(), PITCH);
-    SDL_SetSurfacePalette(renderSurface, palette);
-    SDL_FillSurfaceRect(windowSurface, NULL, SDL_MapSurfaceRGB(windowSurface, 0, 0, 0));
+void SoftwareRenderer::renderFrame(std::span<const uint8_t> framebuffer) {
+    SDL_memcpy(renderSurface->pixels, framebuffer.data(), framebuffer.size());
     SDL_BlitSurfaceScaled(renderSurface, NULL, windowSurface, &gameScreen, SDL_SCALEMODE_PIXELART);
     SDL_UpdateWindowSurface(renderWindow);
-    SDL_DestroySurface(renderSurface);
 }

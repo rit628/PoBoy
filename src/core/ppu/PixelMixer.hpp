@@ -3,7 +3,6 @@
 #include "BitBuffer.hpp"
 #include "SpriteFetcher.hpp"
 #include "GraphicsConstants.hpp"
-#include <array>
 #include <cstdint>
 
 namespace Graphics {
@@ -24,7 +23,7 @@ namespace Graphics {
 
             void tick();
             void scanlineReset();
-            std::array<uint8_t, FRAMEBUFFER_SIZE>& extractFrame();
+            std::span<const uint8_t> extractFrame();
             bool atLineEnd();
             void addSprite(uint8_t yPos, uint8_t xPos, uint8_t tileNumber, uint8_t spriteFlags);
     

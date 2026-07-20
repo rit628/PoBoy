@@ -10,7 +10,7 @@
 
 using namespace Graphics;
 
-PPU::PPU(Interrupts::IMU& imu, std::function<void(std::array<uint8_t, FRAMEBUFFER_SIZE>&)> renderFrame)
+PPU::PPU(Interrupts::IMU& imu, std::function<void(std::span<const uint8_t>)> renderFrame)
         : imu(imu), renderFrame(renderFrame)
 {
     initialize();
@@ -242,10 +242,9 @@ bool PPU::disabled() {
         lineDotsElapsed = 0;
         currentLine = 0;
         mode = MODE::OAM_SCAN;
-        mixer.scanlineReset();
-        auto& frame = mixer.extractFrame();
-        frame.fill(0);
-        renderFrame(frame);
+        mixer.extractFrame();
+        static constexpr std::array<uint8_t, FRAMEBUFFER_SIZE> blank{};
+        renderFrame(blank);
     }
     return lcdDisabled;
 }

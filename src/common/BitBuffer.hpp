@@ -2,6 +2,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <span>
 
 template<uint8_t S>
 concept BitStep = S == 1 || S == 2 || S == 4 || S == 8;
@@ -38,7 +39,7 @@ template<size_t N, uint8_t Step>
 class BitBuffer : public BitBufferBase<N, Step> {
     public:
         void push(uint8_t value);
-        std::array<uint8_t, N>& extract() noexcept;
+        std::span<const uint8_t> extract() noexcept;
 
     private:
         std::array<uint8_t, N> buffer;
@@ -54,10 +55,12 @@ void BitBuffer<N, Step>::push(uint8_t value) {
 }
 
 template<size_t N, uint8_t Step>
-std::array<uint8_t, N>& BitBuffer<N, Step>::extract() noexcept {
+std::span<const uint8_t> BitBuffer<N, Step>::extract() noexcept {
+    auto size = currentByte + std::min(this->currentBit, uint8_t(1));
+    auto result = std::span(buffer).subspan(0, size);
     currentByte = 0;
     this->currentBit = 0;
-    return buffer;
+    return result;
 }
 
 template<uint8_t Step>

@@ -57,7 +57,7 @@ void GUI<RendererType>::handleInput(SDL_Event* event) {
 }
 
 template<typename RendererType>
-void GUI<RendererType>::renderFrame(std::array<uint8_t, Graphics::FRAMEBUFFER_SIZE>& framebuffer) {
+void GUI<RendererType>::renderFrame(std::span<const uint8_t> framebuffer) {
     renderer.renderFrame(framebuffer);
 }
 

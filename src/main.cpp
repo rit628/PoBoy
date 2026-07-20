@@ -28,7 +28,7 @@ void loadRom(void* userdata, const char * const * filelist, int filter [[ maybe_
         auto metadata = gb.loadRom(romFile);
         app->gui.updateWindow(metadata.title.data());
         app->running = true;
-        SDL_SetHint(SDL_HINT_MAIN_CALLBACK_RATE, "0");
+        SDL_ResetHint(SDL_HINT_MAIN_CALLBACK_RATE);
         SDL_Event wakeEvent;
         SDL_zero(wakeEvent);
         wakeEvent.type = SDL_EVENT_USER;

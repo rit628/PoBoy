@@ -57,7 +57,7 @@ void PixelMixer::scanlineReset() {
     currentColumn = 0;
 }
 
-std::array<uint8_t, FRAMEBUFFER_SIZE>& PixelMixer::extractFrame() {
+std::span<const uint8_t> PixelMixer::extractFrame() {
     backgroundFetcher.frameReset();
     spriteFetcher.reset();
     return framebuffer.extract();

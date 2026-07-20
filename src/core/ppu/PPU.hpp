@@ -18,7 +18,7 @@ namespace Graphics {
                 VBLANK = 1
             };
 
-            PPU(Interrupts::IMU& imu, std::function<void(std::array<uint8_t, FRAMEBUFFER_SIZE>&)> renderFrame);
+            PPU(Interrupts::IMU& imu, std::function<void(std::span<const uint8_t>)> renderFrame);
             void initialize();
 
             uint8_t readVRAM(uint16_t address);
@@ -49,7 +49,7 @@ namespace Graphics {
             bool disabled();
 
             Interrupts::IMU& imu;
-            std::function<void(std::array<uint8_t, FRAMEBUFFER_SIZE>&)> renderFrame;   // use std::function for simplicity
+            std::function<void(std::span<const uint8_t>)> renderFrame;   // use std::function for simplicity
     
             std::array<uint8_t, VRAM_SIZE> vram;
             std::array<uint8_t, OAM_SIZE> oam;

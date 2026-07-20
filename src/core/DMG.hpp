@@ -19,7 +19,7 @@ class DMG {
 
         DMG(std::function<uint8_t()> readInput
           , std::function<void(std::span<const float>)> queueAudioData
-          , std::function<void(std::array<uint8_t, Graphics::FRAMEBUFFER_SIZE>&)> renderFrame);
+          , std::function<void(std::span<const uint8_t>)> renderFrame);
 
         Memory::CartridgeMetadata loadRom(const std::filesystem::path& romFile);
         void run();

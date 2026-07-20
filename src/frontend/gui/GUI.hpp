@@ -1,10 +1,8 @@
 #pragma once
 #include "AudioStreamer.hpp"
-#include "GraphicsConstants.hpp"
 #include "InputManager.hpp"
 #include "SoftwareRenderer.hpp"
 #include <SDL3/SDL.h>
-#include <array>
 #include <cstdint>
 #include <string>
 
@@ -18,7 +16,7 @@ class GUI {
         void renderInterface();
         void handleInput(SDL_Event* event);
 
-        void renderFrame(std::array<uint8_t, Graphics::FRAMEBUFFER_SIZE>& framebuffer);
+        void renderFrame(std::span<const uint8_t> framebuffer);
         void queueAudioData(std::span<const float> data);
         uint8_t readInput();
 
