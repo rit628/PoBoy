@@ -13,7 +13,7 @@
 
 Renderer::Renderer() {
     using std::string_literals::operator""s;
-    
+
     palette = SDL_CreatePalette(4);
     static constexpr std::array<SDL_Color, 4> paletteColors = {{
         {230, 230, 230, 255},
@@ -69,6 +69,7 @@ void Renderer::renderFrame(std::span<const uint8_t> framebuffer) {
     SDL_memcpy(sourceSurface->pixels, framebuffer.data(), framebuffer.size());
     SDL_BlitSurface(sourceSurface, NULL, conversionSurface, NULL);
     SDL_UpdateTexture(renderTexture, NULL, conversionSurface->pixels, conversionSurface->pitch); // SDL says this is slow but it works fine
+    SDL_RenderClear(renderer);
     SDL_RenderTexture(renderer, renderTexture, NULL, &gameScreen);
     SDL_RenderPresent(renderer);
 }
