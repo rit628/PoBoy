@@ -75,10 +75,14 @@ jobs:
     steps:
       - uses: actions/download-artifact@v6
 
+      - name: Get Commit Hash
+        id: hash
+        run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
       - name: Publish Release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: ${{ github.sha }}
+          tag_name: ${{ steps.hash.outputs.sha }}
           prerelease: true
           make_latest: false
           files: |
