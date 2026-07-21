@@ -32,8 +32,16 @@ jobs:
       run:
         shell: bash
 
+    outputs:
+      hash: ${{ steps.hash.outputs.sha }}
+    
     steps:
       - uses: actions/checkout@v6
+
+      - name: Get Commit Hash
+        if: runner.os == 'Windows'
+        id: hash
+        run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Install SDL3 Dependencies
         if: runner.os == 'Linux'
@@ -73,18 +81,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
-
-      - name: Get Commit Hash
-        id: hash
-        run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-      
       - uses: actions/download-artifact@v6
 
       - name: Publish Release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: ${{ steps.hash.outputs.sha }}
+          tag_name: ${{ needs.build.outputs.hash }}
           prerelease: true
           make_latest: false
           files: |
