@@ -73,11 +73,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/download-artifact@v6
+      - uses: actions/checkout@v6
 
       - name: Get Commit Hash
         id: hash
         run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      
+      - uses: actions/download-artifact@v6
 
       - name: Publish Release
         uses: softprops/action-gh-release@v3
