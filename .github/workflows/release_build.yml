@@ -8,6 +8,7 @@ permissions:
 
 env:
   executable: PoBoy
+  target: local
 
 jobs:
   build:
@@ -22,7 +23,7 @@ jobs:
             artifact: macos
             extension:
 
-          - os: windows-latest
+          - os: ubuntu-26.04
             artifact: windows
             extension: .exe
 
@@ -31,20 +32,12 @@ jobs:
     defaults:
       run:
         shell: bash
-
-    outputs:
-      hash: ${{ steps.hash.outputs.sha }}
     
     steps:
       - uses: actions/checkout@v6
 
-      - name: Get Commit Hash
-        if: runner.os == 'Windows'
-        id: hash
-        run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-
       - name: Install SDL3 Dependencies
-        if: runner.os == 'Linux'
+        if: matrix.artifact == 'linux'
         run: |
           sudo apt-get update
           sudo apt-get install build-essential git make \
@@ -56,19 +49,27 @@ jobs:
           libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev
 
       - name: Configure LLVM Clang
-        if: runner.os == 'macOS'
+        if: matrix.artifact == 'macos'
         run: |
           brew install lld@20
           echo "$(brew --prefix llvm@20)/bin" >> $GITHUB_PATH
           echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> $GITHUB_ENV
 
+      - name: Configure Cross Compiler
+        if: matrix.artifact == 'windows'
+        run: |
+          sudo apt-get update
+          sudo apt-get install mingw-w64
+          echo "target=${{ matrix.artifact }}" >> $GITHUB_ENV
+
       - name: Build
-        run: python3 dmg_build.py -m release ${{ env.executable }}
+        run: python3 dmg_build.py -m release ${{ env.executable }} -t ${{ env.target }}
 
       - name: Package
         run: |
           mkdir artifacts
-          cp build/local/bin/${{ env.executable }}${{ matrix.extension }} artifacts/${{ env.executable }}-${{ matrix.artifact }}${{ matrix.extension }}
+          cp build/${{ env.target }}/bin/${{ env.executable }}${{ matrix.extension }} \
+          artifacts/${{ env.executable }}-${{ matrix.artifact }}${{ matrix.extension }}
 
       - uses: actions/upload-artifact@v6
         with:
@@ -86,7 +87,8 @@ jobs:
       - name: Publish Release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: ${{ needs.build.outputs.hash }}
+          name: PoBoy beta
+          tag_name: beta
           prerelease: true
           make_latest: false
           files: |
