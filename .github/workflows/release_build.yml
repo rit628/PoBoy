@@ -63,7 +63,7 @@ jobs:
           echo "target=${{ matrix.artifact }}" >> $GITHUB_ENV
 
       - name: Build
-        run: python3 dmg_build.py -m release ${{ env.executable }} -t ${{ env.target }}
+        run: python3 dmg_build.py -m release -t ${{ env.target }} ${{ env.executable }}
 
       - name: Package
         run: |
@@ -87,9 +87,8 @@ jobs:
       - name: Publish Release
         uses: softprops/action-gh-release@v3
         with:
-          name: PoBoy beta
+          name: trunk
           tag_name: beta
-          prerelease: true
-          make_latest: false
+          make_latest: true
           files: |
             **/*
