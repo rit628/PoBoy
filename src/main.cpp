@@ -19,10 +19,7 @@ struct AppState {
     bool running = false;
 };
 
-void loadRom(void* userdata, const char * const * filelist, int filter [[ maybe_unused ]]) {
-    if (!filelist || !*filelist) return;
-    auto* app = static_cast<AppState*>(userdata);
-    const std::filesystem::path romFile = filelist[0];
+void loadRom(AppState* app, const std::filesystem::path romFile) {
     if (std::filesystem::exists(romFile)) {
         auto& gb = app->gb;
         auto metadata = gb.loadRom(romFile);
@@ -36,11 +33,18 @@ void loadRom(void* userdata, const char * const * filelist, int filter [[ maybe_
     }
 }
 
+void romLoadCallback(void* userdata, const char * const * filelist, int filter [[ maybe_unused ]]) {
+    if (!filelist || !*filelist) return;
+    auto* app = static_cast<AppState*>(userdata);
+    const std::filesystem::path romFile = filelist[0];
+    loadRom(app, romFile);
+}
+
 SDL_AppResult SDL_AppInit(void** appstate, int argc, char** argv) {
     auto* app = new AppState();
     *appstate = app;
     SDL_SetHint(SDL_HINT_MAIN_CALLBACK_RATE, "waitevent");
-    if (argc > 1) loadRom(app, &argv[1], 0);
+    if (argc > 1) romLoadCallback(app, &argv[1], 0);
     return SDL_APP_CONTINUE;
 }
 
@@ -60,11 +64,16 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
         break;
 
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
+            if (app->running) return SDL_APP_CONTINUE;
             static constexpr std::array<SDL_DialogFileFilter, 2> filters = {{
                 {"GameBoy and GameBoy Color ROMs", "gb;gbc"},
                 {"All Files", "*"}
             }};
-            SDL_ShowOpenFileDialog(loadRom, app, gui.getWindow(), filters.data(), filters.size(), NULL, false);
+            SDL_ShowOpenFileDialog(romLoadCallback, app, gui.getWindow(), filters.data(), filters.size(), NULL, false);
+        break;
+
+        case SDL_EVENT_DROP_FILE:
+            loadRom(app, event->drop.data);
         break;
 
         case SDL_EVENT_QUIT: return SDL_APP_SUCCESS;
