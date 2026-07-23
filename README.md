@@ -31,7 +31,7 @@ Includes a reusable DMG core written in portable C++ and a basic frontend GUI bu
 
 # Notes and Usage
 At the moment, the frontend is quite primitive as the primary focus of this project was writing a reasonably accurate DMG core. More features will be added once a proper GUI library is added.
-* Upon launching the program, a blank window will appear. Click anywhere within the window to open a file selection prompt to select a GB or GBC ROM to run. This prompt can be opened at any time by simply clicking within window again.
+* Upon launching the program, a blank window will appear. Click anywhere within the window to open a file selection prompt to select a GB or GBC ROM to run. To change the loaded ROM while a game is running, simply drag and drop your target file into the window and it will be loaded into the emulator.
 * Resizing the window will confine the game screen to the maximum integer scale of the GameBoy resolution supported by the current window resolution.
 * In supported games, save data is dumped to a file with a matching filename to the ROM with a `.sav` extension whenever the program is closed. If available, save files matching the ROM name within the same directory will be loaded when selected.
 * Save data format is a simple dump of the cartridge SRAM, so most emulator save files should be compatible with PoBoy.
