@@ -13,7 +13,6 @@ def build(args):
     output_directory = Path("build", args.target_platform)
     cmake_args = list(filter(None, [ "-DCMAKE_C_COMPILER=clang"
                                    , "-DCMAKE_CXX_COMPILER=clang++"
-                                   , "-DCMAKE_LINKER_TYPE=LLD"
                                    , "-G Ninja"
                                    , "-DCMAKE_COLOR_DIAGNOSTICS=ON"
                                    , build_mode
@@ -40,7 +39,7 @@ parser.add_argument("-m", "--mode"
 
 parser.add_argument("-t", "--target-platform"
                    , help="set build platform target"
-                   , choices=["local", "windows"]
+                   , choices=["local", "windows", "web"]
                    , default="local")
 
 parser.add_argument("--cores"
