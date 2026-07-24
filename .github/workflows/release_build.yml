@@ -65,10 +65,13 @@ jobs:
       - name: Configure Web Cross Compiler
         if: matrix.artifact == 'web'
         run: |
+          cd ~
           git clone https://github.com/emscripten-core/emsdk.git
+          cd emsdk
           ./emsdk install latest
           ./emsdk activate latest
-          echo 'source "./emsdk/emsdk_env.sh"' >> $HOME/.bash_profile
+          echo "$(pwd)" >> $GITHUB_PATH
+          echo "EMSDK=$(pwd)" >> $GITHUB_ENV
           echo "target=${{ matrix.artifact }}" >> $GITHUB_ENV
 
       - name: Build
