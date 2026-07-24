@@ -17,15 +17,15 @@ jobs:
         include:
           - os: ubuntu-26.04
             artifact: linux
-            extension:
 
           - os: macos-26
             artifact: macos
-            extension:
 
           - os: ubuntu-26.04
             artifact: windows
-            extension: .exe
+
+          - os: ubuntu-26.04
+            artifact: web
 
     runs-on: ${{ matrix.os }}
 
@@ -55,11 +55,20 @@ jobs:
           echo "$(brew --prefix llvm@20)/bin" >> $GITHUB_PATH
           echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> $GITHUB_ENV
 
-      - name: Configure Cross Compiler
+      - name: Configure Windows Cross Compiler
         if: matrix.artifact == 'windows'
         run: |
           sudo apt-get update
           sudo apt-get install mingw-w64
+          echo "target=${{ matrix.artifact }}" >> $GITHUB_ENV
+
+      - name: Configure Web Cross Compiler
+        if: matrix.artifact == 'web'
+        run: |
+          git clone https://github.com/emscripten-core/emsdk.git
+          ./emsdk install latest
+          ./emsdk activate latest
+          echo 'source "./emsdk/emsdk_env.sh"' >> $HOME/.bash_profile
           echo "target=${{ matrix.artifact }}" >> $GITHUB_ENV
 
       - name: Build
@@ -68,8 +77,7 @@ jobs:
       - name: Package
         run: |
           mkdir artifacts
-          cp build/${{ env.target }}/bin/${{ env.executable }}${{ matrix.extension }} \
-          artifacts/${{ env.executable }}-${{ matrix.artifact }}${{ matrix.extension }}
+          zip -r artifacts/${{ env.executable }}-${{ matrix.artifact }}.zip build/${{ env.target }}/bin/*
 
       - uses: actions/upload-artifact@v6
         with:
