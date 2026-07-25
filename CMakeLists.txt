@@ -38,7 +38,7 @@ FetchContent_MakeAvailable(SDL3 ${OPTIONAL_DEPS})
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-c23-extensions --embed-dir=${CMAKE_SOURCE_DIR}/bin")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -glldb -gfull")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -flto=thin -DNDEBUG")
 set(CMAKE_CXX_FLAGS_MINSIZEREL "-Os -DNDEBUG")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-Og -fno-omit-frame-pointer -g -glldb -gfull")
 
