@@ -74,12 +74,11 @@ void APU::writeWaveRAM(uint8_t address, uint8_t value) {
 
 void APU::tick() {
     incrementDivider();
-    sample<&APU::channel1>();
-    sample<&APU::channel2>();
-    sample<&APU::channel3>();
-    sample<&APU::channel4>();
-    mixChannels();
-    if (samples.full()) queueAudioData(samples.extract());
+    channel1.tick();
+    channel2.tick();
+    channel3.tick();
+    channel4.tick();
+    if (++discardedSamples == SAMPLES_TO_DISCARD) sampleChannels();
 }
 
 void APU::incrementDivider() {
@@ -105,8 +104,21 @@ void APU::incrementDivider() {
     }
 }
 
+void APU::sampleChannels() {
+    if (audioEnabled) {
+        sample<&APU::channel1>();
+        sample<&APU::channel2>();
+        sample<&APU::channel3>();
+        sample<&APU::channel4>();
+        mixChannels();
+    }
+    else {
+        addSample(0, 0);
+    }
+    if (samples.full()) queueAudioData(samples.extract());
+}
+
 void APU::mixChannels() {
-    if (!audioEnabled) return addSample(0, 0);
     float left = 0, right = 0;
     for (uint8_t i = 0; i < dacs.size(); i++) {
         left += getChannelPan<true>(i) * dacs.at(i);
@@ -142,7 +154,7 @@ float APU::highPassFilter(float sample) {
 
 template<auto Channel>
 void APU::sample() {
-    uint8_t digitalSample = (this->*Channel).tick();
+    uint8_t digitalSample = (this->*Channel).getDigitalSample();
     float analogSample = 0.0f;
     if ((this->*Channel).dacEnabled()) {
         analogSample = -2 * (float(digitalSample) / DIGITAL_SAMPLE_MAX) + 1;
@@ -165,7 +177,6 @@ void APU::sample() {
 }
 
 void APU::addSample(float left, float right) {
-    if (++discardedSamples < SAMPLES_TO_DISCARD) return;
     discardedSamples = 0;
     samples.push(highPassFilter(left));
     samples.push(highPassFilter(right));

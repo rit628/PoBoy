@@ -24,10 +24,11 @@ namespace Audio {
             void writeWaveRAM(uint8_t address, uint8_t value);
 
             void tick();
-            void incrementDivider();
-            void mixChannels();
-
+            
         private:
+            void incrementDivider();
+            void sampleChannels();
+            void mixChannels();
             template<bool Left>
             bool getChannelPan(uint8_t channel);
             template<bool Left>
