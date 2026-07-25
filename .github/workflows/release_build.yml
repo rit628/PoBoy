@@ -92,15 +92,27 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    env:
+      tag: beta
+
     steps:
+      - uses: actions/checkout@v6
+
+      - name: Delete Latest Release
+        run: gh release delete ${{ env.tag }} --cleanup-tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - uses: actions/download-artifact@v6
+        with:
+          path: artifacts
 
       - name: Publish Release
         uses: softprops/action-gh-release@v3
         with:
           name: ${{ github.ref_name }}
-          tag_name: beta
+          tag_name: ${{ env.tag }}
           make_latest: true
           target_commitish: ${{ github.sha }}
           files: |
-            **/*
+            artifacts/**/*
