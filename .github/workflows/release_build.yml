@@ -80,7 +80,7 @@ jobs:
       - name: Package
         run: |
           mkdir artifacts
-          zip -r artifacts/${{ env.executable }}-${{ matrix.artifact }}.zip build/${{ env.target }}/bin/*
+          zip -j artifacts/${{ env.executable }}-${{ matrix.artifact }}.zip build/${{ env.target }}/bin/*
 
       - uses: actions/upload-artifact@v6
         with:
@@ -98,8 +98,9 @@ jobs:
       - name: Publish Release
         uses: softprops/action-gh-release@v3
         with:
-          name: trunk
+          name: ${{ github.ref_name }}
           tag_name: beta
           make_latest: true
+          target_commitish: ${{ github.sha }}
           files: |
             **/*
