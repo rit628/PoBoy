@@ -5,10 +5,12 @@
 
 class Renderer {
     public:
-        Renderer();
+        Renderer(SDL_Window* renderWindow);
         ~Renderer();
-        uint8_t getMaxGameScale(size_t width, size_t height);
-        void updateWindow(SDL_Window* window);
+
+        static uint8_t getMaxGameScale(size_t width, size_t height);
+
+        void updateRenderRegion();
         void renderFrame(std::span<const uint8_t> framebuffer);
 
     private:

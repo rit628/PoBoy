@@ -7,7 +7,6 @@
 AudioStreamer::AudioStreamer() {
     using std::string_literals::operator""s;
     
-    SDL_Init(SDL_INIT_AUDIO);
     audioStream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &streamFormat, NULL, NULL);
     if (!audioStream || !SDL_ResumeAudioStreamDevice(audioStream)) {
         throw std::runtime_error("Audio streamer failed to initialize: "s + SDL_GetError());
