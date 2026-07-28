@@ -1,5 +1,8 @@
 include($ENV{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake)
 
-set(CMAKE_EXECUTABLE_SUFFIX_C ".html")
-set(CMAKE_EXECUTABLE_SUFFIX_CXX ".html")
+set(EXECUTABLE_TARGET ".html")
+
+set(CMAKE_EXECUTABLE_SUFFIX_C ${EXECUTABLE_TARGET})
+set(CMAKE_EXECUTABLE_SUFFIX_CXX ${EXECUTABLE_TARGET})
+
 set(CMAKE_LINKER_TYPE DEFAULT)
