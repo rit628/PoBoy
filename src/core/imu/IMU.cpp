@@ -44,7 +44,6 @@ void IMU::writeIO(uint8_t value) {
 
 void IMU::tick() {
     timer.tick();
-    joypad.tick();
 }
 
 void IMU::triggerInterrupt(INTERRUPT_FLAG flag) {

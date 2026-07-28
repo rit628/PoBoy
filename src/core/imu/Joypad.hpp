@@ -15,10 +15,10 @@ namespace Interrupts {
             uint8_t readIO();
             template<uint16_t Register>
             void writeIO(uint8_t value);
-            
-            void tick();
 
         private:
+            void updateInput();
+
             IMU& imu;
 
             std::function<uint8_t()> readInput;
