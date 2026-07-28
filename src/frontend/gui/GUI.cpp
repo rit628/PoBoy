@@ -5,14 +5,12 @@
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_video.h>
 #include <cstdint>
+#include <format>
 #include <stdexcept>
 #include <array>
 #include <string>
 
-GUI::GUI() : gb{std::bind(&GUI::readInput, std::ref(*this))
-              , std::bind(&GUI::queueAudioData, std::ref(*this), std::placeholders::_1)
-              , std::bind(&GUI::renderFrame, std::ref(*this), std::placeholders::_1)}
-{
+GUI::GUI() {
     using std::string_literals::operator""s;
     
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS)) {
@@ -33,7 +31,11 @@ GUI::GUI() : gb{std::bind(&GUI::readInput, std::ref(*this))
 
     renderer = std::make_unique<Renderer>(window);
     audioStreamer = std::make_unique<AudioStreamer>();
-    inputManager = std::make_unique<InputManager>();
+    inputManager = std::make_unique<InputManager>(*this);
+
+    gb = std::make_unique<DMG>(std::bind(&InputManager::readInput, std::ref(*inputManager))
+                             , std::bind(&AudioStreamer::queueAudioData, std::ref(*audioStreamer), std::placeholders::_1)
+                             , std::bind(&Renderer::renderFrame, std::ref(*renderer), std::placeholders::_1));
 }
 
 GUI::~GUI() {
@@ -42,8 +44,9 @@ GUI::~GUI() {
 
 SDL_AppResult GUI::handleIterate() {
     if (running) [[ likely ]] {
+        gb->frameAdvance();
+        if (!speedUnlocked) gb->synchronizeClock();
         updateFps();
-        gb.frameAdvance();
     }
     else {
         renderInterface();
@@ -78,15 +81,24 @@ SDL_AppResult GUI::handleEvent(SDL_Event* event) {
         break;
 
         case SDL_EVENT_QUIT: return SDL_APP_SUCCESS;
+
+        default:
+            inputManager->handleInput(event);
+        break;
     }
-    inputManager->handleInput(event);
     return SDL_APP_CONTINUE;
+}
+
+template<bool Unlocked>
+void GUI::updateSpeed() {
+    speedUnlocked = Unlocked;
+    gb->resetClock();
 }
 
 void GUI::loadFile(const std::filesystem::path file) {
     if (!std::filesystem::exists(file)) return;
     using std::string_literals::operator""s;
-    auto metadata = gb.loadRom(file);
+    auto metadata = gb->loadRom(file);
     windowTitle = "PoBoy: "s + metadata.title.data();
     SDL_SetWindowTitle(window, windowTitle.c_str());
     running = true;
@@ -109,7 +121,7 @@ void GUI::updateFps() {
     frameCount++;
     if (currentTime - lastTime >= 1000) {
         float fps = frameCount * 1000.0 / (currentTime - lastTime);
-        auto newTitle = windowTitle + "\tFPS:" + std::to_string(fps);
+        auto newTitle = std::format("{}\tFPS: {:.2f}", windowTitle, fps);
         SDL_SetWindowTitle(window, newTitle.c_str());
         lastTime = currentTime;
         frameCount = 0;
@@ -121,14 +133,5 @@ void GUI::renderInterface() {
     renderer->renderFrame(blank);
 }
 
-void GUI::renderFrame(std::span<const uint8_t> framebuffer) {
-    renderer->renderFrame(framebuffer);
-}
-
-void GUI::queueAudioData(std::span<const float> data) {
-    audioStreamer->queueAudioData(data);
-}
-
-uint8_t GUI::readInput() {
-    return inputManager->readInput();
-}
+template void GUI::updateSpeed<true>();
+template void GUI::updateSpeed<false>();

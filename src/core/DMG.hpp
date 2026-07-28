@@ -25,11 +25,12 @@ class DMG {
         void run();
         void run(std::stop_token stoken);
         void frameAdvance();
+        void synchronizeClock();
+        void resetClock();
 
     private:
         void initialize();
         void systemTick();
-        void wait();
 
         using clock = std::chrono::steady_clock;
         clock::time_point start;

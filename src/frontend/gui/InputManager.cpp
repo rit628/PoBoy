@@ -1,9 +1,12 @@
 #include "InputManager.hpp"
+#include "GUI.hpp"
 #include "FlagOps.hpp"
 #include "InterruptConstants.hpp"
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_keycode.h>
 #include <cstdint>
+
+InputManager::InputManager(GUI& gui) : gui(gui) {}
 
 void InputManager::handleInput(SDL_Event* event) {
     switch (event->type) {
@@ -55,6 +58,10 @@ void InputManager::handleKeypress(SDL_KeyboardEvent& keypress) {
 
         case SDLK_A:
             modifyFlag(B);
+        break;
+
+        case SDLK_TAB:
+            gui.updateSpeed<Down>();
         break;
     }
 }

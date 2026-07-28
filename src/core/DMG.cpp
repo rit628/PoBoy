@@ -20,11 +20,17 @@ Memory::CartridgeMetadata DMG::loadRom(const std::filesystem::path& romFile) {
 }
 
 void DMG::run() {
-    while (true) frameAdvance();
+    while (true) {
+        frameAdvance();
+        synchronizeClock();
+    }
 }
 
 void DMG::run(std::stop_token stoken) {
-    while (!stoken.stop_requested()) frameAdvance();
+    while (!stoken.stop_requested()) {
+        frameAdvance();
+        synchronizeClock();
+    }
 }
 
 void DMG::frameAdvance() {
@@ -32,12 +38,26 @@ void DMG::frameAdvance() {
     while (cycleCount - prevCycles < Graphics::DOTS_PER_FRAME) {
         cpu.tick();
     }
-    wait();
+}
+
+void DMG::synchronizeClock() {
+    auto now = clock::now();
+    auto elapsed = std::chrono::duration<double, std::micro>(now - start);
+    auto expectedElapsed = cycleCount * DMG_CLOCK_US;
+
+    if (elapsed < expectedElapsed) {
+        auto waitTime = expectedElapsed - elapsed;
+        std::this_thread::sleep_for(waitTime);
+    }
+}
+
+void DMG::resetClock() {
+    start = clock::now();
+    cycleCount = 0;
 }
 
 void DMG::initialize() {
-    start = clock::now();
-    cycleCount = 0;
+    resetClock();
     cpu.initialize();
     imu.initialize();
     mmu.initialize();
@@ -52,16 +72,5 @@ void DMG::systemTick() {
         apu.tick();
         ppu.tick();
         cycleCount++;
-    }
-}
-
-void DMG::wait() {
-    auto now = clock::now();
-    auto elapsed = std::chrono::duration<double, std::micro>(now - start);
-    auto expectedElapsed = cycleCount * DMG_CLOCK_US;
-
-    if (elapsed < expectedElapsed) {
-        auto waitTime = expectedElapsed - elapsed;
-        std::this_thread::sleep_for(waitTime);
     }
 }
