@@ -13,7 +13,7 @@ namespace Processing {
     template<bool FlatMemory = false>
     class CPU {
         public:
-            CPU(std::function<void()> systemTick) requires FlatMemory;
+            CPU(std::function<void()> systemTick) requires (FlatMemory);
             CPU(Memory::MMU& mmu, std::function<void()> systemTick) requires (!FlatMemory);
             void initialize();
             void tick();
@@ -212,3 +212,4 @@ namespace Processing {
 }
 
 #include "CPU.tpp"
+#include "Opcodes.tpp"

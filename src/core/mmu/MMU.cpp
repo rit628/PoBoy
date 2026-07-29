@@ -36,7 +36,7 @@ CartridgeMetadata MMU::loadRom(const std::filesystem::path& romFile) {
 }
 
 uint8_t MMU::read(uint16_t address) {
-    if (!bootromDisabled && address < BOOTROM_SIZE) {
+    if (!bootromDisabled && address < BOOTROM_SIZE) { [[ unlikely ]]
         return BOOTROM.at(address);
     }
     if (address < ROM_BANK_0_END) {
@@ -73,7 +73,7 @@ uint8_t MMU::read(uint16_t address) {
 }
 
 void MMU::write(uint16_t address, uint8_t value) {
-    if (!bootromDisabled && address < BOOTROM_SIZE) {
+    if (!bootromDisabled && address < BOOTROM_SIZE) { [[ unlikely ]]
         return; // bootrom is not writeable
     }
     if (address < ROM_BANK_0_END) {

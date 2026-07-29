@@ -21,7 +21,7 @@ namespace Memory {
             auto ramSize = decodeRamSize(encodedRamSize);
             sram.resize(ramSize, 0xFF);
             if (ramSize >= SRAM_BANK_SIZE) { // prevent span ub for mbc2 and roms with header mismatch
-                sramBank = std::span(sram).subspan<0, SRAM_BANK_SIZE>();
+                sramBank = std::span(sram).template subspan<0, SRAM_BANK_SIZE>();
             }
         }
         if constexpr (RamType == SRAM_TYPE::BATTERY_BUFFERED) {

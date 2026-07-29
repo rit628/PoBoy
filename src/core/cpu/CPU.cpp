@@ -44,7 +44,7 @@
 using namespace Processing;
 
 template<bool FlatMemory>
-CPU<FlatMemory>::CPU(std::function<void()> systemTick) requires FlatMemory
+CPU<FlatMemory>::CPU(std::function<void()> systemTick) requires (FlatMemory)
                     : systemTick(systemTick)
 {
     initialize();
@@ -96,7 +96,7 @@ void CPU<FlatMemory>::tick() {
             #define FLAG_VALUE(...)
             #define OPERAND(name, type, bytecount, immediate, postop, ...) \
             if constexpr (bytecount > 0) { \
-                std::array<uint8_t, bytecount> bytes; \
+                static std::array<uint8_t, bytecount> bytes; \
                 for (auto&& byte : bytes) { \
                     byte = read(PC++); \
                 } \
