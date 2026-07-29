@@ -37,10 +37,10 @@ set(SDL_SHARED OFF)
 FetchContent_MakeAvailable(SDL3 ${OPTIONAL_DEPS})
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-c23-extensions --embed-dir=${CMAKE_SOURCE_DIR}/bin")
-set(CMAKE_CXX_FLAGS_DEBUG "-O0 -glldb -gfull")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -flto=thin -DNDEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -glldb -gfull")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -flto=auto -DNDEBUG")
 set(CMAKE_CXX_FLAGS_MINSIZEREL "-Os -DNDEBUG")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-Og -fno-omit-frame-pointer -g -glldb -gfull")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-Og -g -glldb -gfull -fno-omit-frame-pointer -fprofile-instr-generate -fcoverage-mapping")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
