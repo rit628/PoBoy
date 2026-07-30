@@ -26,6 +26,7 @@ namespace Graphics {
             std::span<const uint8_t> extractFrame();
             bool atLineEnd();
             void addSprite(uint8_t yPos, uint8_t xPos, uint8_t tileNumber, uint8_t spriteFlags);
+            void sortSprites();
     
         private:
             uint8_t applyPalette(uint8_t palette, uint8_t colorIndex);

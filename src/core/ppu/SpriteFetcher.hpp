@@ -1,7 +1,7 @@
 #pragma once
 #include "GraphicsConstants.hpp"
 #include "PixelFetcher.hpp"
-#include <array>
+#include "StaticQueue.hpp"
 #include <cstdint>
 #include <span>
 
@@ -25,6 +25,7 @@ namespace Graphics {
             bool spriteAvailable();
             void reset();
             void addSprite(uint8_t yPos, uint8_t xPos, uint8_t tileNumber, uint8_t spriteFlags);
+            void sortSprites();
 
         private:
             void fetchReset();
@@ -42,9 +43,8 @@ namespace Graphics {
             const uint8_t& currentLine; // LY register reference
             uint8_t yPos = currentLine + SPRITE_Y_OFFSET;
 
-            std::array<Sprite, MAX_SPRITES_PER_LINE> spriteBuffer{};
-            uint8_t bufferIndex = 0;
-            Sprite* fetchedSprite = nullptr;
+            StaticQueue<Sprite, MAX_SPRITES_PER_LINE> spriteBuffer;
+            const Sprite* fetchedSprite = nullptr;
 
             std::span<const uint8_t, TILE_DATA_SIZE> tileData;
     };

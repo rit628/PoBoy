@@ -71,6 +71,10 @@ void PixelMixer::addSprite(uint8_t yPos, uint8_t xPos, uint8_t tileNumber, uint8
     spriteFetcher.addSprite(yPos, xPos, tileNumber, spriteFlags);
 }
 
+void PixelMixer::sortSprites() {
+    spriteFetcher.sortSprites();
+}
+
 uint8_t PixelMixer::applyPalette(uint8_t palette, uint8_t colorIndex) {
     return (palette >> (2 * colorIndex)) & 0b11;
 }

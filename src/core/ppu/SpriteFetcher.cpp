@@ -1,6 +1,7 @@
 #include "SpriteFetcher.hpp"
 #include "FlagOps.hpp"
 #include "GraphicsConstants.hpp"
+#include <algorithm>
 #include <cstdint>
 
 using namespace Graphics;
@@ -16,38 +17,41 @@ SpriteFetcher::SpriteFetcher(const uint8_t& lcdControl
                            {}
 
 bool SpriteFetcher::spriteAvailable() {
+    if (spriteBuffer.empty()) return false;
     if (!testFlags(lcdControl, LCDC_FLAG::SPRITE_ENABLE)) {
         fetchReset();
         return false;
     };
     if (fetchedSprite) return true; // dont recheck if already fetched
-    for (uint8_t i = 0; i < bufferIndex; i++) { // for loop should be reasonable for this
-        auto& sprite = spriteBuffer.at(i);
-        if (sprite.xPos == xPos) {
-            fetchedSprite = &sprite;
-            return true;
-        }
-    }
-    return false;
+
+    auto& sprite = spriteBuffer.front();
+    return (sprite.xPos == xPos) ? bool(fetchedSprite = &sprite) : false;
 }
 
 void SpriteFetcher::reset() {
-    bufferIndex = 0;
     fetchReset();
+    spriteBuffer.clear();
 }
 
 void SpriteFetcher::addSprite(uint8_t yPos, uint8_t xPos, uint8_t tileNumber, uint8_t spriteFlags) {
     uint8_t spriteHeight = 8 * (testFlags(lcdControl, LCDC_FLAG::SPRITE_SIZE_MODIFIER) + 1);
     this->yPos = currentLine + SPRITE_Y_OFFSET;
-    if (bufferIndex == MAX_SPRITES_PER_LINE) return;    // ensure buffer has space 
+    if (spriteBuffer.full()) return;                     // ensure buffer has space 
     if (xPos == 0) return;                              // ensure visibility on current scanline columnwise
     if (yPos > this->yPos) return;                      // ensure visibility on current scanline rowwise
     if (yPos + spriteHeight <= this->yPos) return;      // ensure sprite has not been completely rendered previously
-    spriteBuffer.at(bufferIndex++) = {yPos, xPos, tileNumber, spriteFlags};
+    spriteBuffer.push({yPos, xPos, tileNumber, spriteFlags});
+}
+
+void SpriteFetcher::sortSprites() {
+    std::ranges::stable_sort(spriteBuffer.data(), [](uint8_t a, uint8_t b){
+        return a < b;
+    }, &Sprite::xPos);
 }
 
 void SpriteFetcher::fetchReset() {
     resetState();
+    spriteBuffer.pop();
     fetchedSprite = nullptr;
     pixelFifo.clear();
 }
@@ -109,6 +113,6 @@ void SpriteFetcher::push() {
     }
 
     /* discard fetched sprite */
-    fetchedSprite->xPos = UINT8_MAX;
+    spriteBuffer.pop();
     fetchedSprite = nullptr;
 }
