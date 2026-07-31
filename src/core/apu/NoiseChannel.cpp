@@ -20,7 +20,7 @@ uint8_t NoiseChannel::readIO() {
     if constexpr (Register == NRx1) return 0xFF;
     if constexpr (Register == NRx2) return envelopeGenerator.readRegister();
     if constexpr (Register == NRx3) return clockShift << 4 | shortWidthMode << 3 | clockDivider;
-    if constexpr (Register == NRx4) return lengthController.getState() << 6 | 0x3F;
+    if constexpr (Register == NRx4) return 0xBF | lengthController.getState() << 6;
 }
 
 template<uint8_t Register>

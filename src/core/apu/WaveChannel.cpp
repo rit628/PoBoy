@@ -21,11 +21,11 @@ void WaveChannel::init() {
 
 template<uint8_t Register>
 uint8_t WaveChannel::readIO() {
-    if constexpr (Register == NRx0) return dacEnable << 7 | 0x7F;
-    if constexpr (Register == NRx1) return 0;
-    if constexpr (Register == NRx2) return outputLevel << 5 | 0x9F;
-    if constexpr (Register == NRx3) return 0;
-    if constexpr (Register == NRx4) return lengthController.getState() << 6;
+    if constexpr (Register == NRx0) return 0x7F | dacEnable << 7;
+    if constexpr (Register == NRx1) return 0xFF;
+    if constexpr (Register == NRx2) return 0x9F | outputLevel << 5;
+    if constexpr (Register == NRx3) return 0xFF;
+    if constexpr (Register == NRx4) return 0xBF | lengthController.getState() << 6;
 }
 
 template<uint8_t Register>

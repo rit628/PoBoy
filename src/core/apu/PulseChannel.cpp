@@ -16,10 +16,10 @@ void PulseChannel::init() {
 
 template<uint8_t Register>
 uint8_t PulseChannel::readIO() {
-    if constexpr (Register == NRx1) return std::to_underlying(dutyCycle) << 6;
+    if constexpr (Register == NRx1) return 0x3F | std::to_underlying(dutyCycle) << 6;
     if constexpr (Register == NRx2) return envelopeGenerator.readRegister();
-    if constexpr (Register == NRx3) return 0;
-    if constexpr (Register == NRx4) return lengthController.getState() << 6;
+    if constexpr (Register == NRx3) return 0xFF;
+    if constexpr (Register == NRx4) return 0xBF | lengthController.getState() << 6;
 }
 
 template<uint8_t Register>
@@ -72,9 +72,11 @@ void SweepChannel::init() {
 template<uint8_t Register>
 uint8_t SweepChannel::readIO() {
     if constexpr (Register == NRx0) {
-        return 0x80 | sweepPeriod << 4 | std::to_underlying(direction) | step;
+        return 0x80 | sweepPeriod << 4 | std::to_underlying(direction) << 3 | step;
     }
-    else return PulseChannel::readIO<Register>();
+    else {
+        return PulseChannel::readIO<Register>();
+    }
 }
 
 template<uint8_t Register>
@@ -87,7 +89,9 @@ void SweepChannel::writeIO(uint8_t value) {
     else if constexpr (Register == NRx4) {
         channelControl(value);  // must be called here to ensure correct trigger() call is dispatched
     }
-    else PulseChannel::writeIO<Register>(value);
+    else {
+        PulseChannel::writeIO<Register>(value);
+    }
 }
 
 void SweepChannel::tickSweep() {
