@@ -50,6 +50,8 @@ namespace Graphics {
     constexpr uint16_t DOTS_PER_OAM_SCAN_MODE       = 80;
     constexpr uint16_t DOTS_PER_RENDER_STARTUP      = 4;
 
+    constexpr float    FRAMES_PER_SECOND            = float(1 << 22) / DOTS_PER_FRAME;
+
     constexpr uint16_t VRAM_SIZE                    = 0x2000;
 
     constexpr uint8_t SPRITE_COUNT                  = 40;

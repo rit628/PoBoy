@@ -4,6 +4,7 @@
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_video.h>
+#include <cmath>
 #include <cstdint>
 #include <format>
 #include <stdexcept>
@@ -121,7 +122,8 @@ void GUI::updateFps() {
     frameCount++;
     if (currentTime - lastTime >= 1000) {
         float fps = frameCount * 1000.0 / (currentTime - lastTime);
-        auto newTitle = std::format("{}\tFPS: {:.2f}", windowTitle, fps);
+        uint16_t speed = std::lround(fps / Graphics::FRAMES_PER_SECOND * 100);
+        auto newTitle = std::format("{} | FPS: {:.2f} ({}%)", windowTitle, fps, speed);
         SDL_SetWindowTitle(window, newTitle.c_str());
         lastTime = currentTime;
         frameCount = 0;
