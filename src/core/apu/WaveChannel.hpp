@@ -18,6 +18,7 @@ namespace Audio {
         
         private:
             void init();
+            void clearRegisters();
             void advanceOutput();
             uint8_t sample();
             void trigger();

@@ -38,30 +38,38 @@ uint8_t APU::readIO() {
     using namespace Memory;
     if constexpr (Register == NR50) return masterVolumeControl;
     if constexpr (Register == NR51) return soundPanControl;
-    if constexpr (Register == NR52) {
-        return audioEnabled << 7
-            | 0x70
-            | channel4.on() << 3
-            | channel3.on() << 2
-            | channel2.on() << 1
-            | channel1.on();
-    }
     if constexpr (NR10 <= Register && Register <= NR14) return channel1.readIO<Register - NR10>();
     if constexpr (NR21 <= Register && Register <= NR24) return channel2.readIO<Register - NR21 + 1>();
     if constexpr (NR30 <= Register && Register <= NR34) return channel3.readIO<Register - NR30>();
     if constexpr (NR41 <= Register && Register <= NR44) return channel4.readIO<Register - NR41 + 1>();
 }
 
+template<>
+uint8_t APU::readIO<Memory::NR52>() {
+    return 0x70
+         | audioEnabled << 7
+         | channel4.on() << 3
+         | channel3.on() << 2
+         | channel2.on() << 1
+         | channel1.on();
+}
+
 template<uint16_t Register>
 void APU::writeIO(uint8_t value) {
     using namespace Memory;
-    if constexpr (Register == NR50) return void(masterVolumeControl = value);
-    if constexpr (Register == NR51) return void(soundPanControl = value);
-    if constexpr (Register == NR52) return void(audioEnabled = value & 0x80);
-    if constexpr (NR10 <= Register && Register <= NR14) return channel1.writeIO<Register - NR10>(value);
-    if constexpr (NR21 <= Register && Register <= NR24) return channel2.writeIO<Register - NR21 + 1>(value);
-    if constexpr (NR30 <= Register && Register <= NR34) return channel3.writeIO<Register - NR30>(value);
-    if constexpr (NR41 <= Register && Register <= NR44) return channel4.writeIO<Register - NR41 + 1>(value);
+    if (!audioEnabled) return;  // register writes ignored when powered off
+    if constexpr (Register == NR50) masterVolumeControl = value;
+    if constexpr (Register == NR51) soundPanControl = value;
+    if constexpr (NR10 <= Register && Register <= NR14) channel1.writeIO<Register - NR10>(value);
+    if constexpr (NR21 <= Register && Register <= NR24) channel2.writeIO<Register - NR21 + 1>(value);
+    if constexpr (NR30 <= Register && Register <= NR34) channel3.writeIO<Register - NR30>(value);
+    if constexpr (NR41 <= Register && Register <= NR44) channel4.writeIO<Register - NR41 + 1>(value);
+}
+
+template<>
+void APU::writeIO<Memory::NR52>(uint8_t value) {
+    audioEnabled = value & 0x80;
+    if (!audioEnabled) disableAudio();
 }
 
 uint8_t APU::readWaveRAM(uint8_t address) {
@@ -79,6 +87,16 @@ void APU::tick() {
     channel3.tick();
     channel4.tick();
     if (++discardedSamples == SAMPLES_TO_DISCARD) sampleChannels();
+}
+
+void APU::disableAudio() {
+    masterVolumeControl = 0;
+    soundPanControl = 0;
+    
+    channel1.disable();
+    channel2.disable();
+    channel3.disable();
+    channel4.disable();
 }
 
 void APU::incrementDivider() {
@@ -184,7 +202,6 @@ void APU::addSample(float left, float right) {
 
 template uint8_t APU::readIO<Memory::NR50>();
 template uint8_t APU::readIO<Memory::NR51>();
-template uint8_t APU::readIO<Memory::NR52>();
 
 template uint8_t APU::readIO<Memory::NR10>();
 template uint8_t APU::readIO<Memory::NR11>();
@@ -211,7 +228,6 @@ template uint8_t APU::readIO<Memory::NR44>();
 
 template void APU::writeIO<Memory::NR50>(uint8_t);
 template void APU::writeIO<Memory::NR51>(uint8_t);
-template void APU::writeIO<Memory::NR52>(uint8_t);
 
 template void APU::writeIO<Memory::NR10>(uint8_t);
 template void APU::writeIO<Memory::NR11>(uint8_t);

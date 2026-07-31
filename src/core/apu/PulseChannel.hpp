@@ -16,6 +16,7 @@ namespace Audio {
 
         protected:
             void init();
+            void clearRegisters();
             void advanceOutput();
             uint8_t sample();
             void trigger();
@@ -53,6 +54,7 @@ namespace Audio {
 
         private:
             void init();
+            void clearRegisters();
             uint16_t computeNewPeriod();
             void trigger();
 

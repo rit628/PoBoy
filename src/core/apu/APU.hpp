@@ -26,6 +26,7 @@ namespace Audio {
             void tick();
             
         private:
+            void disableAudio();
             void incrementDivider();
             void sampleChannels();
             void mixChannels();

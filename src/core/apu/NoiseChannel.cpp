@@ -8,8 +8,12 @@ NoiseChannel::NoiseChannel() {
 }
 
 void NoiseChannel::init() {
-    feedbackRegister = 0;
+    clearRegisters();
 
+    feedbackRegister = 0;
+}
+
+void NoiseChannel::clearRegisters() {
     clockShift = 0;
     shortWidthMode = false;
     clockDivider = 0;

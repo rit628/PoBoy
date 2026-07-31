@@ -63,8 +63,18 @@ namespace Audio {
     }
 
     template<VOLUME_TYPE VolumeType, TICK_RATE TickRate>
-    inline bool Channel<VolumeType, TickRate>::on(this auto&& self) {
-        return self.enabled;
+    inline bool Channel<VolumeType, TickRate>::on() const {
+        return enabled;
+    }
+
+    template<VOLUME_TYPE VolumeType, TICK_RATE TickRate>
+    inline void Channel<VolumeType, TickRate>::disable(this auto&& self) {
+        self.enabled = false;
+        self.period = 0;
+        self.lengthController.setState(false);
+        self.lengthController.setPeriod(0);
+        if constexpr (VolumeType == VOLUME_TYPE::ENVELOPE) self.envelopeGenerator.writeRegister(0);
+        self.clearRegisters();
     }
 
     template<VOLUME_TYPE VolumeType, TICK_RATE TickRate>

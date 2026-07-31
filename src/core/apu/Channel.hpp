@@ -28,7 +28,8 @@ namespace Audio {
             void tickLength();
             void tickEnvelope() requires (VolumeType == VOLUME_TYPE::ENVELOPE);
             bool dacEnabled(this auto&& self);
-            bool on(this auto&& self);
+            bool on() const;
+            void disable(this auto&& self);
 
         protected:
             void initBase();

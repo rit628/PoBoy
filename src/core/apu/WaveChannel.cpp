@@ -9,13 +9,16 @@ WaveChannel::WaveChannel() {
 }
 
 void WaveChannel::init() {
+    clearRegisters();
+
     waveram.fill(0);
     currentOutputLevel = 0;
     waveRamIndex = 0;
-    currentSample = 0;
+    currentSample = 0;    
+}
 
+void WaveChannel::clearRegisters() {
     dacEnable = false;
-
     outputLevel = 0;
 }
 

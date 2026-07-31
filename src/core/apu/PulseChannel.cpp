@@ -9,8 +9,12 @@ PulseChannel::PulseChannel() {
 }
 
 void PulseChannel::init() {
-    dutyCyclePositionBit = 1 << 7;
+    clearRegisters();
 
+    dutyCyclePositionBit = 1 << 7;
+}
+
+void PulseChannel::clearRegisters() {
     dutyCycle = DUTY_CYCLE::P12_5;
 }
 
@@ -60,10 +64,15 @@ SweepChannel::SweepChannel() {
 void SweepChannel::init() {
     PulseChannel::init();
 
+    clearRegisters();
+
     sweepEnabled = false;
     sweepTimer = 0;
     shadowPeriod = 0;
+}
 
+void SweepChannel::clearRegisters() {
+    PulseChannel::clearRegisters();
     sweepPeriod = 0;
     direction = DIRECTION::INCREASING;
     step = 0;
