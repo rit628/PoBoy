@@ -17,6 +17,7 @@ Includes a reusable DMG core written in portable C++ and a basic frontend GUI bu
     * MBC3 (including battery buffered SRAM and RTC)
     * MBC5 (including battery buffered SRAM)
 * Halt bug emulation
+* APU zombie mode bug emulation
 * Generic callback APIs for all major components to connect with an arbitary frontend
 
 ## Planned Features
@@ -35,6 +36,7 @@ At the moment, the frontend is quite primitive as the primary focus of this proj
 * Resizing the window will confine the game screen to the maximum integer scale of the GameBoy resolution supported by the current window resolution.
 * In supported games, save data is dumped to a file with a matching filename to the ROM with a `.sav` extension whenever the program is closed. If available, save files matching the ROM name within the same directory will be loaded when selected.
 * Save data format is a simple dump of the cartridge SRAM, so most emulator save files should be compatible with PoBoy.
+* The <kbd>Tab</kbd> key can be held at any time to unlock the emulator's speed for fast forwarding.
 
 ## Button Mapping
 
