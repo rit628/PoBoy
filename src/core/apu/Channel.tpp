@@ -73,13 +73,13 @@ namespace Audio {
         self.period = 0;
         self.lengthController.setState(false);
         self.lengthController.setPeriod(0);
-        if constexpr (VolumeType == VOLUME_TYPE::ENVELOPE) self.envelopeGenerator.writeRegister(0);
+        if constexpr (VolumeType == VOLUME_TYPE::ENVELOPE) self.envelopeGenerator.writeRegister(0, false);
         self.clearRegisters();
     }
 
     template<VOLUME_TYPE VolumeType, TICK_RATE TickRate>
     inline void Channel<VolumeType, TickRate>::writeEnvelope(uint8_t value) requires (VolumeType == VOLUME_TYPE::ENVELOPE) {
-        this->envelopeGenerator.writeRegister(value);
+        this->envelopeGenerator.writeRegister(value, enabled);
         if (!dacEnabled()) enabled = false;
     }
 
@@ -89,7 +89,7 @@ namespace Audio {
         self.lengthController.setState(value & 0x40);
         self.setPeriodHi(value);
         if (triggered) {
-            self.enabled = true;
+            self.enabled = self.enabled || self.dacEnabled();
             self.resetPeriodTimer();
             self.lengthController.trigger();
             if constexpr (VolumeType == VOLUME_TYPE::ENVELOPE) self.envelopeGenerator.trigger();
