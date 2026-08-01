@@ -55,6 +55,7 @@ namespace Audio {
         private:
             void init();
             void clearRegisters();
+            uint8_t getSweepPeriod();
             uint16_t computeNewPeriod();
             void trigger();
 

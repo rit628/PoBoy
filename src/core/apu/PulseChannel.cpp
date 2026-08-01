@@ -104,16 +104,21 @@ void SweepChannel::writeIO(uint8_t value) {
 }
 
 void SweepChannel::tickSweep() {
-    if (!sweepEnabled || sweepPeriod == 0 || period == 0) return;
-    if (--sweepTimer == 0) {
-        sweepTimer = sweepPeriod;
+    if (--sweepTimer > 0) return;
+
+    sweepTimer = getSweepPeriod();
+    if (sweepEnabled && sweepPeriod > 0) {
         uint16_t newPeriod = computeNewPeriod();
         if (newPeriod < PERIOD_MAX && step > 0) {
-            shadowPeriod = newPeriod;
-            period = shadowPeriod;
+            period = newPeriod;
+            shadowPeriod = period;
             computeNewPeriod();
         }
     }
+}
+
+uint8_t SweepChannel::getSweepPeriod() {
+    return (sweepPeriod > 0) ? sweepPeriod : 8;
 }
 
 uint16_t SweepChannel::computeNewPeriod() {
@@ -130,7 +135,7 @@ uint16_t SweepChannel::computeNewPeriod() {
 void SweepChannel::trigger() {
     PulseChannel::trigger();
     shadowPeriod = period;
-    sweepTimer = sweepPeriod;
+    sweepTimer = getSweepPeriod();
     sweepEnabled = sweepPeriod > 0 || step > 0;
     if (step > 0) computeNewPeriod();
 }
