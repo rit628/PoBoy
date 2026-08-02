@@ -66,6 +66,8 @@ void SweepChannel::init() {
 
     clearRegisters();
 
+    decrementComputed = false;
+
     sweepEnabled = false;
     sweepTimer = 0;
     shadowPeriod = 0;
@@ -94,6 +96,12 @@ void SweepChannel::writeIO(uint8_t value) {
         sweepPeriod = (value >> 4) & 0x07;
         direction = static_cast<DIRECTION>(value & 0x08);
         step = value & 0x07;
+
+        /* disable channel if sweep direction swapped after decrement computation */
+        if (direction == DIRECTION::INCREASING && decrementComputed) {
+            enabled = false;
+            sweepEnabled = false;
+        }
     }
     else if constexpr (Register == NRx4) {
         channelControl(value);  // must be called here to ensure correct trigger() call is dispatched
@@ -125,6 +133,7 @@ uint16_t SweepChannel::computeNewPeriod() {
     uint16_t shiftedPeriod = shadowPeriod >> step;
     int32_t offset = (direction == DIRECTION::INCREASING) ? shiftedPeriod : -shiftedPeriod;
     uint16_t newPeriod = shadowPeriod + offset;
+    decrementComputed = direction == DIRECTION::DECREASING;
     if (newPeriod >= PERIOD_MAX) {
         enabled = false;
         sweepEnabled = false;
@@ -137,6 +146,7 @@ void SweepChannel::trigger() {
     shadowPeriod = period;
     sweepTimer = getSweepPeriod();
     sweepEnabled = sweepPeriod > 0 || step > 0;
+    decrementComputed = false;
     if (step > 0) computeNewPeriod();
 }
 

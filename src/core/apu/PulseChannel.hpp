@@ -65,6 +65,8 @@ namespace Audio {
             uint8_t sweepTimer;
             uint16_t shadowPeriod;
 
+            bool decrementComputed; // internal flag for obscure negative sweep channel disable behavior
+
             /* NR10 Register Components */
             uint8_t sweepPeriod;    // NR10 bits 6-4
             DIRECTION direction;    // NR10 bit 3

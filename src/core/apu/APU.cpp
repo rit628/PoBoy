@@ -104,8 +104,8 @@ void APU::incrementDivider() {
     bool currDividerBit = imu.readIO<Memory::DIV>() & APU_DIV_BIT;
     bool increment = prevDividerBit > currDividerBit;
     prevDividerBit = currDividerBit;
-    if (!increment) return; // only increment apu divider and tick channel units on falling edge
-    apuDivider++; 
+    if (!audioEnabled || !increment) return; // only increment apu divider and tick channel units on falling edge
+    ++apuDivider;
     if (!(apuDivider & 0x01)) { // sound length tick every other increment
         channel1.tickLength();
         channel2.tickLength();
