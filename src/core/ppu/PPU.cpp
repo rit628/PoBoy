@@ -165,7 +165,7 @@ template<>
 void PPU::postTick<PPU::MODE::OAM_SCAN>() {
     using enum MODE;
     if (lineDotsElapsed >= DOTS_PER_OAM_SCAN_MODE) [[ unlikely ]] {
-        mixer.sortSprites();
+        mixer.scanlineInitialize();
         updateMode<PIXEL_TRANSFER>();
     }
 }

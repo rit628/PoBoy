@@ -53,7 +53,6 @@ void PixelMixer::tick() {
 void PixelMixer::scanlineReset() {
     backgroundFetcher.scanlineReset();
     spriteFetcher.reset();
-    pixelsToDiscard = scrollX & 0b111;
     currentColumn = 0;
 }
 
@@ -71,8 +70,9 @@ void PixelMixer::addSprite(uint8_t yPos, uint8_t xPos, uint8_t tileNumber, uint8
     spriteFetcher.addSprite(yPos, xPos, tileNumber, spriteFlags);
 }
 
-void PixelMixer::sortSprites() {
+void PixelMixer::scanlineInitialize() {
     spriteFetcher.sortSprites();
+    pixelsToDiscard = scrollX & 0b111;
 }
 
 uint8_t PixelMixer::applyPalette(uint8_t palette, uint8_t colorIndex) {
@@ -107,10 +107,7 @@ void PixelMixer::emitSpritePixel(const Pixel& pixel) {
 }
 
 void PixelMixer::emitPixel(uint8_t colorIndex) {
-    if (pixelsToDiscard > 0) {
-        pixelsToDiscard--;
-        return;
-    }
+    if (pixelsToDiscard > 0) return void(--pixelsToDiscard);
     if (currentColumn++ < PIXEL_OVERSCAN) return;
     framebuffer.push(colorIndex);
 }
