@@ -97,8 +97,11 @@ void SpriteFetcher::push() {
     Pixel pixel;
     pixel.palette = testFlags(fetchedSprite->spriteFlags, SPRITE_FLAG::PALETTE_NUMBER);
     pixel.backgroundPriority = testFlags(fetchedSprite->spriteFlags, SPRITE_FLAG::OBJ_TO_BG_PRIORITY);
-    auto getPixelColor = [this](uint8_t pixelIndex) -> uint8_t {
-        uint8_t mask = 0x1 << ((xFlip) ? pixelIndex : 7 - pixelIndex);
+    
+    auto getMask = (xFlip) ? [](uint8_t pixelIndex) { return 0x1 << pixelIndex; }
+                                             : [](uint8_t pixelIndex) { return 0x1 << (7 - pixelIndex); };
+    auto getPixelColor = [this, getMask](uint8_t pixelIndex) -> uint8_t {
+        uint8_t mask = getMask(pixelIndex);
         bool lsb = rowBitPlaneLo & mask;
         bool msb = rowBitPlaneHi & mask;
         return (msb << 1) | lsb;
