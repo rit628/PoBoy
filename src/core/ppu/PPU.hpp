@@ -46,13 +46,14 @@ namespace Graphics {
             void postTick();
             template<MODE Mode>
             void tickDispatch();
-            bool disabled();
+            void disableLCD();
 
             Interrupts::IMU& imu;
             std::function<void(std::span<const uint8_t>)> renderFrame;   // use std::function for simplicity
     
             std::array<uint8_t, VRAM_SIZE> vram;
             std::array<uint8_t, OAM_SIZE> oam;
+            bool enabled;
             uint16_t lineDotsElapsed;
             uint32_t frameDotsElapsed;
         

@@ -19,6 +19,7 @@ PPU::PPU(Interrupts::IMU& imu, std::function<void(std::span<const uint8_t>)> ren
 void PPU::initialize() {
     vram.fill(0);
     oam.fill(0);
+    enabled = false;
     lineDotsElapsed = 0;
     frameDotsElapsed = 0;
 
@@ -40,24 +41,24 @@ void PPU::initialize() {
 }
 
 uint8_t PPU::readVRAM(uint16_t address) {
-    if (mode == MODE::PIXEL_TRANSFER && !disabled()) return 0xFF;
+    if (mode == MODE::PIXEL_TRANSFER && enabled) return 0xFF;
     return vram.at(address);
 }
 
 void PPU::writeVRAM(uint16_t address, uint8_t value) {
-    if (mode == MODE::PIXEL_TRANSFER && !disabled()) return;
+    if (mode == MODE::PIXEL_TRANSFER && enabled) return;
     vram.at(address) = value;
 }
 
 uint8_t PPU::readOAM(uint16_t address) {
     using enum MODE;
-    if ((mode == PIXEL_TRANSFER || mode == OAM_SCAN) && !disabled()) return 0xFF;
+    if ((mode == PIXEL_TRANSFER || mode == OAM_SCAN) && enabled) return 0xFF;
     return oam.at(address);
 }
 
 void PPU::writeOAM(uint16_t address, uint8_t value) {
     using enum MODE;
-    if ((mode == PIXEL_TRANSFER || mode == OAM_SCAN) && !disabled()) return;
+    if ((mode == PIXEL_TRANSFER || mode == OAM_SCAN) && enabled) return;
     oam.at(address) = value;
 }
 
@@ -82,7 +83,7 @@ uint8_t PPU::readIO() {
 
 template<>
 uint8_t PPU::readIO<Memory::STAT>() {
-    if (disabled()) return 0x80 | interruptMask;   // bits 0-2 return 0 when lcd is off
+    if (!enabled) return 0x80 | interruptMask;   // bits 0-2 return 0 when lcd is off
     return 0x80
         | interruptMask
         | (lineCompare == currentLine % FRAME_LINES) << 2
@@ -92,16 +93,21 @@ uint8_t PPU::readIO<Memory::STAT>() {
 template<uint16_t Register>
 void PPU::writeIO(uint8_t value) {
     using namespace Memory;
-    if constexpr (Register == LY)   return void();
-    if constexpr (Register == LYC)  return void(lineCompare = value);
-    if constexpr (Register == SCX)  return void(scrollX = value);
-    if constexpr (Register == SCY)  return void(scrollY = value);
-    if constexpr (Register == WX)   return void(windowX = value);
-    if constexpr (Register == WY)   return void(windowY = value);
-    if constexpr (Register == LCDC) return void(lcdControl = value);
-    if constexpr (Register == BGP)  return void(backgroundPalette = value);
-    if constexpr (Register == OBP0) return void(spritePalette0 = value);
-    if constexpr (Register == OBP1) return void(spritePalette1 = value);
+    if constexpr (Register == LYC)  lineCompare = value;
+    if constexpr (Register == SCX)  scrollX = value;
+    if constexpr (Register == SCY)  scrollY = value;
+    if constexpr (Register == WX)   windowX = value;
+    if constexpr (Register == WY)   windowY = value;
+    if constexpr (Register == BGP)  backgroundPalette = value;
+    if constexpr (Register == OBP0) spritePalette0 = value;
+    if constexpr (Register == OBP1) spritePalette1 = value;
+}
+
+template<>
+void PPU::writeIO<Memory::LCDC>(uint8_t value) {
+    lcdControl = value;
+    enabled = testFlags(lcdControl, LCDC_FLAG::LCD_AND_PPU_ENABLE);
+    if (!enabled && mode == MODE::VBLANK) disableLCD();
 }
 
 template<>
@@ -225,7 +231,7 @@ void PPU::tickDispatch() {
 }
 
 void PPU::tick() {
-    if (disabled()) return;
+    if (!enabled) return;
     switch (mode) {
         using enum MODE;
         case OAM_SCAN:          return tickDispatch<OAM_SCAN>();
@@ -235,19 +241,15 @@ void PPU::tick() {
     }
 }
 
-bool PPU::disabled() {
-    bool lcdDisabled = !testFlags(lcdControl, LCDC_FLAG::LCD_AND_PPU_ENABLE);
-    if (lcdDisabled && mode == MODE::VBLANK) { // lcd can only be disabled during vblank
-        /* reset ppu state and render blank frame to emulate lcd shutting off */
-        frameDotsElapsed = 0;
-        lineDotsElapsed = 0;
-        currentLine = 0;
-        mode = MODE::OAM_SCAN;
-        mixer.extractFrame();
-        static constexpr std::array<uint8_t, FRAMEBUFFER_SIZE> blank{};
-        renderFrame(blank);
-    }
-    return lcdDisabled;
+void PPU::disableLCD() {
+    /* reset ppu state and render blank frame to emulate lcd shutting off */
+    frameDotsElapsed = 0;
+    lineDotsElapsed = 0;
+    currentLine = 0;
+    mode = MODE::OAM_SCAN;
+    mixer.extractFrame();
+    static constexpr std::array<uint8_t, FRAMEBUFFER_SIZE> blank{};
+    renderFrame(blank);
 }
 
 std::span<const uint8_t, TILE_DATA_SIZE> PPU::getTileData() {
@@ -275,7 +277,6 @@ template void PPU::writeIO<Memory::SCX>(uint8_t);
 template void PPU::writeIO<Memory::SCY>(uint8_t);
 template void PPU::writeIO<Memory::WX>(uint8_t);
 template void PPU::writeIO<Memory::WY>(uint8_t);
-template void PPU::writeIO<Memory::LCDC>(uint8_t);
 template void PPU::writeIO<Memory::BGP>(uint8_t);
 template void PPU::writeIO<Memory::OBP0>(uint8_t);
 template void PPU::writeIO<Memory::OBP1>(uint8_t);
