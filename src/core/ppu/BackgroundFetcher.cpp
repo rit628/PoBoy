@@ -5,8 +5,7 @@
 
 using namespace Graphics;
 
-BackgroundFetcher::BackgroundFetcher(const uint8_t& lcdControl
-                                   , const uint8_t& xPos
+BackgroundFetcher::BackgroundFetcher(const uint8_t& xPos
                                    , const uint8_t& yPos
                                    , const uint8_t& scrollX
                                    , const uint8_t& scrollY
@@ -14,8 +13,7 @@ BackgroundFetcher::BackgroundFetcher(const uint8_t& lcdControl
                                    , const uint8_t& windowY
                                    , std::span<const uint8_t, TILE_DATA_SIZE> tileData
                                    , std::span<const uint8_t, 2 * TILE_MAP_SIZE> tileMaps)
-                                   : lcdControl(lcdControl)
-                                   , xPos(xPos)
+                                   : xPos(xPos)
                                    , yPos(yPos)
                                    , scrollX(scrollX)
                                    , scrollY(scrollY)
@@ -40,10 +38,16 @@ void BackgroundFetcher::scanlineReset() {
     windowYCondition = windowYCondition || yPos == windowY;
 }
 
+void BackgroundFetcher::updateFlags(uint8_t lcdControl) {
+    windowEnabled = testFlags(lcdControl, LCDC_FLAG::WINDOW_ENABLE);
+    unsignedAddressing = testFlags(lcdControl, LCDC_FLAG::BACKGROUND_AND_WINDOW_DATA_AREA);
+    windowTileMap = testFlags(lcdControl, LCDC_FLAG::WINDOW_TILEMAP_AREA);
+    backgroundTileMap = testFlags(lcdControl, LCDC_FLAG::BACKGROUND_TILEMAP_AREA);
+}
+
 void BackgroundFetcher::preTick() {
     /* Update Fetcher Mode */
     windowXCondition = windowXCondition || (xPos == windowX + ADJUSTED_WINDOW_X_OFFSET);
-    bool windowEnabled = testFlags(lcdControl, LCDC_FLAG::WINDOW_ENABLE);
     bool inWindow = windowEnabled && windowXCondition && windowYCondition;
     if (!renderingWindow && inWindow) {
         renderingWindow = true;
@@ -60,7 +64,6 @@ void BackgroundFetcher::preTick() {
 }
 
 uint16_t BackgroundFetcher::getTileRowAddress() {
-    bool unsignedAddressing = testFlags(lcdControl, LCDC_FLAG::BACKGROUND_AND_WINDOW_DATA_AREA);
     uint16_t tileAddress = (unsignedAddressing) ? tileId * TILE_BYTES : 0x1000 + static_cast<int8_t>(tileId) * TILE_BYTES;
     uint8_t tileRow = 0;
     if (renderingWindow) {  // get window tile data
@@ -77,12 +80,12 @@ void BackgroundFetcher::getTile() {
     uint8_t yCoordinate = 0;
     uint8_t xCoordinate = 0;
     if (renderingWindow) {  // get window tile
-        selectedTileMap = testFlags(lcdControl, LCDC_FLAG::WINDOW_TILEMAP_AREA);
+        selectedTileMap = windowTileMap;
         yCoordinate = currentWindowLine / 8;
         xCoordinate = currentWindowColumn / 8;
     }
     else {  // get background tile
-        selectedTileMap = testFlags(lcdControl, LCDC_FLAG::BACKGROUND_TILEMAP_AREA);
+        selectedTileMap = backgroundTileMap;
         /* x and y coordinates of tile are computed in 8 bits to allow wraparound scrolling */
         yCoordinate = ((yPos + scrollY) & 0xFF) / 8;
         xCoordinate = ((xPos + scrollX) & 0xFF) / 8;

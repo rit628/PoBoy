@@ -6,26 +6,30 @@
 
 using namespace Graphics;
 
-SpriteFetcher::SpriteFetcher(const uint8_t& lcdControl
-                           , const uint8_t& xPos
+SpriteFetcher::SpriteFetcher(const uint8_t& xPos
                            , const uint8_t& currentLine
                            , std::span<const uint8_t, TILE_DATA_SIZE> tileData)
-                           : lcdControl(lcdControl)
-                           , xPos(xPos)
+                           : xPos(xPos)
                            , currentLine(currentLine)
                            , tileData(tileData)
                            {}
 
 bool SpriteFetcher::spriteAvailable() {
     if (spriteBuffer.empty()) return false;
-    if (!testFlags(lcdControl, LCDC_FLAG::SPRITE_ENABLE)) {
+    if (!spritesEnabled) {
         fetchReset();
         return false;
     };
     if (fetchedSprite) return true; // dont recheck if already fetched
 
     auto& sprite = spriteBuffer.front();
-    return (sprite.xPos == xPos) ? bool(fetchedSprite = &sprite) : false;
+    if (sprite.xPos == xPos) {
+        fetchedSprite = &sprite;
+        yFlip = testFlags(fetchedSprite->spriteFlags, SPRITE_FLAG::Y_FLIP);
+        xFlip = testFlags(fetchedSprite->spriteFlags, SPRITE_FLAG::X_FLIP);
+        return true;
+    }
+    return false;
 }
 
 void SpriteFetcher::reset() {
@@ -34,10 +38,9 @@ void SpriteFetcher::reset() {
 }
 
 void SpriteFetcher::addSprite(uint8_t yPos, uint8_t xPos, uint8_t tileNumber, uint8_t spriteFlags) {
-    uint8_t spriteHeight = 8 * (testFlags(lcdControl, LCDC_FLAG::SPRITE_SIZE_MODIFIER) + 1);
+    uint8_t spriteHeight = 8 * (doubleHeightSprites + 1);
     this->yPos = currentLine + SPRITE_Y_OFFSET;
     if (spriteBuffer.full()) return;                     // ensure buffer has space 
-    if (xPos == 0) return;                              // ensure visibility on current scanline columnwise
     if (yPos > this->yPos) return;                      // ensure visibility on current scanline rowwise
     if (yPos + spriteHeight <= this->yPos) return;      // ensure sprite has not been completely rendered previously
     spriteBuffer.push({yPos, xPos, tileNumber, spriteFlags});
@@ -47,6 +50,11 @@ void SpriteFetcher::sortSprites() {
     std::ranges::stable_sort(spriteBuffer.data(), [](uint8_t a, uint8_t b){
         return a < b;
     }, &Sprite::xPos);
+}
+
+void SpriteFetcher::updateFlags(uint8_t lcdControl) {
+    spritesEnabled = testFlags(lcdControl, LCDC_FLAG::SPRITE_ENABLE);
+    doubleHeightSprites = testFlags(lcdControl, LCDC_FLAG::SPRITE_SIZE_MODIFIER);
 }
 
 void SpriteFetcher::fetchReset() {
@@ -61,16 +69,14 @@ void SpriteFetcher::preTick() {}
 uint16_t SpriteFetcher::getTileRowAddress() {
     uint16_t tileAddress = tileId * TILE_BYTES;
     uint8_t tileRow = (yPos - fetchedSprite->yPos) % 8;
-    bool yFlip = testFlags(fetchedSprite->spriteFlags, SPRITE_FLAG::Y_FLIP);
     tileRow = 0b111 & ((yFlip) ? ~tileRow : tileRow);   // negate and mask to flip and remain in range
     return tileAddress + tileRow * TILE_ROW_BYTES;
 }
 
 void SpriteFetcher::getTile() {
     tileId = fetchedSprite->tileNumber;
-    if (testFlags(lcdControl, LCDC_FLAG::SPRITE_SIZE_MODIFIER)) {
+    if (doubleHeightSprites) {
         bool onSecondTile = yPos >= fetchedSprite->yPos + 8;
-        bool yFlip = testFlags(fetchedSprite->spriteFlags, SPRITE_FLAG::Y_FLIP);
         tileId = (tileId & ~0b1) + ((yFlip) ? !onSecondTile : onSecondTile);
     }
 }
@@ -91,8 +97,7 @@ void SpriteFetcher::push() {
     Pixel pixel;
     pixel.palette = testFlags(fetchedSprite->spriteFlags, SPRITE_FLAG::PALETTE_NUMBER);
     pixel.backgroundPriority = testFlags(fetchedSprite->spriteFlags, SPRITE_FLAG::OBJ_TO_BG_PRIORITY);
-    bool xFlip = testFlags(fetchedSprite->spriteFlags, SPRITE_FLAG::X_FLIP);
-    auto getPixelColor = [this, xFlip](uint8_t pixelIndex) -> uint8_t {
+    auto getPixelColor = [this](uint8_t pixelIndex) -> uint8_t {
         uint8_t mask = 0x1 << ((xFlip) ? pixelIndex : 7 - pixelIndex);
         bool lsb = rowBitPlaneLo & mask;
         bool msb = rowBitPlaneHi & mask;

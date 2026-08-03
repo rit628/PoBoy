@@ -9,8 +9,7 @@ namespace Graphics {
 
     class PixelMixer {
         public:
-            PixelMixer(const uint8_t& lcdc
-                     , const uint8_t& bgp
+            PixelMixer(const uint8_t& bgp
                      , const uint8_t& obp0
                      , const uint8_t& obp1
                      , const uint8_t& ly
@@ -27,6 +26,7 @@ namespace Graphics {
             bool atLineEnd();
             void addSprite(uint8_t yPos, uint8_t xPos, uint8_t tileNumber, uint8_t spriteFlags);
             void scanlineInitialize();
+            void updateFlags(uint8_t lcdControl);
     
         private:
             uint8_t applyPalette(uint8_t palette, uint8_t colorIndex);
@@ -35,11 +35,12 @@ namespace Graphics {
             void emitSpritePixel(const Pixel& pixel);
             void emitPixel(uint8_t colorIndex);
             
-            const uint8_t& lcdControl;      // LCDC register reference
             const uint8_t& bgPalette;       // BGP register reference
             const uint8_t& spritePalette0;  // OBP0 register reference
             const uint8_t& spritePalette1;  // OBP1 register reference
             const uint8_t& scrollX;         // SCX register reference
+
+            bool backgroundAndWindowEnabled = false;
             uint8_t pixelsToDiscard = 0;
 
             BackgroundFetcher backgroundFetcher;

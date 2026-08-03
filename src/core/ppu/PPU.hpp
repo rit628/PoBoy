@@ -71,8 +71,7 @@ namespace Graphics {
             uint8_t interruptMask;  // STAT bits 6-3
             MODE mode;              // STAT bits 1-0
 
-            PixelMixer mixer{lcdControl
-                           , backgroundPalette
+            PixelMixer mixer{backgroundPalette
                            , spritePalette0
                            , spritePalette1
                            , currentLine

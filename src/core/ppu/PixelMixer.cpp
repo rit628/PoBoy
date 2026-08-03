@@ -7,8 +7,7 @@
 
 using namespace Graphics;
 
-PixelMixer::PixelMixer(const uint8_t& lcdc
-                     , const uint8_t& bgp
+PixelMixer::PixelMixer(const uint8_t& bgp
                      , const uint8_t& obp0
                      , const uint8_t& obp1
                      , const uint8_t& ly
@@ -18,13 +17,11 @@ PixelMixer::PixelMixer(const uint8_t& lcdc
                      , const uint8_t& wy
                      , std::span<const uint8_t, TILE_DATA_SIZE> tileData
                      , std::span<const uint8_t, 2 * TILE_MAP_SIZE> tileMaps)
-                     : lcdControl(lcdc)
-                     , bgPalette(bgp)
+                     : bgPalette(bgp)
                      , spritePalette0(obp0)
                      , spritePalette1(obp1)
                      , scrollX(scx)
-                     , backgroundFetcher(lcdc
-                                       , currentColumn
+                     , backgroundFetcher(currentColumn
                                        , ly
                                        , scx
                                        , scy
@@ -32,8 +29,7 @@ PixelMixer::PixelMixer(const uint8_t& lcdc
                                        , wy
                                        , tileData
                                        , tileMaps)
-                     , spriteFetcher(lcdc
-                                   , currentColumn
+                     , spriteFetcher(currentColumn
                                    , ly
                                    , tileData)
                      {}
@@ -75,6 +71,12 @@ void PixelMixer::scanlineInitialize() {
     pixelsToDiscard = scrollX & 0b111;
 }
 
+void PixelMixer::updateFlags(uint8_t lcdControl) {
+    backgroundAndWindowEnabled = testFlags(lcdControl, LCDC_FLAG::BACKGROUND_AND_WINDOW_ENABLE);
+    backgroundFetcher.updateFlags(lcdControl);
+    spriteFetcher.updateFlags(lcdControl);
+}
+
 uint8_t PixelMixer::applyPalette(uint8_t palette, uint8_t colorIndex) {
     return (palette >> (2 * colorIndex)) & 0b11;
 }
@@ -93,7 +95,7 @@ void PixelMixer::mixPixel(const Pixel& backgroundPixel) {
 }
 
 void PixelMixer::emitBackgroundPixel(const Pixel& pixel) {
-    if (testFlags(lcdControl, LCDC_FLAG::BACKGROUND_AND_WINDOW_ENABLE)) {
+    if (backgroundAndWindowEnabled) {
         emitPixel(applyPalette(bgPalette, pixel.color));
     }
     else {

@@ -106,6 +106,7 @@ void PPU::writeIO(uint8_t value) {
 template<>
 void PPU::writeIO<Memory::LCDC>(uint8_t value) {
     lcdControl = value;
+    mixer.updateFlags(lcdControl);
     enabled = testFlags(lcdControl, LCDC_FLAG::LCD_AND_PPU_ENABLE);
     if (!enabled && mode == MODE::VBLANK) disableLCD();
 }

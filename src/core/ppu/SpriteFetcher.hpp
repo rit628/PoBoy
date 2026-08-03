@@ -17,8 +17,7 @@ namespace Graphics {
     class SpriteFetcher : public PixelFetcher {
         friend class PixelFetcher;
         public:
-            SpriteFetcher(const uint8_t& lcdControl
-                        , const uint8_t& xPos
+            SpriteFetcher(const uint8_t& xPos
                         , const uint8_t& currentLine
                         , std::span<const uint8_t, TILE_DATA_SIZE> tileData);
 
@@ -26,6 +25,7 @@ namespace Graphics {
             void reset();
             void addSprite(uint8_t yPos, uint8_t xPos, uint8_t tileNumber, uint8_t spriteFlags);
             void sortSprites();
+            void updateFlags(uint8_t lcdControl);
 
         private:
             void fetchReset();
@@ -38,13 +38,18 @@ namespace Graphics {
             void sleep();
             void push();
 
-            const uint8_t& lcdControl;  // LCDC register reference
             const uint8_t& xPos;        // LX (internal) register reference
             const uint8_t& currentLine; // LY register reference
             uint8_t yPos = currentLine + SPRITE_Y_OFFSET;
 
+            bool spritesEnabled = false;
+            bool doubleHeightSprites = false;
+
             StaticQueue<Sprite, MAX_SPRITES_PER_LINE> spriteBuffer;
             const Sprite* fetchedSprite = nullptr;
+            /* sprite flags */
+            bool yFlip = false;
+            bool xFlip = false;
 
             std::span<const uint8_t, TILE_DATA_SIZE> tileData;
     };
