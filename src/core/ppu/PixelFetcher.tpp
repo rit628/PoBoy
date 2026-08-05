@@ -78,7 +78,7 @@ namespace Graphics {
     inline void PixelFetcher::executePush(this auto&& self) {
         self.push();
         self.state = STATE::GET_TILE;
-        self.onSecondDot = false;
+        self.onSecondDot = true;    // will get flipped by tick()
     }
 
 }

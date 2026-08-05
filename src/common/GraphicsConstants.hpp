@@ -48,7 +48,6 @@ namespace Graphics {
     constexpr uint16_t DOTS_PER_LINE                = DOTS_PER_FRAME / FRAME_LINES;
     constexpr uint32_t DOTS_PER_LCD_SCAN            = LCD_HEIGHT * DOTS_PER_LINE;
     constexpr uint16_t DOTS_PER_OAM_SCAN_MODE       = 80;
-    constexpr uint16_t DOTS_PER_RENDER_STARTUP      = 4;
 
     constexpr float    FRAMES_PER_SECOND            = float(1 << 22) / DOTS_PER_FRAME;
 

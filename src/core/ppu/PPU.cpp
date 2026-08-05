@@ -163,9 +163,7 @@ void PPU::tick<PPU::MODE::OAM_SCAN>() {
 
 template<>
 void PPU::tick<PPU::MODE::PIXEL_TRANSFER>() {
-    if (lineDotsElapsed >= DOTS_PER_OAM_SCAN_MODE + DOTS_PER_RENDER_STARTUP) [[ likely ]] {
-        mixer.tick();
-    }
+    mixer.tick();
 }
 
 template<>

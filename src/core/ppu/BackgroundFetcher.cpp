@@ -31,7 +31,8 @@ void BackgroundFetcher::frameReset() {
 
 void BackgroundFetcher::scanlineReset() {
     resetState();
-    pixelFifo.fill();  // fill fifo to account for overscan
+    state = STATE::GET_TILE_DATA_LO; // skip first state to account for 4 dot initial fetch
+    pixelFifo.clear();
     renderingWindow = false;
     currentWindowColumn = 0;
     windowXCondition = false;
