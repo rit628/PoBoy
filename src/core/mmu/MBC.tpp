@@ -26,7 +26,7 @@ namespace Memory {
         }
         if constexpr (RamType == SRAM_TYPE::BATTERY_BUFFERED) {
             if (std::filesystem::exists(saveFile)) {
-                std::ifstream saveData{saveFile};
+                std::ifstream saveData(saveFile, std::ios::binary);
                 saveData.read(reinterpret_cast<char*>(sram.data()), sram.size());
                 saveData.close();
             }
@@ -36,7 +36,7 @@ namespace Memory {
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
     MBC<RamType, AdditionalHardware>::~MBC() {
         if constexpr (RamType == SRAM_TYPE::BATTERY_BUFFERED) {
-            std::ofstream saveData{saveFile};
+            std::ofstream saveData(saveFile, std::ios::binary);
             saveData.write(reinterpret_cast<char*>(sram.data()), sram.size());
             saveData.close();
         }

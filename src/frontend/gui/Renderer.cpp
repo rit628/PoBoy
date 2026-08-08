@@ -7,12 +7,11 @@
 #include <SDL3/SDL_video.h>
 #include <cstddef>
 #include <cstdint>
-#include <stdexcept>
+#include <iostream>
+#include <print>
 #include <array>
-#include <string>
 
 Renderer::Renderer(SDL_Window* renderWindow) {
-    using std::string_literals::operator""s;
 
     this->renderWindow = renderWindow;
     renderer = SDL_CreateRenderer(renderWindow, NULL);
@@ -34,7 +33,8 @@ Renderer::Renderer(SDL_Window* renderWindow) {
     conversionSurface = SDL_ConvertSurface(sourceSurface, SDL_PIXELFORMAT_RGBA8888);
 
     if (!renderer || !renderTexture || !palette || !sourceSurface || !conversionSurface) {
-        throw std::runtime_error("Renderer failed to initialize: "s + SDL_GetError());
+        std::println(std::cerr, "Renderer failed to initialize: {}", SDL_GetError());
+        exit(EXIT_FAILURE);
     }
 
     updateRenderRegion();

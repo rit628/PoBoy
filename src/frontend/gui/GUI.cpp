@@ -7,21 +7,21 @@
 #include <cmath>
 #include <cstdint>
 #include <format>
-#include <stdexcept>
 #include <array>
+#include <iostream>
 #include <string>
 
 GUI::GUI() {
-    using std::string_literals::operator""s;
-    
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS)) {
-        throw std::runtime_error("SDL failed to initialize: "s + SDL_GetError());
+        std::println(std::cerr, "SDL failed to initialize: {}", SDL_GetError());
+        exit(EXIT_FAILURE);
     }
     SDL_SetHint(SDL_HINT_MAIN_CALLBACK_RATE, "waitevent");
 
     window = SDL_CreateWindow(windowTitle.c_str(), Graphics::LCD_WIDTH, Graphics::LCD_HEIGHT, SDL_WINDOW_RESIZABLE);
     if (!window) {
-        throw std::runtime_error("GUI failed to initialize: "s + SDL_GetError());
+        std::println(std::cerr, "GUI failed to initialize: {}", SDL_GetError());
+        exit(EXIT_FAILURE);
     }
     SDL_SetWindowMinimumSize(window, Graphics::LCD_WIDTH, Graphics::LCD_HEIGHT);
     auto display = SDL_GetDisplayForWindow(window);

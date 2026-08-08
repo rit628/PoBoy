@@ -18,7 +18,7 @@ void Cartridge::tick() {
 }
 
 CartridgeMetadata Cartridge::loadRom(const std::filesystem::path& romFile) {
-    std::ifstream romData(romFile);
+    std::ifstream romData(romFile, std::ios::binary);
     auto metadata = readRomMetadata(romData);
     auto romSize = decodeRomSize(metadata.encodedRomSize);
     rom.resize(romSize);
