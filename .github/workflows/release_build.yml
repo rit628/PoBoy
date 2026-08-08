@@ -21,7 +21,7 @@ jobs:
           - os: macos-26
             artifact: macos
 
-          - os: ubuntu-26.04
+          - os: windows-latest
             artifact: windows
 
           - os: ubuntu-26.04
@@ -54,13 +54,6 @@ jobs:
           brew install lld@20
           echo "$(brew --prefix llvm@20)/bin" >> $GITHUB_PATH
           echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> $GITHUB_ENV
-
-      - name: Configure Windows Cross Compiler
-        if: matrix.artifact == 'windows'
-        run: |
-          sudo apt-get update
-          sudo apt-get install mingw-w64
-          echo "target=${{ matrix.artifact }}" >> $GITHUB_ENV
 
       - name: Configure Web Cross Compiler
         if: matrix.artifact == 'web'
