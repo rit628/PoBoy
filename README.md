@@ -5,8 +5,8 @@ A somewhat accurate Game Boy emulator written in modern C++.
 Includes a reusable DMG core written in portable C++ and a basic frontend GUI built with SDL3 (as well as a toy TUI for terminal usage).
 
 ## Features
-* M-Cycle stepped CPU emulation
-* T-Cycle stepped SoC component emulation driven by M-Cycle granular CPU ticks
+* Instruction stepped, M-Cycle granular CPU emulation
+* T-Cycle stepped SoC component emulation
 * Pixel FIFO based PPU emulation
 * Fully functional APU emulation with per T-Cycle audio sampling and stereo sound
 * Full interrupt, joypad, and timer emulation
@@ -19,15 +19,16 @@ Includes a reusable DMG core written in portable C++ and a basic frontend GUI bu
 * Halt bug emulation
 * APU zombie mode bug emulation
 * Generic callback APIs for all major components to connect with an arbitary frontend
+* Emulation speed control
 
 ## Planned Features
-* Additional APIs for PPU VRAM and hardware register access, individual APU channel control, and CPU emulation speed control
+* Additional APIs for PPU VRAM and hardware register access, individual APU channel control
 * APIs for save state and rewind support
 * Serial Emulation
 * T-Cycle stepped OAM DMA transfer emulation
 * Additional bug emulation (OAM corruption, Wave RAM corruption, etc.)
 * Cartridge rumble and gyroscope hardware emulation
-* Remaining memory bank controller chip emulation (MBCC6, MBC7, MM01, HuC1, HuC-3)
+* Remaining memory bank controller chip emulation (MBC6, MBC7, MM01, HuC1, HuC-3)
 * CGB emulation
 
 # Notes and Usage
