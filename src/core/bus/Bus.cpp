@@ -14,8 +14,8 @@ namespace {
     };
 }
 
-Bus::Bus(Interrupts::IMU& imu, Audio::APU& apu, Graphics::PPU& ppu)
-        : imu(imu), apu(apu), ppu(ppu)
+Bus::Bus(Cartridge& cartridge, Interrupts::IMU& imu, Audio::APU& apu, Graphics::PPU& ppu)
+        : cartridge(cartridge), imu(imu), apu(apu), ppu(ppu)
 {
     initialize();
 }
@@ -25,14 +25,6 @@ void Bus::initialize() {
     hram.fill(0);
     bootromDisabled = false;
     dmaSourceAddress = 0;
-}
-
-void Bus::tick() {
-    cartridge.tick();
-}
-
-CartridgeMetadata Bus::loadRom(const std::filesystem::path& romFile) {
-    return cartridge.loadRom(romFile);
 }
 
 uint8_t Bus::read(uint16_t address) {

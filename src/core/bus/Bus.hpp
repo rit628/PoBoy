@@ -11,11 +11,9 @@ namespace Memory {
 
     class Bus {
         public:
-            Bus(Interrupts::IMU& imu, Audio::APU& apu, Graphics::PPU& ppu);
+            Bus(Cartridge& cartridge, Interrupts::IMU& imu, Audio::APU& apu, Graphics::PPU& ppu);
             void initialize();
     
-            void tick();
-            CartridgeMetadata loadRom(const std::filesystem::path& romFile);
             uint8_t read(uint16_t address);
             void write(uint16_t address, uint8_t value);
             
@@ -23,11 +21,11 @@ namespace Memory {
             uint8_t readIO(uint16_t registerAddress);
             void writeIO(uint16_t registerAddress, uint8_t value);
     
+            Cartridge& cartridge;
             Interrupts::IMU& imu;
             Audio::APU& apu;
             Graphics::PPU& ppu;
 
-            Cartridge cartridge;
             std::array<uint8_t, WRAM_SIZE> wram;
             std::array<uint8_t, HRAM_SIZE> hram;
             bool bootromDisabled;       // BANK register

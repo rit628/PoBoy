@@ -1,4 +1,5 @@
 #pragma once
+#include "Cartridge.hpp"
 #include "IMU.hpp"
 #include "MemoryConstants.hpp"
 #include "PPU.hpp"
@@ -36,6 +37,7 @@ class DMG {
         clock::time_point start;
         uint64_t cycleCount = 0;
 
+        Memory::Cartridge cartridge;
         Interrupts::IMU imu;
         Graphics::PPU ppu;
         Audio::APU apu;

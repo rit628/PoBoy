@@ -10,13 +10,13 @@ DMG::DMG(std::function<uint8_t()> readInput
         : imu(readInput)
         , ppu(imu, renderFrame)
         , apu(imu, queueAudioData)
-        , bus(imu, apu, ppu)
+        , bus(cartridge, imu, apu, ppu)
         , cpu(bus, std::bind(&DMG::systemTick, std::ref(*this)))
         {}
 
 Memory::CartridgeMetadata DMG::loadRom(const std::filesystem::path& romFile) {
     initialize();
-    return bus.loadRom(romFile);
+    return cartridge.loadRom(romFile);
 }
 
 void DMG::run() {
@@ -67,8 +67,8 @@ void DMG::initialize() {
 
 void DMG::systemTick() {
     for (uint8_t i = 0; i < 4; i++) {
+        cartridge.tick();
         imu.tick();
-        bus.tick();
         apu.tick();
         ppu.tick();
         cycleCount++;
