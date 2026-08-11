@@ -7,46 +7,40 @@
 
 namespace Processing {
 
-    template<bool FlatMemory>
+    template<typename BusType>
     template<bool Tick>
-    inline uint8_t CPU<FlatMemory>::read(uint16_t address) {
-        uint8_t result = 0;
-        if constexpr (FlatMemory) result = mmu.at(address);
-        else result = mmu.read(address);
-
+    inline uint8_t CPU<BusType>::read(uint16_t address) {
         if constexpr (Tick) systemTick();
-        return result;
+        return bus.read(address);
     }
 
-    template<bool FlatMemory>
+    template<typename BusType>
     template<bool Tick>
-    inline void CPU<FlatMemory>::write(uint16_t address, uint8_t value) {
-        if constexpr (FlatMemory) mmu.at(address) = value;
-        else mmu.write(address, value);
-
+    inline void CPU<BusType>::write(uint16_t address, uint8_t value) {
         if constexpr (Tick) systemTick();
+        return bus.write(address, value);
     }
 
-    template<bool FlatMemory>
-    inline uint8_t CPU<FlatMemory>::getCarry() {
+    template<typename BusType>
+    inline uint8_t CPU<BusType>::getCarry() {
         using enum REGISTER_FLAG;
         return (F & std::to_underlying(C)) >> 4; // 1 if C is set else 0
     }
     
-    template<bool FlatMemory>
-    inline uint8_t CPU<FlatMemory>::getHalfCarry() {
+    template<typename BusType>
+    inline uint8_t CPU<BusType>::getHalfCarry() {
         using enum REGISTER_FLAG;
         return (F & std::to_underlying(H)) >> 5; // 1 if H is set else 0
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::setZero(uint8_t result) {
+    template<typename BusType>
+    inline void CPU<BusType>::setZero(uint8_t result) {
         using enum REGISTER_FLAG;
         (result == 0) ? F.set(Z) : F.clear(Z);
     }
     
-    template<bool FlatMemory>
-    inline uint8_t CPU<FlatMemory>::addAndSetFlags(uint8_t a, uint8_t b, uint8_t carry) {
+    template<typename BusType>
+    inline uint8_t CPU<BusType>::addAndSetFlags(uint8_t a, uint8_t b, uint8_t carry) {
         using enum REGISTER_FLAG;
         uint8_t result = a + b + carry;
     
@@ -62,8 +56,8 @@ namespace Processing {
         return result;
     }
     
-    template<bool FlatMemory>
-    inline uint16_t CPU<FlatMemory>::addAndSetFlags(uint16_t a, uint16_t b) {
+    template<typename BusType>
+    inline uint16_t CPU<BusType>::addAndSetFlags(uint16_t a, uint16_t b) {
         using enum REGISTER_FLAG;
         uint16_t result = a + b;
     
@@ -78,8 +72,8 @@ namespace Processing {
         return result;
     }
     
-    template<bool FlatMemory>
-    inline uint16_t CPU<FlatMemory>::addAndSetFlags(uint16_t a, int8_t b) {
+    template<typename BusType>
+    inline uint16_t CPU<BusType>::addAndSetFlags(uint16_t a, int8_t b) {
         // set carry and half carry based on 8 bit unsigned addition
         addAndSetFlags(static_cast<uint8_t>(a & 0x00FF), std::bit_cast<uint8_t, int8_t>(b));
         
@@ -91,8 +85,8 @@ namespace Processing {
         return a + b;
     }
     
-    template<bool FlatMemory>
-    inline uint8_t CPU<FlatMemory>::subtractAndSetFlags(uint8_t a, uint8_t b, uint8_t carry) {
+    template<typename BusType>
+    inline uint8_t CPU<BusType>::subtractAndSetFlags(uint8_t a, uint8_t b, uint8_t carry) {
         using enum REGISTER_FLAG;
         uint8_t result = static_cast<int16_t>(a) - static_cast<int16_t>(b) - carry;
     
@@ -108,176 +102,176 @@ namespace Processing {
         return result;
     }
     
-    template<bool FlatMemory>
+    template<typename BusType>
     template<size_t N>
-    inline void CPU<FlatMemory>::load(Register<N> auto& target, RegisterValue<N> value) {
+    inline void CPU<BusType>::load(Register<N> auto& target, RegisterValue<N> value) {
         target = value;
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::loadIndirect(uint16_t address, uint8_t value) {
+    template<typename BusType>
+    inline void CPU<BusType>::loadIndirect(uint16_t address, uint8_t value) {
         write(address, value);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::loadIndirect(uint16_t address, uint16_t value) {
+    template<typename BusType>
+    inline void CPU<BusType>::loadIndirect(uint16_t address, uint16_t value) {
         write(address, value & 0x00FF);
         write(address + 1, (value & 0xFF00) >> 8);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::loadIndirect(Register<8> auto& target, uint16_t address) {
+    template<typename BusType>
+    inline void CPU<BusType>::loadIndirect(Register<8> auto& target, uint16_t address) {
         target = read(address);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::loadHiIndirect(Register<8> auto& target, uint8_t address) {
+    template<typename BusType>
+    inline void CPU<BusType>::loadHiIndirect(Register<8> auto& target, uint8_t address) {
         target = read(static_cast<uint16_t>(address) | 0xFF00);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::loadHiIndirect(uint16_t address, uint8_t value) {
+    template<typename BusType>
+    inline void CPU<BusType>::loadHiIndirect(uint16_t address, uint8_t value) {
         write(static_cast<uint16_t>(address) | 0xFF00, value);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::loadIncrement(Register<8> auto& target, Register<16> auto& address) {
+    template<typename BusType>
+    inline void CPU<BusType>::loadIncrement(Register<8> auto& target, Register<16> auto& address) {
         target = read(address++);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::loadIncrement(Register<16> auto& address, uint8_t value) {
+    template<typename BusType>
+    inline void CPU<BusType>::loadIncrement(Register<16> auto& address, uint8_t value) {
         write(address++, value);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::loadDecrement(Register<8> auto& target, Register<16> auto& address) {
+    template<typename BusType>
+    inline void CPU<BusType>::loadDecrement(Register<8> auto& target, Register<16> auto& address) {
         target = read(address--);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::loadDecrement(Register<16> auto& address, uint8_t value) {
+    template<typename BusType>
+    inline void CPU<BusType>::loadDecrement(Register<16> auto& address, uint8_t value) {
         write(address--, value);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::loadAdjusted(Register<16> auto& target, Register<16> auto& value, int8_t adjust) {
+    template<typename BusType>
+    inline void CPU<BusType>::loadAdjusted(Register<16> auto& target, Register<16> auto& value, int8_t adjust) {
         auto adjustedValue = addAndSetFlags(value, adjust);
         target = adjustedValue;
         systemTick();   // extra cycle for opcode 0xF8
     }
     
-    template<bool FlatMemory>
+    template<typename BusType>
     template<size_t N>
-    inline void CPU<FlatMemory>::add(Register<N> auto& target, RegisterValue<N> value) {
+    inline void CPU<BusType>::add(Register<N> auto& target, RegisterValue<N> value) {
         target = addAndSetFlags(target, value);
         if constexpr (N == 16) systemTick();    // 16 bit add takes extra cycle
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::addIndirect(Register<8> auto& target, uint16_t address) {
+    template<typename BusType>
+    inline void CPU<BusType>::addIndirect(Register<8> auto& target, uint16_t address) {
         auto value = read(address);
         add<8>(target, value);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::adc(Register<8> auto& target, uint8_t value) {
+    template<typename BusType>
+    inline void CPU<BusType>::adc(Register<8> auto& target, uint8_t value) {
         auto carry = getCarry();
         target = addAndSetFlags(target, value, carry);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::adcIndirect(Register<8> auto& target, uint16_t address) {
+    template<typename BusType>
+    inline void CPU<BusType>::adcIndirect(Register<8> auto& target, uint16_t address) {
         auto value = read(address);
         adc(target, value);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::addRelative(Register<16> auto& target, int8_t value) {
+    template<typename BusType>
+    inline void CPU<BusType>::addRelative(Register<16> auto& target, int8_t value) {
         target = addAndSetFlags(target, value);
         /* relative add takes 2 extra cycles */
         systemTick();
         systemTick();
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::sub(Register<8> auto& target, uint8_t value) {
+    template<typename BusType>
+    inline void CPU<BusType>::sub(Register<8> auto& target, uint8_t value) {
         target = subtractAndSetFlags(target, value);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::subIndirect(Register<8> auto& target, uint16_t address) {
+    template<typename BusType>
+    inline void CPU<BusType>::subIndirect(Register<8> auto& target, uint16_t address) {
         auto value = read(address);
         sub(target, value);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::sbc(Register<8> auto& target, uint8_t value) {
+    template<typename BusType>
+    inline void CPU<BusType>::sbc(Register<8> auto& target, uint8_t value) {
         auto carry = getCarry();
         target = subtractAndSetFlags(target, value, carry);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::sbcIndirect(Register<8> auto& target, uint16_t address) {
+    template<typename BusType>
+    inline void CPU<BusType>::sbcIndirect(Register<8> auto& target, uint16_t address) {
         auto value = read(address);
         sbc(target, value);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::compare(uint8_t lhs, uint8_t rhs) {
+    template<typename BusType>
+    inline void CPU<BusType>::compare(uint8_t lhs, uint8_t rhs) {
         subtractAndSetFlags(lhs, rhs); // subtract and discard result
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::compareIndirect(uint8_t lhs, uint16_t address) {
+    template<typename BusType>
+    inline void CPU<BusType>::compareIndirect(uint8_t lhs, uint16_t address) {
         auto rhs = read(address);
         compare(lhs, rhs);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::decrement(Integer<8> auto& target) {
+    template<typename BusType>
+    inline void CPU<BusType>::decrement(Integer<8> auto& target) {
         using enum REGISTER_FLAG;
         bool carrySet = getCarry();
         target = subtractAndSetFlags(target, 1);
         (carrySet) ? F.set(C) : F.clear(C); // ensure C remains unmodified
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::decrement(Register<16> auto& target) {
+    template<typename BusType>
+    inline void CPU<BusType>::decrement(Register<16> auto& target) {
         target--;
         systemTick();   // 16 bit dec takes extra cycle
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::decrementIndirect(uint16_t address) {
+    template<typename BusType>
+    inline void CPU<BusType>::decrementIndirect(uint16_t address) {
         auto value = read(address);
         decrement(value);
         write(address, value);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::increment(Integer<8> auto& target) {
+    template<typename BusType>
+    inline void CPU<BusType>::increment(Integer<8> auto& target) {
         using enum REGISTER_FLAG;
         bool carrySet = getCarry();
         target = addAndSetFlags(target, 1);
         (carrySet) ? F.set(C) : F.clear(C); // ensure C remains unmodified
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::increment(Register<16> auto& target) {
+    template<typename BusType>
+    inline void CPU<BusType>::increment(Register<16> auto& target) {
         target++;
         systemTick();   // 16 bit inc takes extra cycle
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::incrementIndirect(uint16_t address) {
+    template<typename BusType>
+    inline void CPU<BusType>::incrementIndirect(uint16_t address) {
         auto value = read(address);
         increment(value);
         write(address, value);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::bitAnd(Register<8> auto& lhs, uint8_t rhs) {
+    template<typename BusType>
+    inline void CPU<BusType>::bitAnd(Register<8> auto& lhs, uint8_t rhs) {
         using enum REGISTER_FLAG;
         lhs &= rhs;
         setZero(lhs);
@@ -286,22 +280,22 @@ namespace Processing {
         F.clear(C);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::bitAndIndirect(Register<8> auto& lhs, uint16_t address) {
+    template<typename BusType>
+    inline void CPU<BusType>::bitAndIndirect(Register<8> auto& lhs, uint16_t address) {
         auto rhs = read(address);
         bitAnd(lhs, rhs);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::bitNot(Register<8> auto& target) {
+    template<typename BusType>
+    inline void CPU<BusType>::bitNot(Register<8> auto& target) {
         using enum REGISTER_FLAG;
         target = ~target;
         F.set(N);
         F.set(H);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::bitOr(Register<8> auto& lhs, uint8_t rhs) {
+    template<typename BusType>
+    inline void CPU<BusType>::bitOr(Register<8> auto& lhs, uint8_t rhs) {
         using enum REGISTER_FLAG;
         lhs |= rhs;
         setZero(lhs);
@@ -310,14 +304,14 @@ namespace Processing {
         F.clear(C);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::bitOrIndirect(Register<8> auto& lhs, uint16_t address) {
+    template<typename BusType>
+    inline void CPU<BusType>::bitOrIndirect(Register<8> auto& lhs, uint16_t address) {
         auto rhs = read(address);
         bitOr(lhs, rhs);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::bitXor(Register<8> auto& lhs, uint8_t rhs) {
+    template<typename BusType>
+    inline void CPU<BusType>::bitXor(Register<8> auto& lhs, uint8_t rhs) {
         using enum REGISTER_FLAG;
         lhs ^= rhs;
         setZero(lhs);
@@ -326,14 +320,14 @@ namespace Processing {
         F.clear(C);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::bitXorIndirect(Register<8> auto& lhs, uint16_t address) {
+    template<typename BusType>
+    inline void CPU<BusType>::bitXorIndirect(Register<8> auto& lhs, uint16_t address) {
         auto rhs = read(address);
         bitXor(lhs, rhs);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::bitTest(uint8_t bitIndex, uint8_t target) {
+    template<typename BusType>
+    inline void CPU<BusType>::bitTest(uint8_t bitIndex, uint8_t target) {
         using enum REGISTER_FLAG;
         uint8_t test = 1 << bitIndex;
         (test & target) ? F.clear(Z) : F.set(Z);
@@ -341,40 +335,40 @@ namespace Processing {
         F.set(H);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::bitTestIndirect(uint8_t bitIndex, uint16_t address) {
+    template<typename BusType>
+    inline void CPU<BusType>::bitTestIndirect(uint8_t bitIndex, uint16_t address) {
         auto target = read(address);
         bitTest(bitIndex, target);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::bitReset(uint8_t bitIndex, Integer<8> auto& target) {
+    template<typename BusType>
+    inline void CPU<BusType>::bitReset(uint8_t bitIndex, Integer<8> auto& target) {
         uint8_t test = 1 << bitIndex;
         target &= ~test; // set bit "test" to 0 in target
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::bitResetIndirect(uint8_t bitIndex, uint16_t address) {
+    template<typename BusType>
+    inline void CPU<BusType>::bitResetIndirect(uint8_t bitIndex, uint16_t address) {
         auto value = read(address);
         bitReset(bitIndex, value);
         write(address, value);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::bitSet(uint8_t bitIndex, Integer<8> auto& target) {
+    template<typename BusType>
+    inline void CPU<BusType>::bitSet(uint8_t bitIndex, Integer<8> auto& target) {
         uint8_t test = 1 << bitIndex;
         target |= test; // set bit "test" to 1 in target
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::bitSetIndirect(uint8_t bitIndex, uint16_t address) {
+    template<typename BusType>
+    inline void CPU<BusType>::bitSetIndirect(uint8_t bitIndex, uint16_t address) {
         auto value = read(address);
         bitSet(bitIndex, value);
         write(address, value);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::rotateLeft(Integer<8> auto& target) {
+    template<typename BusType>
+    inline void CPU<BusType>::rotateLeft(Integer<8> auto& target) {
         using enum REGISTER_FLAG;
         uint8_t carry = getCarry(); // carry becomes new lsb
         bool msb = target & 0x80;
@@ -386,15 +380,15 @@ namespace Processing {
         (msb) ? F.set(C) : F.clear(C); // carry = former msb
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::rotateLeftIndirect(uint16_t address) {
+    template<typename BusType>
+    inline void CPU<BusType>::rotateLeftIndirect(uint16_t address) {
         auto value = read(address);
         rotateLeft(value);
         write(address, value);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::rotateLeftCircular(Integer<8> auto& target) {
+    template<typename BusType>
+    inline void CPU<BusType>::rotateLeftCircular(Integer<8> auto& target) {
         using enum REGISTER_FLAG;
         uint8_t msb = (target & 0x80) >> 7; // msb becomes new lsb
         target = (target << 1) | msb; 
@@ -405,15 +399,15 @@ namespace Processing {
         (msb) ? F.set(C) : F.clear(C); // carry = former msb
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::rotateLeftCircularIndirect(uint16_t address) {
+    template<typename BusType>
+    inline void CPU<BusType>::rotateLeftCircularIndirect(uint16_t address) {
         auto value = read(address);
         rotateLeftCircular(value);
         write(address, value);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::rotateRight(Integer<8> auto& target) {
+    template<typename BusType>
+    inline void CPU<BusType>::rotateRight(Integer<8> auto& target) {
         using enum REGISTER_FLAG;
         uint8_t carry = getCarry() << 7; // carry becomes new msb
         bool lsb = target & 0x01;
@@ -425,15 +419,15 @@ namespace Processing {
         (lsb) ? F.set(C) : F.clear(C); // carry = former lsb
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::rotateRightIndirect(uint16_t address) {
+    template<typename BusType>
+    inline void CPU<BusType>::rotateRightIndirect(uint16_t address) {
         auto value = read(address);
         rotateRight(value);
         write(address, value);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::rotateRightCircular(Integer<8> auto& target) {
+    template<typename BusType>
+    inline void CPU<BusType>::rotateRightCircular(Integer<8> auto& target) {
         using enum REGISTER_FLAG;
         uint8_t lsb = (target & 0x01) << 7; // lsb becomes new msb
         target = (target >> 1) | lsb;
@@ -444,15 +438,15 @@ namespace Processing {
         (lsb) ? F.set(C) : F.clear(C); // carry = former lsb
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::rotateRightCircularIndirect(uint16_t address) {
+    template<typename BusType>
+    inline void CPU<BusType>::rotateRightCircularIndirect(uint16_t address) {
         auto value = read(address);
         rotateRightCircular(value);
         write(address, value);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::shiftLeftArithmetic(Integer<8> auto& target) {
+    template<typename BusType>
+    inline void CPU<BusType>::shiftLeftArithmetic(Integer<8> auto& target) {
         using enum REGISTER_FLAG;
         bool msb = target & 0x80;
         target <<= 1;
@@ -462,15 +456,15 @@ namespace Processing {
         (msb) ? F.set(C) : F.clear(C);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::shiftLeftArithmeticIndirect(uint16_t address) {
+    template<typename BusType>
+    inline void CPU<BusType>::shiftLeftArithmeticIndirect(uint16_t address) {
         auto value = read(address);
         shiftLeftArithmetic(value);
         write(address, value);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::shiftRightArithmetic(Integer<8> auto& target) {
+    template<typename BusType>
+    inline void CPU<BusType>::shiftRightArithmetic(Integer<8> auto& target) {
         using enum REGISTER_FLAG;
         bool lsb = target & 0x01;
         uint8_t msb = target & 0x80;
@@ -481,15 +475,15 @@ namespace Processing {
         (lsb) ? F.set(C) : F.clear(C);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::shiftRightArithmeticIndirect(uint16_t address) {
+    template<typename BusType>
+    inline void CPU<BusType>::shiftRightArithmeticIndirect(uint16_t address) {
         auto value = read(address);
         shiftRightArithmetic(value);
         write(address, value);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::shiftRightLogical(Integer<8> auto& target) {
+    template<typename BusType>
+    inline void CPU<BusType>::shiftRightLogical(Integer<8> auto& target) {
         using enum REGISTER_FLAG;
         bool lsb = target & 0x01;
         target >>= 1;
@@ -499,15 +493,15 @@ namespace Processing {
         (lsb) ? F.set(C) : F.clear(C);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::shiftRightLogicalIndirect(uint16_t address) {
+    template<typename BusType>
+    inline void CPU<BusType>::shiftRightLogicalIndirect(uint16_t address) {
         auto value = read(address);
         shiftRightLogical(value);
         write(address, value);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::swap(Integer<8> auto& target) {
+    template<typename BusType>
+    inline void CPU<BusType>::swap(Integer<8> auto& target) {
         using enum REGISTER_FLAG;
         target = (target << 4) | (target >> 4);
         setZero(target);
@@ -516,125 +510,125 @@ namespace Processing {
         F.clear(C);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::swapIndirect(uint16_t address) {
+    template<typename BusType>
+    inline void CPU<BusType>::swapIndirect(uint16_t address) {
         auto value = read(address);
         swap(value);
         write(address, value);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::pop(Register<16> auto& target) {
+    template<typename BusType>
+    inline void CPU<BusType>::pop(Register<16> auto& target) {
         target.setLo(read(SP++));
         target.setHi(read(SP++));
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::push(Register<16> auto& target) {
+    template<typename BusType>
+    inline void CPU<BusType>::push(Register<16> auto& target) {
         systemTick();   // match delay from pipelined decrement
         write(--SP, target.hi());
         write(--SP, target.lo());
     }
     
-    template<bool FlatMemory>
+    template<typename BusType>
     template<REGISTER_FLAG Flag, bool N>
-    inline bool CPU<FlatMemory>::testCondition() {
+    inline bool CPU<BusType>::testCondition() {
         bool condition = F.test(Flag);
         if constexpr (N) condition = !condition;
         return condition;
     }
 
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::call(uint16_t address) {
+    template<typename BusType>
+    inline void CPU<BusType>::call(uint16_t address) {
         push(PC);
         PC = address;
     }
 
-    template<bool FlatMemory>
+    template<typename BusType>
     template<REGISTER_FLAG Flag, bool N>
-    inline void CPU<FlatMemory>::call(uint16_t address) {
+    inline void CPU<BusType>::call(uint16_t address) {
         if (testCondition<Flag, N>()) call(address);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::jump(uint16_t address) {
+    template<typename BusType>
+    inline void CPU<BusType>::jump(uint16_t address) {
         PC = address;
         systemTick();
     }
 
-    template<bool FlatMemory>
+    template<typename BusType>
     template<REGISTER_FLAG Flag, bool N>
-    inline void CPU<FlatMemory>::jump(uint16_t address) {
+    inline void CPU<BusType>::jump(uint16_t address) {
         if (testCondition<Flag, N>()) jump(address);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::jumpRelative(int8_t offset) {
+    template<typename BusType>
+    inline void CPU<BusType>::jumpRelative(int8_t offset) {
         PC += offset;
         systemTick();
     }
 
-    template<bool FlatMemory>
+    template<typename BusType>
     template<REGISTER_FLAG Flag, bool N>
-    inline void CPU<FlatMemory>::jumpRelative(int8_t offset) {
+    inline void CPU<BusType>::jumpRelative(int8_t offset) {
         if (testCondition<Flag, N>()) jumpRelative(offset);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::ret() {
+    template<typename BusType>
+    inline void CPU<BusType>::ret() {
         pop(PC);
         systemTick();
     }
 
-    template<bool FlatMemory>
+    template<typename BusType>
     template<REGISTER_FLAG Flag, bool N>
-    inline void CPU<FlatMemory>::ret() {
+    inline void CPU<BusType>::ret() {
         if (testCondition<Flag, N>()) ret();
         systemTick();
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::reti() {
+    template<typename BusType>
+    inline void CPU<BusType>::reti() {
         ret();
         IME = INTERRUPT_MASTER_FLAG::ENABLED; // skip to this state since ret() counts as next instruction
     }
     
-    template<bool FlatMemory>
+    template<typename BusType>
     template<uint8_t Address>
-    inline void CPU<FlatMemory>::restart() {
+    inline void CPU<BusType>::restart() {
         call(Address);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::complementCarryFlag() {
+    template<typename BusType>
+    inline void CPU<BusType>::complementCarryFlag() {
         using enum REGISTER_FLAG;
         F.clear(N);
         F.clear(H);
         (F.test(C)) ? F.clear(C) : F.set(C);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::setCarryFlag() {
+    template<typename BusType>
+    inline void CPU<BusType>::setCarryFlag() {
         using enum REGISTER_FLAG;
         F.clear(N);
         F.clear(H);
         F.set(C);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::disableInterrupts() {
+    template<typename BusType>
+    inline void CPU<BusType>::disableInterrupts() {
         IME = INTERRUPT_MASTER_FLAG::DISABLED;
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::enableInterrupts() {
+    template<typename BusType>
+    inline void CPU<BusType>::enableInterrupts() {
         if (IME != INTERRUPT_MASTER_FLAG::ENABLED) {
             IME = INTERRUPT_MASTER_FLAG::ENABLE_PENDING; // signal to enable interrupts after next machine cycle
         }
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::halt() {
+    template<typename BusType>
+    inline void CPU<BusType>::halt() {
         auto IF = read<false>(Memory::IF);
         auto IE = read<false>(Memory::IE);
         if (IME == INTERRUPT_MASTER_FLAG::ENABLED || !(IF & IE & 0x1F)) {
@@ -645,8 +639,8 @@ namespace Processing {
         }
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::decimalAdjustAccumulator() {
+    template<typename BusType>
+    inline void CPU<BusType>::decimalAdjustAccumulator() {
         using enum REGISTER_FLAG;
         uint8_t adjustment = 0;
         if (F.test(N)) {
@@ -672,8 +666,8 @@ namespace Processing {
         F.clear(H);
     }
     
-    template<bool FlatMemory>
-    inline void CPU<FlatMemory>::stop() {
+    template<typename BusType>
+    inline void CPU<BusType>::stop() {
         // this one is kind of ridiculous (and unused), just interpret as noop
         // maybe will implement in the future for completeness
     }

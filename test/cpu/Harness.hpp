@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CPU.hpp"
+#include "MemoryConstants.hpp"
 #include <boost/json.hpp>
 #include <cstddef>
 #include <cstdint>
@@ -16,7 +17,7 @@ if (!(expr)) { \
     std::cout.flush(); \
 }
 
-class Harness : Processing::CPU<true> {
+class Harness : Processing::CPU<Memory::FlatBus> {
     public:
         Harness();
         void test(boost::json::value& testConfig);
@@ -31,7 +32,7 @@ class Harness : Processing::CPU<true> {
 };
 
 inline Harness::Harness()
-    : CPU<true>([this](){ticksThisInstruction++;}) {}
+    : CPU<Memory::FlatBus>([this](){ticksThisInstruction++;}) {}
 
 inline void Harness::test(boost::json::value& testConfig) {
     currentTest = testConfig.at("name").as_string();
@@ -47,7 +48,7 @@ inline void Harness::test(boost::json::value& testConfig) {
 }
 
 inline void Harness::init(boost::json::value& initial) {
-    mmu.fill(0);
+    bus.initialize();
     state = STATE::RUNNING;
 
     PC = initial.at("pc").as_int64();
@@ -66,7 +67,7 @@ inline void Harness::init(boost::json::value& initial) {
     for (auto&& addressValue : ram) {
         uint16_t address = addressValue.at(0).as_int64();
         uint8_t value = addressValue.at(1).as_int64();
-        mmu.at(address) = value;
+        bus.write(address, value);
     }
 }
 
@@ -101,7 +102,7 @@ inline void Harness::compare(boost::json::value& final) {
     for (auto&& addressValue : expectedRam) {
         uint16_t address = addressValue.at(0).as_int64();
         uint8_t value = addressValue.at(1).as_int64();
-        CHECK(mmu.at(address) == value);
+        CHECK(bus.read(address) == value);
     }
 }
 

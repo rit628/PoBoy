@@ -1,20 +1,16 @@
 #pragma once
-#include "MemoryConstants.hpp"
 #include "Register.hpp"
-#include "MMU.hpp"
-#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
-#include <type_traits>
 
 namespace Processing {
 
-    template<bool FlatMemory = false>
+    template<typename BusType>
     class CPU {
         public:
-            CPU(std::function<void()> systemTick) requires (FlatMemory);
-            CPU(Memory::MMU& mmu, std::function<void()> systemTick) requires (!FlatMemory);
+            CPU(std::function<void()> systemTick) requires (!std::is_reference_v<BusType>);
+            CPU(BusType& bus, std::function<void()> systemTick);
             void initialize();
             void tick();
             
@@ -186,9 +182,7 @@ namespace Processing {
             void decimalAdjustAccumulator();
             void stop();
     
-            using MemoryType = std::conditional_t<FlatMemory, std::array<uint8_t, Memory::MEMORY_SIZE>, Memory::MMU&>;
-            
-            MemoryType mmu;
+            BusType bus;
             std::function<void()> systemTick;   // use std::function for simplicity
     
             /* Register File */

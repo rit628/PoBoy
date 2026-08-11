@@ -1,4 +1,6 @@
 #include "CPU.hpp"
+#include "InterruptConstants.hpp"
+#include "Bus.hpp"
 #include "Opcodes.hpp"
 #include "MemoryConstants.hpp"
 #include "Register.hpp"
@@ -43,22 +45,22 @@
 
 using namespace Processing;
 
-template<bool FlatMemory>
-CPU<FlatMemory>::CPU(std::function<void()> systemTick) requires (FlatMemory)
-                    : systemTick(systemTick)
+template<typename BusType>
+CPU<BusType>::CPU(std::function<void()> systemTick) requires (!std::is_reference_v<BusType>)
+                 : systemTick(systemTick)
 {
     initialize();
 }
 
-template<bool FlatMemory>
-CPU<FlatMemory>::CPU(Memory::MMU& mmu, std::function<void()> systemTick) requires (!FlatMemory)
-                    : mmu(mmu), systemTick(systemTick)
+template<typename BusType>
+CPU<BusType>::CPU(BusType& bus, std::function<void()> systemTick)
+                 : bus(bus), systemTick(systemTick)
 {
     initialize();
 }
 
-template<bool FlatMemory>
-void CPU<FlatMemory>::initialize() {
+template<typename BusType>
+void CPU<BusType>::initialize() {
     PC = 0;
     SP = 0;
     AF = 0, BC = 0, DE = 0, HL = 0;
@@ -68,8 +70,8 @@ void CPU<FlatMemory>::initialize() {
     state = STATE::RUNNING;
 }
 
-template<bool FlatMemory>
-void CPU<FlatMemory>::tick() {
+template<typename BusType>
+void CPU<BusType>::tick() {
     /* Unprefixed Opcode Argument Constants */
     uint8_t $00 = 0x00, $08 = 0x08, $10 = 0x10, $18 = 0x18, $20 = 0x20, $28 = 0x28, $30 = 0x30, $38 = 0x38;
     uint16_t a16 = 0, n16 = 0;
@@ -140,8 +142,8 @@ void CPU<FlatMemory>::tick() {
     }
 }
 
-template<bool FlatMemory>
-void CPU<FlatMemory>::handleInterrupts() {
+template<typename BusType>
+void CPU<BusType>::handleInterrupts() {
     static constexpr uint8_t VBLANK_INTERRUPT_ADDRESS      = 0x40;
     static constexpr uint8_t LCD_STAT_INTERRUPT_ADDRESS    = 0x48;
     static constexpr uint8_t TIMER_INTERRUPT_ADDRESS       = 0X50;
@@ -180,13 +182,13 @@ void CPU<FlatMemory>::handleInterrupts() {
     if (handleInterrupt.template operator()<JOYPAD, JOYPAD_INTERRUPT_ADDRESS>())     {DEBUG_PRINT_INTERRUPT(JOYPAD) return;}
 }
 
-template<bool FlatMemory>
-void CPU<FlatMemory>::handleHaltBug() {
+template<typename BusType>
+void CPU<BusType>::handleHaltBug() {
     if (state == STATE::BUGGED) {
         PC--;
         state = STATE::RUNNING;
     }
 }
 
-template class Processing::CPU<false>;
-template class Processing::CPU<true>;
+template class Processing::CPU<Memory::Bus&>;
+template class Processing::CPU<Memory::FlatBus>;

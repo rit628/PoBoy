@@ -3,7 +3,7 @@
 #include "MemoryConstants.hpp"
 #include "PPU.hpp"
 #include "APU.hpp"
-#include "MMU.hpp"
+#include "Bus.hpp"
 #include "CPU.hpp"
 #include <chrono>
 #include <cstdint>
@@ -39,6 +39,6 @@ class DMG {
         Interrupts::IMU imu;
         Graphics::PPU ppu;
         Audio::APU apu;
-        Memory::MMU mmu;
-        Processing::CPU<> cpu;
+        Memory::Bus bus;
+        Processing::CPU<Memory::Bus&> cpu;
 };

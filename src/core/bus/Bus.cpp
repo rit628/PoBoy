@@ -1,4 +1,4 @@
-#include "MMU.hpp"
+#include "Bus.hpp"
 #include "GraphicsConstants.hpp"
 #include "IMU.hpp"
 #include "MemoryConstants.hpp"
@@ -14,28 +14,28 @@ namespace {
     };
 }
 
-MMU::MMU(Interrupts::IMU& imu, Audio::APU& apu, Graphics::PPU& ppu)
+Bus::Bus(Interrupts::IMU& imu, Audio::APU& apu, Graphics::PPU& ppu)
         : imu(imu), apu(apu), ppu(ppu)
 {
     initialize();
 }
 
-void MMU::initialize() {
+void Bus::initialize() {
     wram.fill(0);
     hram.fill(0);
     bootromDisabled = false;
     dmaSourceAddress = 0;
 }
 
-void MMU::tick() {
+void Bus::tick() {
     cartridge.tick();
 }
 
-CartridgeMetadata MMU::loadRom(const std::filesystem::path& romFile) {
+CartridgeMetadata Bus::loadRom(const std::filesystem::path& romFile) {
     return cartridge.loadRom(romFile);
 }
 
-uint8_t MMU::read(uint16_t address) {
+uint8_t Bus::read(uint16_t address) {
     if (!bootromDisabled && address < BOOTROM_SIZE) { [[ unlikely ]]
         return BOOTROM.at(address);
     }
@@ -72,7 +72,7 @@ uint8_t MMU::read(uint16_t address) {
     return imu.readIO<IE>();
 }
 
-void MMU::write(uint16_t address, uint8_t value) {
+void Bus::write(uint16_t address, uint8_t value) {
     if (!bootromDisabled && address < BOOTROM_SIZE) { [[ unlikely ]]
         return; // bootrom is not writeable
     }
@@ -109,7 +109,7 @@ void MMU::write(uint16_t address, uint8_t value) {
     return imu.writeIO<IE>(value);
 }
 
-uint8_t MMU::readIO(uint16_t registerAddress) {
+uint8_t Bus::readIO(uint16_t registerAddress) {
     switch (registerAddress) {            
         case BANK:  return 0xFE | bootromDisabled;
         case DMA:   return dmaSourceAddress;
@@ -163,7 +163,7 @@ uint8_t MMU::readIO(uint16_t registerAddress) {
     return 0xFF;
 }
 
-void MMU::writeIO(uint16_t registerAddress, uint8_t value) {
+void Bus::writeIO(uint16_t registerAddress, uint8_t value) {
     switch (registerAddress) {
         case BANK:
             // bootrom can only be unmapped

@@ -9,9 +9,9 @@
 
 namespace Memory {
 
-    class MMU {
+    class Bus {
         public:
-            MMU(Interrupts::IMU& imu, Audio::APU& apu, Graphics::PPU& ppu);
+            Bus(Interrupts::IMU& imu, Audio::APU& apu, Graphics::PPU& ppu);
             void initialize();
     
             void tick();

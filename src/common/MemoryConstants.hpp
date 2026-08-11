@@ -156,6 +156,16 @@ namespace Memory {
         uint8_t headerChecksum = 0;
         uint16_t globalChecksum = 0;
     };
+
+    class FlatBus {
+        public:
+            uint8_t read(uint16_t address) { return bus.at(address); }
+            void write(uint16_t address, uint8_t value) { bus.at(address) = value; }
+            void initialize() { bus.fill(0); }
+
+        private:
+            std::array<uint8_t, Memory::MEMORY_SIZE> bus;
+    };
     
     constexpr uint32_t decodeRomSize(uint8_t encodedSize) {
         return 32 * 1024 * (1 << encodedSize);
