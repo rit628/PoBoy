@@ -16,8 +16,10 @@ Renderer::Renderer(SDL_Window* renderWindow) {
     this->renderWindow = renderWindow;
     renderer = SDL_CreateRenderer(renderWindow, NULL);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-    renderTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, Graphics::LCD_WIDTH, Graphics::LCD_HEIGHT);
+    renderTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_XRGB8888, SDL_TEXTUREACCESS_STREAMING, Graphics::LCD_WIDTH, Graphics::LCD_HEIGHT);
     SDL_SetTextureScaleMode(renderTexture, SDL_SCALEMODE_PIXELART);
+    SDL_SetRenderLogicalPresentation(renderer, Graphics::LCD_WIDTH, Graphics::LCD_HEIGHT, SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
+    SDL_SetRenderVSync(renderer, SDL_RENDERER_VSYNC_ADAPTIVE);
 
     palette = SDL_CreatePalette(4);
     static constexpr std::array<SDL_Color, 4> paletteColors = {{
@@ -30,14 +32,13 @@ Renderer::Renderer(SDL_Window* renderWindow) {
 
     sourceSurface = SDL_CreateSurface(Graphics::LCD_WIDTH, Graphics::LCD_HEIGHT, SDL_PIXELFORMAT_INDEX2LSB);
     SDL_SetSurfacePalette(sourceSurface, palette);
-    conversionSurface = SDL_ConvertSurface(sourceSurface, SDL_PIXELFORMAT_RGBA8888);
+    conversionSurface = SDL_ConvertSurface(sourceSurface, SDL_PIXELFORMAT_XRGB8888);
 
     if (!renderer || !renderTexture || !palette || !sourceSurface || !conversionSurface) {
         std::println(std::cerr, "Renderer failed to initialize: {}", SDL_GetError());
         exit(EXIT_FAILURE);
     }
 
-    updateRenderRegion();
 }
 
 Renderer::~Renderer() {
@@ -48,21 +49,14 @@ Renderer::~Renderer() {
     SDL_DestroyRenderer(renderer);
 }
 
-uint8_t Renderer::getMaxGameScale(size_t width, size_t height) {
-    uint8_t maxScaleX = width / Graphics::LCD_WIDTH;
-    uint8_t maxScaleY = height / Graphics::LCD_HEIGHT;
-    return std::min(maxScaleX, maxScaleY);
-}
-
-void Renderer::updateRenderRegion() {   
-    /* scale and center game screen */
-    int width = 0, height = 0;
-    SDL_GetWindowSize(renderWindow, &width, &height);
-    uint8_t renderScale = getMaxGameScale(width, height);
-    gameScreen.w = Graphics::LCD_WIDTH * renderScale;
-    gameScreen.h = Graphics::LCD_HEIGHT * renderScale;
-    gameScreen.x = (width - gameScreen.w) / 2;
-    gameScreen.y = (height - gameScreen.h) / 2;
+template<bool Enabled>
+void Renderer::setVsync() {
+    if constexpr (Enabled) {
+        SDL_SetRenderVSync(renderer, SDL_RENDERER_VSYNC_ADAPTIVE);
+    }
+    else {
+        SDL_SetRenderVSync(renderer, SDL_RENDERER_VSYNC_DISABLED);
+    }
 }
 
 void Renderer::renderFrame(std::span<const uint8_t> framebuffer) {
@@ -70,6 +64,9 @@ void Renderer::renderFrame(std::span<const uint8_t> framebuffer) {
     SDL_BlitSurface(sourceSurface, NULL, conversionSurface, NULL);
     SDL_UpdateTexture(renderTexture, NULL, conversionSurface->pixels, conversionSurface->pitch); // SDL says this is slow but it works fine
     SDL_RenderClear(renderer);
-    SDL_RenderTexture(renderer, renderTexture, NULL, &gameScreen);
+    SDL_RenderTexture(renderer, renderTexture, NULL, NULL);
     SDL_RenderPresent(renderer);
 }
+
+template void Renderer::setVsync<true>();
+template void Renderer::setVsync<false>();

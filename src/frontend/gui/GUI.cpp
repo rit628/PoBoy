@@ -26,8 +26,9 @@ GUI::GUI() {
     SDL_SetWindowMinimumSize(window, Graphics::LCD_WIDTH, Graphics::LCD_HEIGHT);
     auto display = SDL_GetDisplayForWindow(window);
     auto* displayMode = SDL_GetDesktopDisplayMode(display);
-    size_t width = displayMode->w / 2, height = displayMode->h / 2;
-    uint8_t scale = Renderer::getMaxGameScale(width, height);
+    size_t scaleX = (displayMode->w / 2) / Graphics::LCD_WIDTH;
+    size_t scaleY = (displayMode->h / 2) / Graphics::LCD_HEIGHT;
+    uint8_t scale = std::min(scaleX, scaleY);
     SDL_SetWindowSize(window, scale * Graphics::LCD_WIDTH, scale * Graphics::LCD_HEIGHT);
 
     renderer = std::make_unique<Renderer>(window);
@@ -58,10 +59,6 @@ SDL_AppResult GUI::handleIterate() {
 
 SDL_AppResult GUI::handleEvent(SDL_Event* event) {
     switch (event->type) {
-        case SDL_EVENT_WINDOW_RESIZED:
-            renderer->updateRenderRegion();
-        break;
-
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
             if (running) return SDL_APP_CONTINUE;
             static constexpr std::array<SDL_DialogFileFilter, 2> filters = {{
@@ -93,6 +90,7 @@ SDL_AppResult GUI::handleEvent(SDL_Event* event) {
 template<bool Unlocked>
 void GUI::updateSpeed() {
     speedUnlocked = Unlocked;
+    renderer->setVsync<!Unlocked>();
     gb->resetClock();
 }
 

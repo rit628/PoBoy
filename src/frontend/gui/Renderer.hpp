@@ -8,9 +8,8 @@ class Renderer {
         Renderer(SDL_Window* renderWindow);
         ~Renderer();
 
-        static uint8_t getMaxGameScale(size_t width, size_t height);
-
-        void updateRenderRegion();
+        template<bool Enabled>
+        void setVsync();
         void renderFrame(std::span<const uint8_t> framebuffer);
 
     private:
@@ -20,6 +19,5 @@ class Renderer {
         SDL_Texture* renderTexture = nullptr;
         SDL_Palette* palette = nullptr;
         SDL_Surface* sourceSurface = nullptr;       // for copying index2lsb encoded framebuffer
-        SDL_Surface* conversionSurface = nullptr;   // for converting to rgba8888
-        SDL_FRect gameScreen{};                     // scaled subset of window for game rendering
+        SDL_Surface* conversionSurface = nullptr;   // for converting to xrgb8888
 };
