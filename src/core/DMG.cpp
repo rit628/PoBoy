@@ -17,7 +17,7 @@ DMG::DMG(std::function<uint8_t()> readInput
 Memory::CartridgeMetadata DMG::loadRom(const std::filesystem::path& romFile) {
     initialize();
     auto cartData = cartridge.loadRom(romFile);
-    cpu.bootHLE(cartData);
+    if (!bus.loadBootrom()) cpu.bootHLE(cartData);
     return cartData;
 }
 

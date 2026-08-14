@@ -4,6 +4,9 @@
 #include "MemoryConstants.hpp"
 #include <array>
 #include <cstdint>
+#include <filesystem>
+#include <fstream>
+#include <ranges>
 
 using namespace Memory;
 
@@ -19,6 +22,26 @@ void Bus::initialize() {
     hram.fill(0);
     bootromDisabled = false;
     dmaSourceAddress = 0;
+}
+
+bool Bus::loadBootrom() {
+    std::filesystem::path bootromFile("dmg_boot.bin");
+    auto availableBootroms = std::filesystem::directory_iterator(std::filesystem::current_path())
+                           | std::views::filter([](const auto& file) {
+                                return file.is_regular_file()
+                                    && file.path().extension() == ".bin"
+                                    && file.path().filename().string().contains("dmg");
+                            });
+    
+    if (!std::filesystem::exists(bootromFile)) {
+        if (availableBootroms.begin() == availableBootroms.end()) return false;
+        bootromFile = availableBootroms.begin()->path();
+    }
+    
+    std::ifstream bootromData(bootromFile, std::ios::binary);
+    bootromData.read(reinterpret_cast<char*>(bootrom.data()), bootrom.size());
+    bootromData.close();
+    return true;
 }
 
 void Bus::initHLE() {

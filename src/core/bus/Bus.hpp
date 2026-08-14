@@ -13,6 +13,7 @@ namespace Memory {
         public:
             Bus(Cartridge& cartridge, Interrupts::IMU& imu, Audio::APU& apu, Graphics::PPU& ppu);
             void initialize();
+            bool loadBootrom();
             void initHLE();
     
             uint8_t read(uint16_t address);
