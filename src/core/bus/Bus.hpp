@@ -27,6 +27,7 @@ namespace Memory {
             Audio::APU& apu;
             Graphics::PPU& ppu;
 
+            std::array<uint8_t, BOOTROM_SIZE> bootrom;
             std::array<uint8_t, WRAM_SIZE> wram;
             std::array<uint8_t, HRAM_SIZE> hram;
             bool bootromDisabled;       // BANK register

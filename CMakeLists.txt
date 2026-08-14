@@ -2,15 +2,17 @@ cmake_minimum_required(VERSION 4.0)
 
 project(PoBoy)
 
+set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_C_STANDARD 23)
 set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
 
 include(FetchContent)
 set(FETCHCONTENT_BASE_DIR ${CMAKE_SOURCE_DIR}/.deps)
-set(FETCHCONTENT_QUIET OFF)
 
 FetchContent_Declare(
     Boost
@@ -36,11 +38,11 @@ set(SDL_STATIC ON) # Simplifies binary distribution
 set(SDL_SHARED OFF)
 FetchContent_MakeAvailable(SDL3 ${OPTIONAL_DEPS})
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-c23-extensions --embed-dir=${CMAKE_SOURCE_DIR}/bin")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -glldb -gfull")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -flto=auto -DNDEBUG")
 set(CMAKE_CXX_FLAGS_MINSIZEREL "-Os -DNDEBUG")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -pg -g -fno-omit-frame-pointer")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -fno-omit-frame-pointer")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)

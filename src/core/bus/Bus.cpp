@@ -7,13 +7,6 @@
 
 using namespace Memory;
 
-namespace {
-    /* clangd crashes if declared as a static constexpr member of the class */
-    inline constexpr std::array<uint8_t, BOOTROM_SIZE> BOOTROM = {
-        #embed "bootix_dmg.bin"
-    };
-}
-
 Bus::Bus(Cartridge& cartridge, Interrupts::IMU& imu, Audio::APU& apu, Graphics::PPU& ppu)
         : cartridge(cartridge), imu(imu), apu(apu), ppu(ppu)
 {
@@ -21,6 +14,7 @@ Bus::Bus(Cartridge& cartridge, Interrupts::IMU& imu, Audio::APU& apu, Graphics::
 }
 
 void Bus::initialize() {
+    bootrom.fill(0);
     wram.fill(0);
     hram.fill(0);
     bootromDisabled = false;
@@ -28,8 +22,8 @@ void Bus::initialize() {
 }
 
 void Bus::initHLE() {
-    dmaSourceAddress = 0xFF;    // DMA
     bootromDisabled = true;     // unmap bootrom
+    dmaSourceAddress = 0xFF;    // DMA
 
     imu.initHLE();
     apu.initHLE();
@@ -38,7 +32,7 @@ void Bus::initHLE() {
 
 uint8_t Bus::read(uint16_t address) {
     if (!bootromDisabled && address < BOOTROM_SIZE) { [[ unlikely ]]
-        return BOOTROM.at(address);
+        return bootrom.at(address);
     }
     if (address < ROM_BANK_0_END) {
         return cartridge.readBank0(address - ROM_BANK_0_START);
