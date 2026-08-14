@@ -36,6 +36,12 @@ void Joypad::writeIO<Memory::P1>(uint8_t value) {
     selectedJoypadInput = extractFlags(value, SELECT_BUTTONS, SELECT_DPAD);
 }
 
+void Joypad::initHLE() {
+    using namespace Memory;
+    
+    writeIO<P1>(0xCF);
+}
+
 void Joypad::updateInput() {
     using enum P1_FLAG;
     if (!testFlags(selectedJoypadInput, SELECT_BUTTONS)) {

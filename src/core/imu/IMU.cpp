@@ -18,6 +18,8 @@ void IMU::initialize() {
     
     timer.initialize();
     joypad.initialize();
+    rSB = 0;
+    rSC = 0;
 }
 
 template<uint16_t Register>
@@ -29,6 +31,9 @@ uint8_t IMU::readIO() {
     if constexpr (DIV <= Register && Register <= TAC) return timer.readIO<Register>();
 
     if constexpr (Register == P1) return joypad.readIO<Register>();
+
+    if constexpr (Register == SB) return rSB;
+    if constexpr (Register == SC) return rSC | 0x7E;    // mask is 0x7C in cgb mode
 }
 
 template<uint16_t Register>
@@ -40,6 +45,21 @@ void IMU::writeIO(uint8_t value) {
     if constexpr (DIV <= Register && Register <= TAC) return timer.writeIO<Register>(value);
 
     if constexpr (Register == P1) return joypad.writeIO<Register>(value);
+
+    if constexpr (Register == SB) return void(rSB = value);
+    if constexpr (Register == SC) return void(rSC = value);
+}
+
+void IMU::initHLE() {
+    using namespace Memory;
+
+    writeIO<IF>(0xE1);
+    writeIO<IE>(0x00);
+
+    timer.initHLE();
+    joypad.initHLE();
+    writeIO<SB>(0x00);
+    writeIO<SC>(0x7E);
 }
 
 void IMU::tick() {
@@ -61,6 +81,8 @@ template uint8_t IMU::readIO<Memory::TIMA>();
 template uint8_t IMU::readIO<Memory::TMA>();
 template uint8_t IMU::readIO<Memory::TAC>();
 template uint8_t IMU::readIO<Memory::P1>();
+template uint8_t IMU::readIO<Memory::SB>();
+template uint8_t IMU::readIO<Memory::SC>();
 
 template void IMU::writeIO<Memory::IF>(uint8_t);
 template void IMU::writeIO<Memory::IE>(uint8_t);
@@ -69,3 +91,5 @@ template void IMU::writeIO<Memory::TIMA>(uint8_t);
 template void IMU::writeIO<Memory::TMA>(uint8_t);
 template void IMU::writeIO<Memory::TAC>(uint8_t);
 template void IMU::writeIO<Memory::P1>(uint8_t);
+template void IMU::writeIO<Memory::SB>(uint8_t);
+template void IMU::writeIO<Memory::SC>(uint8_t);

@@ -9,7 +9,7 @@ using namespace Memory;
 
 namespace {
     /* clangd crashes if declared as a static constexpr member of the class */
-    constexpr std::array<uint8_t, BOOTROM_SIZE> BOOTROM = {
+    inline constexpr std::array<uint8_t, BOOTROM_SIZE> BOOTROM = {
         #embed "bootix_dmg.bin"
     };
 }
@@ -25,6 +25,15 @@ void Bus::initialize() {
     hram.fill(0);
     bootromDisabled = false;
     dmaSourceAddress = 0;
+}
+
+void Bus::initHLE() {
+    dmaSourceAddress = 0xFF;    // DMA
+    bootromDisabled = true;     // unmap bootrom
+
+    imu.initHLE();
+    apu.initHLE();
+    ppu.initHLE();
 }
 
 uint8_t Bus::read(uint16_t address) {
@@ -105,9 +114,9 @@ uint8_t Bus::readIO(uint16_t registerAddress) {
     switch (registerAddress) {            
         case BANK:  return 0xFE | bootromDisabled;
         case DMA:   return dmaSourceAddress;
-        case SB:    return 0xFF;
-        case SC:    return 0xFF;
-        
+
+        case SB:    return imu.readIO<SB>();
+        case SC:    return imu.readIO<SC>();
         case IF:    return imu.readIO<IF>();
         case DIV:   return imu.readIO<DIV>();
         case TIMA:  return imu.readIO<TIMA>();
@@ -171,9 +180,9 @@ void Bus::writeIO(uint16_t registerAddress, uint8_t value) {
             }
             ppu.dmaTransferOAM(sourceRange);
         break;
-        case SB:    break;
-        case SC:    break;
-
+        
+        case SB:    return imu.writeIO<SB>(value);
+        case SC:    return imu.writeIO<SC>(value);
         case IF:    return imu.writeIO<IF>(value);
         case DIV:   return imu.writeIO<DIV>(value);
         case TIMA:  return imu.writeIO<TIMA>(value);

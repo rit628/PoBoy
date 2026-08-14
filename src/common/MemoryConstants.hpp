@@ -162,6 +162,7 @@ namespace Memory {
             uint8_t read(uint16_t address) { return bus.at(address); }
             void write(uint16_t address, uint8_t value) { bus.at(address) = value; }
             void initialize() { bus.fill(0); }
+            void initHLE() { initialize(); }
 
         private:
             std::array<uint8_t, Memory::MEMORY_SIZE> bus;

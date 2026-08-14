@@ -71,6 +71,31 @@ void CPU<BusType>::initialize() {
 }
 
 template<typename BusType>
+void CPU<BusType>::bootHLE(const Memory::CartridgeMetadata& cartData) {
+    A = 0x01;
+    F.set(REGISTER_FLAG::Z);
+    F.clear(REGISTER_FLAG::N);
+    if (cartData.headerChecksum == 0x00) {
+        F.clear(REGISTER_FLAG::H);
+        F.clear(REGISTER_FLAG::C);
+    }
+    else {
+        F.set(REGISTER_FLAG::H);
+        F.set(REGISTER_FLAG::C);
+    }
+    B = 0x00;
+    C = 0x13;
+    D = 0x00;
+    E = 0xD8;
+    H = 0x01;
+    L = 0x4D;
+    PC = 0x0100;
+    SP = 0xFFFE;
+
+    bus.initHLE();
+}
+
+template<typename BusType>
 void CPU<BusType>::tick() {
     /* Unprefixed Opcode Argument Constants */
     uint8_t $00 = 0x00, $08 = 0x08, $10 = 0x10, $18 = 0x18, $20 = 0x20, $28 = 0x28, $30 = 0x30, $38 = 0x38;

@@ -80,6 +80,34 @@ void APU::writeWaveRAM(uint8_t address, uint8_t value) {
     return channel3.writeWaveRAM(address, value);
 }
 
+void APU::initHLE() {
+    using namespace Memory;
+
+    audioEnabled = true;    // enable register writes
+
+    writeIO<NR10>(0x80);
+    writeIO<NR11>(0xBF);
+    writeIO<NR12>(0xF3);
+    writeIO<NR13>(0xFF);
+    writeIO<NR14>(0xBF);
+    writeIO<NR21>(0x3F);
+    writeIO<NR22>(0x00);
+    writeIO<NR23>(0xFF);
+    writeIO<NR24>(0xBF);
+    writeIO<NR30>(0x7F);
+    writeIO<NR31>(0xFF);
+    writeIO<NR32>(0x9F);
+    writeIO<NR33>(0xFF);
+    writeIO<NR34>(0xBF);
+    writeIO<NR41>(0xFF);
+    writeIO<NR42>(0x00);
+    writeIO<NR43>(0x00);
+    writeIO<NR44>(0xBF);
+    writeIO<NR50>(0x77);
+    writeIO<NR51>(0xF3);
+    writeIO<NR52>(0xF1);
+}
+
 void APU::tick() {
     incrementDivider();
     channel1.tick();

@@ -16,6 +16,7 @@ namespace Interrupts {
             template<uint16_t Register>
             void writeIO(uint8_t value);
             
+            void initHLE();
             void tick();
 
         private:

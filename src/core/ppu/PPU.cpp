@@ -116,6 +116,22 @@ void PPU::writeIO<Memory::STAT>(uint8_t value) {
     interruptMask = value & 0x78;   // bits 0-2 and 7 are read only
 }
 
+void PPU::initHLE() {
+    using namespace Memory;
+
+    writeIO<LCDC>   (0x91);
+    writeIO<STAT>   (0x85);
+    writeIO<SCY>    (0x00);
+    writeIO<SCX>    (0x00);
+    writeIO<LY>     (0x00);
+    writeIO<LYC>    (0x00);
+    writeIO<BGP>    (0xFC);
+    writeIO<OBP0>   (0xFF);  // random/uninitialized (treat as 0xFF)
+    writeIO<OBP1>   (0xFF);  // random/uninitialized (treat as 0xFF)
+    writeIO<WY>     (0x00);
+    writeIO<WX>     (0x00);
+}
+
 void PPU::incrementLine() {
     lineDotsElapsed = 0;
     currentLine++;

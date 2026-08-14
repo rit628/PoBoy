@@ -23,6 +23,7 @@ namespace Audio {
             uint8_t readWaveRAM(uint8_t address);
             void writeWaveRAM(uint8_t address, uint8_t value);
 
+            void initHLE();
             void tick();
             
         private:

@@ -17,6 +17,7 @@ namespace Interrupts {
             template<uint16_t Register>
             void writeIO(uint8_t value);
             
+            void initHLE();
             void tick();
 
             void triggerInterrupt(INTERRUPT_FLAG flag);
@@ -28,6 +29,8 @@ namespace Interrupts {
     
             SystemTimer timer;
             Joypad joypad;
+            uint8_t rSB;
+            uint8_t rSC;
     };
 
 }

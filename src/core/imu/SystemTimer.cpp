@@ -49,6 +49,16 @@ void SystemTimer::writeIO<Memory::TAC>(uint8_t value) {
     selectedClock = value & 0b011;
 }
 
+void SystemTimer::initHLE() {
+    using namespace Memory;
+
+    systemCounter = 0xAC00; // DIV (should be 0xAB but something may be wrong with the timer)
+
+    writeIO<TIMA>(0x00);
+    writeIO<TMA>(0x00);
+    writeIO<TAC>(0xF8);  
+}
+
 void SystemTimer::tick() {
     uint16_t overflowBit = timerClocks.at(selectedClock) >> 1;
     bool currTimaBit = bool(++systemCounter & overflowBit) && timerEnabled;

@@ -31,6 +31,7 @@ namespace Graphics {
             template<uint16_t Register>
             void writeIO(uint8_t value);
 
+            void initHLE();
             void tick();
     
             std::span<const uint8_t, TILE_DATA_SIZE> getTileData();

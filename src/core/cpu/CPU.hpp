@@ -1,4 +1,5 @@
 #pragma once
+#include "MemoryConstants.hpp"
 #include "Register.hpp"
 #include <cstddef>
 #include <cstdint>
@@ -12,6 +13,7 @@ namespace Processing {
             CPU(std::function<void()> systemTick) requires (!std::is_reference_v<BusType>);
             CPU(BusType& bus, std::function<void()> systemTick);
             void initialize();
+            void bootHLE(const Memory::CartridgeMetadata& cartData);
             void tick();
             
         protected:
