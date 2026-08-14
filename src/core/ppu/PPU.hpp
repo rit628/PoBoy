@@ -38,6 +38,7 @@ namespace Graphics {
             std::span<const uint8_t, 2 * TILE_MAP_SIZE> getTileMaps();
     
         private:
+            void attemptStatusInterrupt();
             void incrementLine();
             template<MODE Mode>
             void updateMode();
@@ -48,6 +49,7 @@ namespace Graphics {
             template<MODE Mode>
             void tickDispatch();
             void disableLCD();
+            void enableLCD();
 
             Interrupts::IMU& imu;
             std::function<void(std::span<const uint8_t>)> renderFrame;   // use std::function for simplicity
@@ -71,6 +73,8 @@ namespace Graphics {
             /* STAT register components */
             uint8_t interruptMask;  // STAT bits 6-3
             MODE mode;              // STAT bits 1-0
+
+            bool statInterrupted;   // STAT interrupt line
 
             PixelMixer mixer{backgroundPalette
                            , spritePalette0

@@ -35,7 +35,9 @@ void PPU::initialize() {
     spritePalette1 = 0;
 
     interruptMask = 0x80;
-    mode = MODE::OAM_SCAN;
+    mode = MODE::HBLANK;
+
+    statInterrupted = false;
 
     mixer.extractFrame(); // resets pixel fifos to initial frame state
 }
@@ -86,7 +88,7 @@ uint8_t PPU::readIO<Memory::STAT>() {
     if (!enabled) return 0x80 | interruptMask;   // bits 0-2 return 0 when lcd is off
     return 0x80
         | interruptMask
-        | (lineCompare == currentLine % FRAME_LINES) << 2
+        | (lineCompare == currentLine) << 2
         | std::to_underlying(mode);
 }
 
@@ -105,15 +107,18 @@ void PPU::writeIO(uint8_t value) {
 
 template<>
 void PPU::writeIO<Memory::LCDC>(uint8_t value) {
+    bool prevEnabled = enabled;
     lcdControl = value;
     mixer.updateFlags(lcdControl);
     enabled = testFlags(lcdControl, LCDC_FLAG::LCD_AND_PPU_ENABLE);
-    if (!enabled && mode == MODE::VBLANK) disableLCD();
+    if (prevEnabled && !enabled) disableLCD();
+    else if (!prevEnabled && enabled) enableLCD();
 }
 
 template<>
 void PPU::writeIO<Memory::STAT>(uint8_t value) {
     interruptMask = value & 0x78;   // bits 0-2 and 7 are read only
+    attemptStatusInterrupt();
 }
 
 void PPU::initHLE() {
@@ -132,33 +137,31 @@ void PPU::initHLE() {
     writeIO<WX>     (0x00);
 }
 
+void PPU::attemptStatusInterrupt() {
+    if (!enabled) return;
+    using enum STAT_FLAG;
+    uint8_t stat = readIO<Memory::STAT>();
+    uint8_t modeNumber = std::to_underlying(mode);
+    bool interruptUnblocked = !statInterrupted;
+    statInterrupted = testFlags(stat, LYC_INTERRUPT_ENABLE, LYC_INTERRUPT_BIT)
+                   || (modeNumber == 0 && testFlags(stat, MODE_0_INTERRUPT_ENABLE))
+                   || (modeNumber == 1 && testFlags(stat, MODE_1_INTERRUPT_ENABLE))
+                   || (modeNumber == 2 && testFlags(stat, MODE_2_INTERRUPT_ENABLE));
+    if (interruptUnblocked && statInterrupted) {
+        imu.triggerInterrupt(Interrupts::INTERRUPT_FLAG::LCD_STAT);
+    }
+}
+
 void PPU::incrementLine() {
     lineDotsElapsed = 0;
     currentLine++;
-    using enum STAT_FLAG;
-    if (testFlags(readIO<Memory::STAT>(), LYC_INTERRUPT_ENABLE, LYC_INTERRUPT_BIT)) {
-        imu.triggerInterrupt(Interrupts::INTERRUPT_FLAG::LCD_STAT);
-    }
+    attemptStatusInterrupt();
 }
 
 template<PPU::MODE Mode>
 void PPU::updateMode() {
     mode = Mode;
-    uint8_t stat = readIO<Memory::STAT>();
-    using enum STAT_FLAG;
-    constexpr uint8_t modeNumber = std::to_underlying(Mode);
-    if constexpr (modeNumber == 0) {
-        if (testFlags(stat, MODE_0_INTERRUPT_ENABLE))
-            imu.triggerInterrupt(Interrupts::INTERRUPT_FLAG::LCD_STAT);
-    }
-    else if constexpr (modeNumber == 1) {
-        if (testFlags(stat, MODE_1_INTERRUPT_ENABLE))
-            imu.triggerInterrupt(Interrupts::INTERRUPT_FLAG::LCD_STAT);
-    }
-    else if constexpr (modeNumber == 2) {
-        if (testFlags(stat, MODE_2_INTERRUPT_ENABLE))
-            imu.triggerInterrupt(Interrupts::INTERRUPT_FLAG::LCD_STAT);
-    }
+    attemptStatusInterrupt();
 }
 
 template<PPU::MODE Mode>
@@ -223,10 +226,7 @@ void PPU::postTick<PPU::MODE::VBLANK>() {
     
     if (currentLine == 153 && lineDotsElapsed == 4) [[ unlikely ]] { // scanline 153 quirk
         currentLine = 0;
-        using enum STAT_FLAG;
-        if (testFlags(readIO<Memory::STAT>(), LYC_INTERRUPT_ENABLE, LYC_INTERRUPT_BIT)) {
-            imu.triggerInterrupt(Interrupts::INTERRUPT_FLAG::LCD_STAT);
-        }
+        attemptStatusInterrupt();
     }
 
     if (frameDotsElapsed >= DOTS_PER_FRAME) [[ unlikely ]] {
@@ -261,10 +261,15 @@ void PPU::disableLCD() {
     frameDotsElapsed = 0;
     lineDotsElapsed = 0;
     currentLine = 0;
-    mode = MODE::OAM_SCAN;
+    mode = MODE::HBLANK;
+    statInterrupted = false;
     mixer.extractFrame();
     static constexpr std::array<uint8_t, FRAMEBUFFER_SIZE> blank{};
     renderFrame(blank);
+}
+
+void PPU::enableLCD() {
+    updateMode<MODE::OAM_SCAN>();
 }
 
 std::span<const uint8_t, TILE_DATA_SIZE> PPU::getTileData() {
