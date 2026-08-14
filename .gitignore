@@ -2,7 +2,8 @@
 logs
 *.log
 
-# Test Roms and Save Files
+# Bootroms, Test Roms, and Save Files
+*.bin
 *.gb
 *.gbc
 *.sav
