@@ -7,6 +7,7 @@
 
 namespace Graphics {
 
+    template<MODEL Model>
     class PixelMixer {
         public:
             PixelMixer(const uint8_t& bgp
@@ -17,8 +18,7 @@ namespace Graphics {
                      , const uint8_t& scy
                      , const uint8_t& wx
                      , const uint8_t& wy
-                     , std::span<const uint8_t, TILE_DATA_SIZE> tileData
-                     , std::span<const uint8_t, 2 * TILE_MAP_SIZE> tileMaps);
+                     , std::span<const uint8_t, VRAM_SIZE<Model>> vram);
 
             void tick();
             void scanlineReset();
@@ -43,8 +43,8 @@ namespace Graphics {
             bool backgroundAndWindowEnabled = false;
             uint8_t pixelsToDiscard = 0;
 
-            BackgroundFetcher backgroundFetcher;
-            SpriteFetcher spriteFetcher;
+            BackgroundFetcher<Model> backgroundFetcher;
+            SpriteFetcher<Model> spriteFetcher;
             BitBuffer<FRAMEBUFFER_SIZE, BITS_PER_PIXEL> framebuffer;
             uint8_t currentColumn = 0;
     };

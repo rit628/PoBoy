@@ -5,3 +5,7 @@ add_subdirectory(apu)
 add_subdirectory(bus)
 add_subdirectory(cpu)
 add_subdirectory(soc)
+
+add_library(core GameBoy.cpp)
+target_include_directories(core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(core PUBLIC cart soc)

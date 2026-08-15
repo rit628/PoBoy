@@ -5,31 +5,33 @@
 
 using namespace Graphics;
 
-BackgroundFetcher::BackgroundFetcher(const uint8_t& xPos
+template<MODEL Model>
+BackgroundFetcher<Model>::BackgroundFetcher(const uint8_t& xPos
                                    , const uint8_t& yPos
                                    , const uint8_t& scrollX
                                    , const uint8_t& scrollY
                                    , const uint8_t& windowX
                                    , const uint8_t& windowY
-                                   , std::span<const uint8_t, TILE_DATA_SIZE> tileData
-                                   , std::span<const uint8_t, 2 * TILE_MAP_SIZE> tileMaps)
+                                   , std::span<const uint8_t, VRAM_SIZE<Model>> vram)
                                    : xPos(xPos)
                                    , yPos(yPos)
                                    , scrollX(scrollX)
                                    , scrollY(scrollY)
                                    , windowX(windowX)
                                    , windowY(windowY)
-                                   , tileData(tileData)
-                                   , tileMaps(tileMaps)
+                                   , tileData(vram.template subspan<0, TILE_DATA_SIZE>())
+                                   , tileMaps(vram.template subspan<TILE_DATA_SIZE, 2 * TILE_MAP_SIZE>())
                                    {}
 
-void BackgroundFetcher::frameReset() {
+template<MODEL Model>
+void BackgroundFetcher<Model>::frameReset() {
     scanlineReset();
     windowYCondition = false;
     currentWindowLine = UINT8_MAX;  // ensures wrap around to 0 on first increment
 }
 
-void BackgroundFetcher::scanlineReset() {
+template<MODEL Model>
+void BackgroundFetcher<Model>::scanlineReset() {
     resetState();
     state = STATE::GET_TILE_DATA_LO; // skip first state to account for 4 dot initial fetch
     pixelFifo.clear();
@@ -39,14 +41,16 @@ void BackgroundFetcher::scanlineReset() {
     windowYCondition = windowYCondition || yPos == windowY;
 }
 
-void BackgroundFetcher::updateFlags(uint8_t lcdControl) {
+template<MODEL Model>
+void BackgroundFetcher<Model>::updateFlags(uint8_t lcdControl) {
     windowEnabled = testFlags(lcdControl, LCDC_FLAG::WINDOW_ENABLE);
     unsignedAddressing = testFlags(lcdControl, LCDC_FLAG::BACKGROUND_AND_WINDOW_DATA_AREA);
     windowTileMap = testFlags(lcdControl, LCDC_FLAG::WINDOW_TILEMAP_AREA);
     backgroundTileMap = testFlags(lcdControl, LCDC_FLAG::BACKGROUND_TILEMAP_AREA);
 }
 
-void BackgroundFetcher::preTick() {
+template<MODEL Model>
+void BackgroundFetcher<Model>::preTick() {
     /* Update Fetcher Mode */
     windowXCondition = windowXCondition || (xPos == windowX + ADJUSTED_WINDOW_X_OFFSET);
     bool inWindow = windowEnabled && windowXCondition && windowYCondition;
@@ -64,7 +68,8 @@ void BackgroundFetcher::preTick() {
     }
 }
 
-uint16_t BackgroundFetcher::getTileRowAddress() {
+template<MODEL Model>
+uint16_t BackgroundFetcher<Model>::getTileRowAddress() {
     uint16_t tileAddress = (unsignedAddressing) ? tileId * TILE_BYTES : 0x1000 + static_cast<int8_t>(tileId) * TILE_BYTES;
     uint8_t tileRow = 0;
     if (renderingWindow) {  // get window tile data
@@ -76,7 +81,8 @@ uint16_t BackgroundFetcher::getTileRowAddress() {
     return tileAddress + tileRow * TILE_ROW_BYTES;
 }
 
-void BackgroundFetcher::getTile() {
+template<MODEL Model>
+void BackgroundFetcher<Model>::getTile() {
     uint8_t selectedTileMap = 0;
     uint8_t yCoordinate = 0;
     uint8_t xCoordinate = 0;
@@ -95,19 +101,23 @@ void BackgroundFetcher::getTile() {
     tileId = tileMaps[tileIdAddress];
 }
 
-void BackgroundFetcher::getTileDataLo() {
+template<MODEL Model>
+void BackgroundFetcher<Model>::getTileDataLo() {
     rowBitPlaneLo = tileData[getTileRowAddress()];
 }
 
-void BackgroundFetcher::getTileDataHi() {
+template<MODEL Model>
+void BackgroundFetcher<Model>::getTileDataHi() {
     rowBitPlaneHi = tileData[getTileRowAddress() + 1];
 }
 
-void BackgroundFetcher::sleep() {
+template<MODEL Model>
+void BackgroundFetcher<Model>::sleep() {
     if (pixelFifo.empty()) state = STATE::PUSH;
 }
 
-void BackgroundFetcher::push() {
+template<MODEL Model>
+void BackgroundFetcher<Model>::push() {
     for (uint8_t i = 0; i < pixelFifo.capacity(); i++) {
         bool lsb = rowBitPlaneLo & (0x1 << (7 - i));
         bool msb = rowBitPlaneHi & (0x1 << (7 - i));
@@ -117,3 +127,6 @@ void BackgroundFetcher::push() {
     }
     if (renderingWindow) currentWindowColumn += 8;
 }
+
+template class Graphics::BackgroundFetcher<MODEL::DMG>;
+template class Graphics::BackgroundFetcher<MODEL::CGB>;

@@ -7,7 +7,8 @@
 
 using namespace Graphics;
 
-PixelMixer::PixelMixer(const uint8_t& bgp
+template<MODEL Model>
+PixelMixer<Model>::PixelMixer(const uint8_t& bgp
                      , const uint8_t& obp0
                      , const uint8_t& obp1
                      , const uint8_t& ly
@@ -15,8 +16,7 @@ PixelMixer::PixelMixer(const uint8_t& bgp
                      , const uint8_t& scy
                      , const uint8_t& wx
                      , const uint8_t& wy
-                     , std::span<const uint8_t, TILE_DATA_SIZE> tileData
-                     , std::span<const uint8_t, 2 * TILE_MAP_SIZE> tileMaps)
+                     , std::span<const uint8_t, VRAM_SIZE<Model>> vram)
                      : bgPalette(bgp)
                      , spritePalette0(obp0)
                      , spritePalette1(obp1)
@@ -27,14 +27,14 @@ PixelMixer::PixelMixer(const uint8_t& bgp
                                        , scy
                                        , wx
                                        , wy
-                                       , tileData
-                                       , tileMaps)
+                                       , vram)
                      , spriteFetcher(currentColumn
                                    , ly
-                                   , tileData)
+                                   , vram)
                      {}
 
-void PixelMixer::tick() {
+template<MODEL Model>
+void PixelMixer<Model>::tick() {
     backgroundFetcher.tick();
     bool spriteFetcherActive = spriteFetcher.spriteAvailable();
     /* sprite fetcher cant operate until background fetcher releases vram */
@@ -48,42 +48,50 @@ void PixelMixer::tick() {
     }
 }
 
-void PixelMixer::scanlineReset() {
+template<MODEL Model>
+void PixelMixer<Model>::scanlineReset() {
     backgroundFetcher.scanlineReset();
     spriteFetcher.reset();
     currentColumn = 0;
 }
 
-std::span<const uint8_t> PixelMixer::extractFrame() {
+template<MODEL Model>
+std::span<const uint8_t> PixelMixer<Model>::extractFrame() {
     backgroundFetcher.frameReset();
     spriteFetcher.reset();
     return framebuffer.extract();
 }
 
-bool PixelMixer::atLineEnd() {
+template<MODEL Model>
+bool PixelMixer<Model>::atLineEnd() {
     return currentColumn == LCD_WIDTH + PIXEL_OVERSCAN;
 }
 
-void PixelMixer::addSprite(uint8_t yPos, uint8_t xPos, uint8_t tileNumber, uint8_t spriteFlags) {
+template<MODEL Model>
+void PixelMixer<Model>::addSprite(uint8_t yPos, uint8_t xPos, uint8_t tileNumber, uint8_t spriteFlags) {
     spriteFetcher.addSprite(yPos, xPos, tileNumber, spriteFlags);
 }
 
-void PixelMixer::scanlineInitialize() {
+template<MODEL Model>
+void PixelMixer<Model>::scanlineInitialize() {
     spriteFetcher.sortSprites();
     pixelsToDiscard = scrollX & 0b111;
 }
 
-void PixelMixer::updateFlags(uint8_t lcdControl) {
+template<MODEL Model>
+void PixelMixer<Model>::updateFlags(uint8_t lcdControl) {
     backgroundAndWindowEnabled = testFlags(lcdControl, LCDC_FLAG::BACKGROUND_AND_WINDOW_ENABLE);
     backgroundFetcher.updateFlags(lcdControl);
     spriteFetcher.updateFlags(lcdControl);
 }
 
-uint8_t PixelMixer::applyPalette(uint8_t palette, uint8_t colorIndex) {
+template<MODEL Model>
+uint8_t PixelMixer<Model>::applyPalette(uint8_t palette, uint8_t colorIndex) {
     return (palette >> (2 * colorIndex)) & 0b11;
 }
 
-void PixelMixer::mixPixel(const Pixel& backgroundPixel) {
+template<MODEL Model>
+void PixelMixer<Model>::mixPixel(const Pixel& backgroundPixel) {
     Pixel spritePixel = (!spriteFetcher.fifoEmpty()) ? spriteFetcher.fifoPop() : Pixel{};
     if (spritePixel.color == 0) {   // blank sprite
         emitBackgroundPixel(backgroundPixel);
@@ -96,7 +104,8 @@ void PixelMixer::mixPixel(const Pixel& backgroundPixel) {
     }
 }
 
-void PixelMixer::emitBackgroundPixel(const Pixel& pixel) {
+template<MODEL Model>
+void PixelMixer<Model>::emitBackgroundPixel(const Pixel& pixel) {
     if (backgroundAndWindowEnabled) {
         emitPixel(applyPalette(bgPalette, pixel.color));
     }
@@ -105,13 +114,18 @@ void PixelMixer::emitBackgroundPixel(const Pixel& pixel) {
     }
 }
 
-void PixelMixer::emitSpritePixel(const Pixel& pixel) {
+template<MODEL Model>
+void PixelMixer<Model>::emitSpritePixel(const Pixel& pixel) {
     uint8_t palette = (pixel.palette == 0) ? spritePalette0 : spritePalette1;
     emitPixel(applyPalette(palette, pixel.color));
 }
 
-void PixelMixer::emitPixel(uint8_t colorIndex) {
+template<MODEL Model>
+void PixelMixer<Model>::emitPixel(uint8_t colorIndex) {
     if (pixelsToDiscard > 0) return void(--pixelsToDiscard);
     if (currentColumn++ < PIXEL_OVERSCAN) return;
     framebuffer.push(colorIndex);
 }
+
+template class Graphics::PixelMixer<MODEL::DMG>;
+template class Graphics::PixelMixer<MODEL::CGB>;

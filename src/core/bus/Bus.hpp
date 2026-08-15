@@ -4,14 +4,17 @@
 #include "IMU.hpp"
 #include "Cartridge.hpp"
 #include "PPU.hpp"
+#include "SystemConstants.hpp"
 #include <array>
 #include <cstdint>
+#include <span>
 
 namespace Memory {
 
+    template<MODEL Model>
     class Bus {
         public:
-            Bus(Cartridge& cartridge, Interrupts::IMU& imu, Audio::APU& apu, Graphics::PPU& ppu);
+            Bus(Cartridge& cartridge, Interrupts::IMU& imu, Audio::APU& apu, Graphics::PPU<Model>& ppu);
             void initialize();
             bool loadBootrom();
             void initHLE();
@@ -20,19 +23,28 @@ namespace Memory {
             void write(uint16_t address, uint8_t value);
             
         private:
+            bool inBootromRange(uint16_t address);
+            uint8_t readEchoRam(uint16_t address);
+            void writeEchoRam(uint16_t address, uint8_t value);
             uint8_t readIO(uint16_t registerAddress);
             void writeIO(uint16_t registerAddress, uint8_t value);
+
+            static constexpr uint16_t BOOTROM_SIZE = 0x0100 + (Model == MODEL::CGB) * 0x0800;
+            static constexpr uint16_t WRAM_SIZE    = WRAM_BANK_SIZE * (2 + 6 * (Model == MODEL::CGB));
     
             Cartridge& cartridge;
             Interrupts::IMU& imu;
             Audio::APU& apu;
-            Graphics::PPU& ppu;
+            Graphics::PPU<Model>& ppu;
 
             std::array<uint8_t, BOOTROM_SIZE> bootrom;
             std::array<uint8_t, WRAM_SIZE> wram;
             std::array<uint8_t, HRAM_SIZE> hram;
+            std::span<uint8_t, WRAM_BANK_SIZE> wram0, wram1;
             bool bootromDisabled;       // BANK register
             uint8_t dmaSourceAddress;   // DMA register
+            /* CGB registers */
+            uint8_t wramBank;           // SVBK register
     };
 
 }

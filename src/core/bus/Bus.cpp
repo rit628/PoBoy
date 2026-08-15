@@ -2,6 +2,7 @@
 #include "GraphicsConstants.hpp"
 #include "IMU.hpp"
 #include "MemoryConstants.hpp"
+#include "SystemConstants.hpp"
 #include <array>
 #include <cstdint>
 #include <filesystem>
@@ -10,27 +11,41 @@
 
 using namespace Memory;
 
-Bus::Bus(Cartridge& cartridge, Interrupts::IMU& imu, Audio::APU& apu, Graphics::PPU& ppu)
-        : cartridge(cartridge), imu(imu), apu(apu), ppu(ppu)
+template<MODEL Model>
+Bus<Model>::Bus(Cartridge& cartridge, Interrupts::IMU& imu, Audio::APU& apu, Graphics::PPU<Model>& ppu)
+               : cartridge(cartridge), imu(imu), apu(apu), ppu(ppu)
+               , wram0(std::span(wram). template subspan<0, WRAM_BANK_SIZE>())
+               , wram1(std::span(wram). template subspan<WRAM_BANK_SIZE, WRAM_BANK_SIZE>())
 {
     initialize();
 }
 
-void Bus::initialize() {
+template<MODEL Model>
+void Bus<Model>::initialize() {
     bootrom.fill(0);
     wram.fill(0);
     hram.fill(0);
     bootromDisabled = false;
     dmaSourceAddress = 0;
+    
+    if constexpr (Model == MODEL::CGB) {
+        wramBank = 0;
+    }
+    else {
+        wramBank = 0xFF;
+    }
 }
 
-bool Bus::loadBootrom() {
-    std::filesystem::path bootromFile("dmg_boot.bin");
+template<MODEL Model>
+bool Bus<Model>::loadBootrom() {
+    using enum MODEL;
+    static constexpr std::string modelPrefix = (Model == DMG) ? "dmg" : "cgb";
+    std::filesystem::path bootromFile(modelPrefix + "_boot.bin");
     auto availableBootroms = std::filesystem::directory_iterator(std::filesystem::current_path())
-                           | std::views::filter([](const auto& file) {
+                           | std::views::filter([&](const auto& file) {
                                 return file.is_regular_file()
                                     && file.path().extension() == ".bin"
-                                    && file.path().filename().string().contains("dmg");
+                                    && file.path().filename().string().contains(modelPrefix);
                             });
     
     if (!std::filesystem::exists(bootromFile)) {
@@ -44,7 +59,8 @@ bool Bus::loadBootrom() {
     return true;
 }
 
-void Bus::initHLE() {
+template<MODEL Model>
+void Bus<Model>::initHLE() {
     bootromDisabled = true;     // unmap bootrom
     dmaSourceAddress = 0xFF;    // DMA
 
@@ -53,8 +69,55 @@ void Bus::initHLE() {
     ppu.initHLE();
 }
 
-uint8_t Bus::read(uint16_t address) {
-    if (!bootromDisabled && address < BOOTROM_SIZE) { [[ unlikely ]]
+template<MODEL Model>
+bool Bus<Model>::inBootromRange(uint16_t address) {
+    using enum MODEL;
+    if constexpr (Model == DMG) {
+        return address < BOOTROM_SIZE;
+    }
+    else {
+        /* cgb bootrom has a hole in its memory map for the cartridge header */
+        static constexpr uint16_t HOLE_START = 0x0100;
+        static constexpr uint16_t HOLE_END = HOLE_START + 0x0100;
+        return address < BOOTROM_SIZE && !(HOLE_START <= address && address < HOLE_END);
+    }
+}
+
+template<MODEL Model>
+uint8_t Bus<Model>::readEchoRam(uint16_t address) {
+    using enum MODEL;
+    if constexpr (Model == DMG) {
+        return wram.at(address);
+    }
+    else {
+        if (address < WRAM_BANK_SIZE) {
+            return wram0[address];
+        }
+        else {
+            return wram1[address - WRAM_BANK_SIZE];
+        }
+    }
+}
+
+template<MODEL Model>
+void Bus<Model>::writeEchoRam(uint16_t address, uint8_t value) {
+    using enum MODEL;
+    if constexpr (Model == DMG) {
+        wram.at(address) = value;
+    }
+    else {
+        if (address < WRAM_BANK_SIZE) {
+            wram0[address] = value;
+        }
+        else {
+            wram1[address - WRAM_BANK_SIZE] = value;
+        }
+    }
+}
+
+template<MODEL Model>
+uint8_t Bus<Model>::read(uint16_t address) {
+    if (!bootromDisabled && inBootromRange(address)) { [[ unlikely ]]
         return bootrom.at(address);
     }
     if (address < ROM_BANK_0_END) {
@@ -69,11 +132,14 @@ uint8_t Bus::read(uint16_t address) {
     if (address < CARTRIDGE_RAM_END) {
         return cartridge.readSRAM(address - CARTRIDGE_RAM_START);
     }
-    if (address < WRAM_END) {
-        return wram.at(address - WRAM_START);
+    if (address < WRAM_BANK_0_END) {
+        return wram0[address - WRAM_BANK_0_START];
+    }
+    if (address < WRAM_BANK_1_END) {
+        return wram1[address - WRAM_BANK_1_START];
     }
     if (address < ECHO_RAM_END) {
-        return wram.at(address - ECHO_RAM_START);
+        return readEchoRam(address - ECHO_RAM_START);
     }
     if (address < OAM_END) {
         return ppu.readOAM(address - OAM_START);
@@ -90,8 +156,9 @@ uint8_t Bus::read(uint16_t address) {
     return imu.readIO<IE>();
 }
 
-void Bus::write(uint16_t address, uint8_t value) {
-    if (!bootromDisabled && address < BOOTROM_SIZE) { [[ unlikely ]]
+template<MODEL Model>
+void Bus<Model>::write(uint16_t address, uint8_t value) {
+    if (!bootromDisabled && inBootromRange(address)) { [[ unlikely ]]
         return; // bootrom is not writeable
     }
     if (address < ROM_BANK_0_END) {
@@ -106,11 +173,14 @@ void Bus::write(uint16_t address, uint8_t value) {
     if (address < CARTRIDGE_RAM_END) {
         return cartridge.writeSRAM(address - CARTRIDGE_RAM_START, value);
     }
-    if (address < WRAM_END) {
-        return void(wram.at(address - WRAM_START) = value);
+    if (address < WRAM_BANK_0_END) {
+        return void(wram0[address - WRAM_BANK_0_START] = value);
+    }
+    if (address < WRAM_BANK_1_END) {
+        return void(wram1[address - WRAM_BANK_1_START] = value);
     }
     if (address < ECHO_RAM_END) {
-        return void(wram.at(address - ECHO_RAM_START) = value);
+        return writeEchoRam(address - ECHO_RAM_START, value);
     }
     if (address < OAM_END) {
         return ppu.writeOAM(address - OAM_START, value);
@@ -127,10 +197,12 @@ void Bus::write(uint16_t address, uint8_t value) {
     return imu.writeIO<IE>(value);
 }
 
-uint8_t Bus::readIO(uint16_t registerAddress) {
+template<MODEL Model>
+uint8_t Bus<Model>::readIO(uint16_t registerAddress) {
     switch (registerAddress) {            
         case BANK:  return 0xFE | bootromDisabled;
         case DMA:   return dmaSourceAddress;
+        case SVBK:  return 0xF8 | wramBank;
 
         case SB:    return imu.readIO<SB>();
         case SC:    return imu.readIO<SC>();
@@ -163,17 +235,18 @@ uint8_t Bus::readIO(uint16_t registerAddress) {
         case NR43:  return apu.readIO<NR43>();
         case NR44:  return apu.readIO<NR44>();
 
-        case LY:    return ppu.readIO<LY>();
-        case LYC:   return ppu.readIO<LYC>();
-        case SCX:   return ppu.readIO<SCX>();
-        case SCY:   return ppu.readIO<SCY>();
-        case WX:    return ppu.readIO<WX>();
-        case WY:    return ppu.readIO<WY>();
-        case LCDC:  return ppu.readIO<LCDC>();
-        case BGP:   return ppu.readIO<BGP>();
-        case OBP0:  return ppu.readIO<OBP0>();
-        case OBP1:  return ppu.readIO<OBP1>();
-        case STAT:  return ppu.readIO<STAT>();
+        case LY:    return ppu.template readIO<LY>();
+        case LYC:   return ppu.template readIO<LYC>();
+        case SCX:   return ppu.template readIO<SCX>();
+        case SCY:   return ppu.template readIO<SCY>();
+        case WX:    return ppu.template readIO<WX>();
+        case WY:    return ppu.template readIO<WY>();
+        case LCDC:  return ppu.template readIO<LCDC>();
+        case BGP:   return ppu.template readIO<BGP>();
+        case OBP0:  return ppu.template readIO<OBP0>();
+        case OBP1:  return ppu.template readIO<OBP1>();
+        case STAT:  return ppu.template readIO<STAT>();
+        case VBK:   return ppu.template readIO<VBK>();
     }
     if (WAVEL <= registerAddress && registerAddress <= WAVEH) {
         return apu.readWaveRAM(registerAddress - WAVEL);
@@ -181,7 +254,8 @@ uint8_t Bus::readIO(uint16_t registerAddress) {
     return 0xFF;
 }
 
-void Bus::writeIO(uint16_t registerAddress, uint8_t value) {
+template<MODEL Model>
+void Bus<Model>::writeIO(uint16_t registerAddress, uint8_t value) {
     switch (registerAddress) {
         case BANK:
             // bootrom can only be unmapped
@@ -196,6 +270,12 @@ void Bus::writeIO(uint16_t registerAddress, uint8_t value) {
                 sourceRange.at(i) = read((dmaSourceAddress << 8) | i);
             }
             ppu.dmaTransferOAM(sourceRange);
+        break;
+        case SVBK:
+            if constexpr (Model == MODEL::CGB) {
+                wramBank = value & 0x07;
+                wram1 = std::span(wram).subspan(wramBank * WRAM_BANK_SIZE).template first<WRAM_BANK_SIZE>();
+            }
         break;
         
         case SB:    return imu.writeIO<SB>(value);
@@ -229,18 +309,23 @@ void Bus::writeIO(uint16_t registerAddress, uint8_t value) {
         case NR43:  return apu.writeIO<NR43>(value);
         case NR44:  return apu.writeIO<NR44>(value);
 
-        case LYC:   return ppu.writeIO<LYC>(value);
-        case SCX:   return ppu.writeIO<SCX>(value);
-        case SCY:   return ppu.writeIO<SCY>(value);
-        case WX:    return ppu.writeIO<WX>(value);
-        case WY:    return ppu.writeIO<WY>(value);
-        case LCDC:  return ppu.writeIO<LCDC>(value);
-        case BGP:   return ppu.writeIO<BGP>(value);
-        case OBP0:  return ppu.writeIO<OBP0>(value);
-        case OBP1:  return ppu.writeIO<OBP1>(value);
-        case STAT:  return ppu.writeIO<STAT>(value);
+        case LY:    return ppu.template writeIO<LY>(value);
+        case LYC:   return ppu.template writeIO<LYC>(value);
+        case SCX:   return ppu.template writeIO<SCX>(value);
+        case SCY:   return ppu.template writeIO<SCY>(value);
+        case WX:    return ppu.template writeIO<WX>(value);
+        case WY:    return ppu.template writeIO<WY>(value);
+        case LCDC:  return ppu.template writeIO<LCDC>(value);
+        case BGP:   return ppu.template writeIO<BGP>(value);
+        case OBP0:  return ppu.template writeIO<OBP0>(value);
+        case OBP1:  return ppu.template writeIO<OBP1>(value);
+        case STAT:  return ppu.template writeIO<STAT>(value);
+        case VBK:   return ppu.template writeIO<VBK>(value);
     }
     if (WAVEL <= registerAddress && registerAddress <= WAVEH) {
         return apu.writeWaveRAM(registerAddress - WAVEL, value);
     }
 }
+
+template class Memory::Bus<MODEL::DMG>;
+template class Memory::Bus<MODEL::CGB>;

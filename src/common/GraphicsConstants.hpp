@@ -1,4 +1,5 @@
 #pragma once
+#include "SystemConstants.hpp"
 #include <cstdint>
 
 namespace Graphics {
@@ -51,7 +52,9 @@ namespace Graphics {
 
     constexpr float    FRAMES_PER_SECOND            = float(1 << 22) / DOTS_PER_FRAME;
 
-    constexpr uint16_t VRAM_SIZE                    = 0x2000;
+    constexpr uint16_t VRAM_BANK_SIZE               = 0x2000;
+    template<MODEL Model>
+    constexpr uint16_t VRAM_SIZE                    = VRAM_BANK_SIZE * (1 + (Model == MODEL::CGB));
 
     constexpr uint8_t SPRITE_COUNT                  = 40;
     constexpr uint8_t SPRITE_BYTES                  = 4;

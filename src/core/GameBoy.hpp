@@ -1,13 +1,15 @@
 #pragma once
 #include "Cartridge.hpp"
-#include "DMG.hpp"
+#include "System.hpp"
 #include "MemoryConstants.hpp"
+#include "SystemConstants.hpp"
 #include <chrono>
 #include <cstdint>
 #include <filesystem>
 #include <functional>
 #include <span>
 #include <stop_token>
+#include <variant>
 
 class GameBoy {
     public:
@@ -23,10 +25,16 @@ class GameBoy {
         void resetClock();
 
     private:
+        using enum MODEL;
         using clock = std::chrono::steady_clock;
+
+        const std::function<uint8_t()> readInput;
+        const std::function<void(std::span<const float>)> queueAudioData;
+        const std::function<void(std::span<const uint8_t>)> renderFrame;
+        
         clock::time_point start;
         uint64_t cycleCount;
 
         Memory::Cartridge cartridge;
-        DMG dmg;
+        std::variant<std::monostate, System<DMG>, System<CGB>> soc;
 };

@@ -3,6 +3,7 @@
 #include "GraphicsConstants.hpp"
 #include "IMU.hpp"
 #include "MemoryConstants.hpp"
+#include "SystemConstants.hpp"
 #include <algorithm>
 #include <array>
 #include <cstdint>
@@ -10,18 +11,22 @@
 
 using namespace Graphics;
 
-PPU::PPU(Interrupts::IMU& imu, std::function<void(std::span<const uint8_t>)> renderFrame)
+template<MODEL Model>
+PPU<Model>::PPU(Interrupts::IMU& imu, std::function<void(std::span<const uint8_t>)> renderFrame)
         : imu(imu), renderFrame(renderFrame)
+        , currentBank(std::span(vram).template subspan<0, VRAM_BANK_SIZE>())
 {
     initialize();
 }
 
-void PPU::initialize() {
+template<MODEL Model>
+void PPU<Model>::initialize() {
     vram.fill(0);
     oam.fill(0);
     enabled = false;
     lineDotsElapsed = 0;
     frameDotsElapsed = 0;
+    statInterrupted = false;
 
     currentLine = 0;
     lineCompare = 0;
@@ -35,93 +40,20 @@ void PPU::initialize() {
     spritePalette1 = 0;
 
     interruptMask = 0x80;
-    mode = MODE::HBLANK;
+    mode = PPU_MODE::HBLANK;
 
-    statInterrupted = false;
+    if constexpr (Model == MODEL::CGB) {
+        vramBank = 0;
+    }
+    else {
+        vramBank = 0xFF;
+    }
 
     mixer.extractFrame(); // resets pixel fifos to initial frame state
 }
 
-uint8_t PPU::readVRAM(uint16_t address) {
-    if (mode == MODE::PIXEL_TRANSFER && enabled) return 0xFF;
-    return vram.at(address);
-}
-
-void PPU::writeVRAM(uint16_t address, uint8_t value) {
-    if (mode == MODE::PIXEL_TRANSFER && enabled) return;
-    vram.at(address) = value;
-}
-
-uint8_t PPU::readOAM(uint16_t address) {
-    using enum MODE;
-    if ((mode == PIXEL_TRANSFER || mode == OAM_SCAN) && enabled) return 0xFF;
-    return oam.at(address);
-}
-
-void PPU::writeOAM(uint16_t address, uint8_t value) {
-    using enum MODE;
-    if ((mode == PIXEL_TRANSFER || mode == OAM_SCAN) && enabled) return;
-    oam.at(address) = value;
-}
-
-void PPU::dmaTransferOAM(std::span<const uint8_t, OAM_SIZE> sourceRange) {
-    std::copy(sourceRange.begin(), sourceRange.end(), oam.begin());
-}
-
-template<uint16_t Register>
-uint8_t PPU::readIO() {
-    using namespace Memory;
-    if constexpr (Register == LY)   return currentLine;
-    if constexpr (Register == LYC)  return lineCompare;
-    if constexpr (Register == SCX)  return scrollX;
-    if constexpr (Register == SCY)  return scrollY;
-    if constexpr (Register == WX)   return windowX;
-    if constexpr (Register == WY)   return windowY;
-    if constexpr (Register == LCDC) return lcdControl;
-    if constexpr (Register == BGP)  return backgroundPalette;
-    if constexpr (Register == OBP0) return spritePalette0;
-    if constexpr (Register == OBP1) return spritePalette1;
-}
-
-template<>
-uint8_t PPU::readIO<Memory::STAT>() {
-    if (!enabled) return 0x80 | interruptMask;   // bits 0-2 return 0 when lcd is off
-    return 0x80
-        | interruptMask
-        | (lineCompare == currentLine) << 2
-        | std::to_underlying(mode);
-}
-
-template<uint16_t Register>
-void PPU::writeIO(uint8_t value) {
-    using namespace Memory;
-    if constexpr (Register == LYC)  lineCompare = value;
-    if constexpr (Register == SCX)  scrollX = value;
-    if constexpr (Register == SCY)  scrollY = value;
-    if constexpr (Register == WX)   windowX = value;
-    if constexpr (Register == WY)   windowY = value;
-    if constexpr (Register == BGP)  backgroundPalette = value;
-    if constexpr (Register == OBP0) spritePalette0 = value;
-    if constexpr (Register == OBP1) spritePalette1 = value;
-}
-
-template<>
-void PPU::writeIO<Memory::LCDC>(uint8_t value) {
-    bool prevEnabled = enabled;
-    lcdControl = value;
-    mixer.updateFlags(lcdControl);
-    enabled = testFlags(lcdControl, LCDC_FLAG::LCD_AND_PPU_ENABLE);
-    if (prevEnabled && !enabled) disableLCD();
-    else if (!prevEnabled && enabled) enableLCD();
-}
-
-template<>
-void PPU::writeIO<Memory::STAT>(uint8_t value) {
-    interruptMask = value & 0x78;   // bits 0-2 and 7 are read only
-    attemptStatusInterrupt();
-}
-
-void PPU::initHLE() {
+template<MODEL Model>
+void PPU<Model>::initHLE() {
     using namespace Memory;
 
     writeIO<LCDC>   (0x91);
@@ -137,7 +69,127 @@ void PPU::initHLE() {
     writeIO<WX>     (0x00);
 }
 
-void PPU::attemptStatusInterrupt() {
+template<MODEL Model>
+void PPU<Model>::tick() {
+    if (!enabled) return;
+    switch (mode) {
+        using enum PPU_MODE;
+        case OAM_SCAN:          return tickDispatch<OAM_SCAN>();
+        case PIXEL_TRANSFER:    return tickDispatch<PIXEL_TRANSFER>();
+        case HBLANK:            return tickDispatch<HBLANK>();
+        case VBLANK:            return tickDispatch<VBLANK>();
+    }
+}
+
+template<MODEL Model>
+template<PPU_MODE Mode>
+void PPU<Model>::tickDispatch() {
+    tick<Mode>();
+    lineDotsElapsed++;
+    frameDotsElapsed++;
+    postTick<Mode>();
+}
+
+template<MODEL Model>
+template<PPU_MODE Mode>
+void PPU<Model>::tick() {
+    using enum PPU_MODE;
+    if constexpr (Mode == OAM_SCAN) {
+        if (lineDotsElapsed % 2 > 0) return;  // oam scan tick every 2 dots
+        uint8_t spriteIndex = lineDotsElapsed / 2 * SPRITE_BYTES;
+        uint8_t yPos = oam.at(spriteIndex++);
+        uint8_t xPos = oam.at(spriteIndex++);
+        uint8_t tileNumber = oam.at(spriteIndex++);
+        uint8_t spriteFlags = oam.at(spriteIndex++);
+        mixer.addSprite(yPos, xPos, tileNumber, spriteFlags);
+    }
+    else if constexpr (Mode == PIXEL_TRANSFER) {
+        mixer.tick();
+    }
+    else {
+        /* HBLANK and VBLANK do nothing */    
+    }
+}
+
+template<MODEL Model>
+template<PPU_MODE Mode>
+void PPU<Model>::postTick() {
+    using enum PPU_MODE;
+    if constexpr (Mode == OAM_SCAN) {
+        if (lineDotsElapsed >= DOTS_PER_OAM_SCAN_MODE) [[ unlikely ]] {
+            mixer.scanlineInitialize();
+            updateMode<PIXEL_TRANSFER>();
+        }
+    }
+    else if constexpr (Mode == PIXEL_TRANSFER) {
+        if (mixer.atLineEnd()) [[ unlikely ]] {
+            updateMode<HBLANK>();
+        }
+    }
+    else if constexpr (Mode == HBLANK) {
+        if (lineDotsElapsed >= DOTS_PER_LINE) [[ unlikely ]] {
+            updateMode<OAM_SCAN>();
+            incrementLine();
+            mixer.scanlineReset();
+        }
+        
+        if (frameDotsElapsed >= DOTS_PER_LCD_SCAN) [[ unlikely ]] {
+            updateMode<VBLANK>();
+            imu.triggerInterrupt(Interrupts::INTERRUPT_FLAG::VBLANK);
+            renderFrame(mixer.extractFrame());
+        }
+    }
+    else if constexpr (Mode == VBLANK) {
+        if (lineDotsElapsed >= DOTS_PER_LINE) [[ unlikely ]]
+            incrementLine();
+        
+        if (currentLine == 153 && lineDotsElapsed == 4) [[ unlikely ]] { // scanline 153 quirk
+            currentLine = 0;
+            attemptStatusInterrupt();
+        }
+
+        if (frameDotsElapsed >= DOTS_PER_FRAME) [[ unlikely ]] {
+            updateMode<OAM_SCAN>();
+            frameDotsElapsed = 0;
+            currentLine = 0;
+            mixer.scanlineReset();
+        }
+    }
+}
+
+template<MODEL Model>
+uint8_t PPU<Model>::readVRAM(uint16_t address) {
+    if (mode == PPU_MODE::PIXEL_TRANSFER && enabled) return 0xFF;
+    return currentBank[address];
+}
+
+template<MODEL Model>
+void PPU<Model>::writeVRAM(uint16_t address, uint8_t value) {
+    if (mode == PPU_MODE::PIXEL_TRANSFER && enabled) return;
+    currentBank[address] = value;
+}
+
+template<MODEL Model>
+uint8_t PPU<Model>::readOAM(uint16_t address) {
+    using enum PPU_MODE;
+    if ((mode == PIXEL_TRANSFER || mode == OAM_SCAN) && enabled) return 0xFF;
+    return oam.at(address);
+}
+
+template<MODEL Model>
+void PPU<Model>::writeOAM(uint16_t address, uint8_t value) {
+    using enum PPU_MODE;
+    if ((mode == PIXEL_TRANSFER || mode == OAM_SCAN) && enabled) return;
+    oam.at(address) = value;
+}
+
+template<MODEL Model>
+void PPU<Model>::dmaTransferOAM(std::span<const uint8_t, OAM_SIZE> sourceRange) {
+    std::copy(sourceRange.begin(), sourceRange.end(), oam.begin());
+}
+
+template<MODEL Model>
+void PPU<Model>::attemptStatusInterrupt() {
     if (!enabled) return;
     using enum STAT_FLAG;
     uint8_t stat = readIO<Memory::STAT>();
@@ -152,151 +204,37 @@ void PPU::attemptStatusInterrupt() {
     }
 }
 
-void PPU::incrementLine() {
+template<MODEL Model>
+void PPU<Model>::incrementLine() {
     lineDotsElapsed = 0;
     currentLine++;
     attemptStatusInterrupt();
 }
 
-template<PPU::MODE Mode>
-void PPU::updateMode() {
+template<MODEL Model>
+template<PPU_MODE Mode>
+void PPU<Model>::updateMode() {
     mode = Mode;
     attemptStatusInterrupt();
 }
 
-template<PPU::MODE Mode>
-void PPU::tick() {
-    /* HBLANK and VBLANK do nothing */
-}
-
-template<>
-void PPU::tick<PPU::MODE::OAM_SCAN>() {
-    if (lineDotsElapsed % 2 > 0) return;  // oam scan tick every 2 dots
-    uint8_t spriteIndex = lineDotsElapsed / 2 * SPRITE_BYTES;
-    uint8_t yPos = oam.at(spriteIndex++);
-    uint8_t xPos = oam.at(spriteIndex++);
-    uint8_t tileNumber = oam.at(spriteIndex++);
-    uint8_t spriteFlags = oam.at(spriteIndex++);
-    mixer.addSprite(yPos, xPos, tileNumber, spriteFlags);
-}
-
-template<>
-void PPU::tick<PPU::MODE::PIXEL_TRANSFER>() {
-    mixer.tick();
-}
-
-template<>
-void PPU::postTick<PPU::MODE::OAM_SCAN>() {
-    using enum MODE;
-    if (lineDotsElapsed >= DOTS_PER_OAM_SCAN_MODE) [[ unlikely ]] {
-        mixer.scanlineInitialize();
-        updateMode<PIXEL_TRANSFER>();
-    }
-}
-
-template<>
-void PPU::postTick<PPU::MODE::PIXEL_TRANSFER>() {
-    using enum MODE;
-    if (mixer.atLineEnd()) [[ unlikely ]] {
-        updateMode<HBLANK>();
-    }
-}
-
-template<>
-void PPU::postTick<PPU::MODE::HBLANK>() {
-    using enum MODE;
-    if (lineDotsElapsed >= DOTS_PER_LINE) [[ unlikely ]] {
-        updateMode<OAM_SCAN>();
-        incrementLine();
-        mixer.scanlineReset();
-    }
-    
-    if (frameDotsElapsed >= DOTS_PER_LCD_SCAN) [[ unlikely ]] {
-        updateMode<VBLANK>();
-        imu.triggerInterrupt(Interrupts::INTERRUPT_FLAG::VBLANK);
-        renderFrame(mixer.extractFrame());
-    }
-}
-
-template<>
-void PPU::postTick<PPU::MODE::VBLANK>() {
-    using enum MODE;
-    if (lineDotsElapsed >= DOTS_PER_LINE) [[ unlikely ]]
-        incrementLine();
-    
-    if (currentLine == 153 && lineDotsElapsed == 4) [[ unlikely ]] { // scanline 153 quirk
-        currentLine = 0;
-        attemptStatusInterrupt();
-    }
-
-    if (frameDotsElapsed >= DOTS_PER_FRAME) [[ unlikely ]] {
-        updateMode<OAM_SCAN>();
-        frameDotsElapsed = 0;
-        currentLine = 0;
-        mixer.scanlineReset();
-    }
-}
-
-template<PPU::MODE Mode>
-void PPU::tickDispatch() {
-    tick<Mode>();
-    lineDotsElapsed++;
-    frameDotsElapsed++;
-    postTick<Mode>();
-}
-
-void PPU::tick() {
-    if (!enabled) return;
-    switch (mode) {
-        using enum MODE;
-        case OAM_SCAN:          return tickDispatch<OAM_SCAN>();
-        case PIXEL_TRANSFER:    return tickDispatch<PIXEL_TRANSFER>();
-        case HBLANK:            return tickDispatch<HBLANK>();
-        case VBLANK:            return tickDispatch<VBLANK>();
-    }
-}
-
-void PPU::disableLCD() {
+template<MODEL Model>
+void PPU<Model>::disableLCD() {
     /* reset ppu state and render blank frame to emulate lcd shutting off */
     frameDotsElapsed = 0;
     lineDotsElapsed = 0;
     currentLine = 0;
-    mode = MODE::HBLANK;
+    mode = PPU_MODE::HBLANK;
     statInterrupted = false;
     mixer.extractFrame();
     static constexpr std::array<uint8_t, FRAMEBUFFER_SIZE> blank{};
     renderFrame(blank);
 }
 
-void PPU::enableLCD() {
-    updateMode<MODE::OAM_SCAN>();
+template<MODEL Model>
+void PPU<Model>::enableLCD() {
+    updateMode<PPU_MODE::OAM_SCAN>();
 }
 
-std::span<const uint8_t, TILE_DATA_SIZE> PPU::getTileData() {
-    return std::span(vram).subspan<0, TILE_DATA_SIZE>();
-}
-
-std::span<const uint8_t, 2 * TILE_MAP_SIZE> PPU::getTileMaps() {
-    return std::span(vram).subspan<TILE_DATA_SIZE, 2 * TILE_MAP_SIZE>();
-}
-
-template uint8_t PPU::readIO<Memory::LY>();
-template uint8_t PPU::readIO<Memory::LYC>();
-template uint8_t PPU::readIO<Memory::SCX>();
-template uint8_t PPU::readIO<Memory::SCY>();
-template uint8_t PPU::readIO<Memory::WX>();
-template uint8_t PPU::readIO<Memory::WY>();
-template uint8_t PPU::readIO<Memory::LCDC>();
-template uint8_t PPU::readIO<Memory::BGP>();
-template uint8_t PPU::readIO<Memory::OBP0>();
-template uint8_t PPU::readIO<Memory::OBP1>();
-
-template void PPU::writeIO<Memory::LY>(uint8_t);
-template void PPU::writeIO<Memory::LYC>(uint8_t);
-template void PPU::writeIO<Memory::SCX>(uint8_t);
-template void PPU::writeIO<Memory::SCY>(uint8_t);
-template void PPU::writeIO<Memory::WX>(uint8_t);
-template void PPU::writeIO<Memory::WY>(uint8_t);
-template void PPU::writeIO<Memory::BGP>(uint8_t);
-template void PPU::writeIO<Memory::OBP0>(uint8_t);
-template void PPU::writeIO<Memory::OBP1>(uint8_t);
+template class Graphics::PPU<MODEL::DMG>;
+template class Graphics::PPU<MODEL::CGB>;

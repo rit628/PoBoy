@@ -14,12 +14,13 @@ namespace Graphics {
         uint8_t spriteFlags = 0;
     };
 
+    template<MODEL Model>
     class SpriteFetcher : public PixelFetcher {
         friend class PixelFetcher;
         public:
             SpriteFetcher(const uint8_t& xPos
                         , const uint8_t& currentLine
-                        , std::span<const uint8_t, TILE_DATA_SIZE> tileData);
+                        , std::span<const uint8_t, VRAM_SIZE<Model>> vram);
 
             bool spriteAvailable();
             void reset();

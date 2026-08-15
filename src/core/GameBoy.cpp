@@ -1,19 +1,36 @@
 #include "GameBoy.hpp"
-#include "DMG.hpp"
 #include "GraphicsConstants.hpp"
+#include "System.hpp"
+#include "SystemConstants.hpp"
 #include <chrono>
 #include <cstdint>
 #include <thread>
+#include <variant>
+
+template<class... Ts>
+struct overloaded : Ts... { using Ts::operator()...; };
 
 GameBoy::GameBoy(std::function<uint8_t()> readInput
        , std::function<void(std::span<const float>)> queueAudioData
        , std::function<void(std::span<const uint8_t>)> renderFrame)
-       : dmg(cycleCount, cartridge, readInput, queueAudioData, renderFrame) {}
+       : readInput(readInput)
+       , queueAudioData(queueAudioData)
+       , renderFrame(renderFrame)
+       {}
 
 Memory::CartridgeMetadata GameBoy::loadRom(const std::filesystem::path& romFile) {
     resetClock();
     auto cartData = cartridge.loadRom(romFile);
-    dmg.initialize(cartData);
+    bool useCgb = cartData.cgbFlag == 0xC0 || cartData.cgbFlag == 0x80;
+    useCgb = false; // for now until stable
+    if (useCgb) {
+        auto& cgb = soc.emplace<System<CGB>>(cycleCount, cartridge, readInput, queueAudioData, renderFrame);
+        cgb.initialize(cartData);
+    }
+    else {
+        auto& dmg = soc.emplace<System<DMG>>(cycleCount, cartridge, readInput, queueAudioData, renderFrame);
+        dmg.initialize(cartData);
+    }
     return cartData;
 }
 
@@ -34,14 +51,17 @@ void GameBoy::run(std::stop_token stoken) {
 void GameBoy::frameAdvance() {
     uint64_t prevCycles = cycleCount;
     while (cycleCount - prevCycles < Graphics::DOTS_PER_FRAME) {
-        dmg.tick();
+        std::visit(overloaded {
+            [](std::monostate) {},
+            [](auto&& soc) { soc.tick(); }
+        }, soc);
     }
 }
 
 void GameBoy::synchronizeClock() {
     auto now = clock::now();
     auto elapsed = std::chrono::duration<double, std::micro>(now - start);
-    auto expectedElapsed = cycleCount * DMG::CLOCK_US;
+    auto expectedElapsed = cycleCount * CLOCK_US;
 
     if (elapsed < expectedElapsed) {
         auto waitTime = expectedElapsed - elapsed;

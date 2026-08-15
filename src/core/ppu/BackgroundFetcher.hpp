@@ -6,6 +6,7 @@
 
 namespace Graphics {
 
+    template<MODEL Model>
     class BackgroundFetcher : public PixelFetcher {
         friend class PixelFetcher;
         public:
@@ -15,8 +16,7 @@ namespace Graphics {
                             , const uint8_t& scrollY
                             , const uint8_t& windowX
                             , const uint8_t& windowY
-                            , std::span<const uint8_t, TILE_DATA_SIZE> tileData
-                            , std::span<const uint8_t, 2 * TILE_MAP_SIZE> tileMaps);
+                            , std::span<const uint8_t, VRAM_SIZE<Model>> vram);
 
             void frameReset();
             void scanlineReset();

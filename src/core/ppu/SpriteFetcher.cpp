@@ -1,20 +1,23 @@
 #include "SpriteFetcher.hpp"
 #include "FlagOps.hpp"
 #include "GraphicsConstants.hpp"
+#include "SystemConstants.hpp"
 #include <algorithm>
 #include <cstdint>
 
 using namespace Graphics;
 
-SpriteFetcher::SpriteFetcher(const uint8_t& xPos
+template<MODEL Model>
+SpriteFetcher<Model>::SpriteFetcher(const uint8_t& xPos
                            , const uint8_t& currentLine
-                           , std::span<const uint8_t, TILE_DATA_SIZE> tileData)
+                           , std::span<const uint8_t, VRAM_SIZE<Model>> vram)
                            : xPos(xPos)
                            , currentLine(currentLine)
-                           , tileData(tileData)
+                           , tileData(vram.template subspan<0, TILE_DATA_SIZE>())
                            {}
 
-bool SpriteFetcher::spriteAvailable() {
+template<MODEL Model>
+bool SpriteFetcher<Model>::spriteAvailable() {
     if (spriteBuffer.empty()) return false;
     if (!spritesEnabled) {
         fetchReset();
@@ -32,12 +35,14 @@ bool SpriteFetcher::spriteAvailable() {
     return false;
 }
 
-void SpriteFetcher::reset() {
+template<MODEL Model>
+void SpriteFetcher<Model>::reset() {
     fetchReset();
     spriteBuffer.clear();
 }
 
-void SpriteFetcher::addSprite(uint8_t yPos, uint8_t xPos, uint8_t tileNumber, uint8_t spriteFlags) {
+template<MODEL Model>
+void SpriteFetcher<Model>::addSprite(uint8_t yPos, uint8_t xPos, uint8_t tileNumber, uint8_t spriteFlags) {
     uint8_t spriteHeight = 8 * (doubleHeightSprites + 1);
     this->yPos = currentLine + SPRITE_Y_OFFSET;
     if (spriteBuffer.full()) return;                     // ensure buffer has space 
@@ -46,34 +51,40 @@ void SpriteFetcher::addSprite(uint8_t yPos, uint8_t xPos, uint8_t tileNumber, ui
     spriteBuffer.push({yPos, xPos, tileNumber, spriteFlags});
 }
 
-void SpriteFetcher::sortSprites() {
+template<MODEL Model>
+void SpriteFetcher<Model>::sortSprites() {
     std::ranges::stable_sort(spriteBuffer.data(), [](uint8_t a, uint8_t b){
         return a < b;
     }, &Sprite::xPos);
 }
 
-void SpriteFetcher::updateFlags(uint8_t lcdControl) {
+template<MODEL Model>
+void SpriteFetcher<Model>::updateFlags(uint8_t lcdControl) {
     spritesEnabled = testFlags(lcdControl, LCDC_FLAG::SPRITE_ENABLE);
     doubleHeightSprites = testFlags(lcdControl, LCDC_FLAG::SPRITE_SIZE_MODIFIER);
 }
 
-void SpriteFetcher::fetchReset() {
+template<MODEL Model>
+void SpriteFetcher<Model>::fetchReset() {
     resetState();
     spriteBuffer.pop();
     fetchedSprite = nullptr;
     pixelFifo.clear();
 }
 
-void SpriteFetcher::preTick() {}
+template<MODEL Model>
+void SpriteFetcher<Model>::preTick() {}
 
-uint16_t SpriteFetcher::getTileRowAddress() {
+template<MODEL Model>
+uint16_t SpriteFetcher<Model>::getTileRowAddress() {
     uint16_t tileAddress = tileId * TILE_BYTES;
     uint8_t tileRow = (yPos - fetchedSprite->yPos) % 8;
     tileRow = 0b111 & ((yFlip) ? ~tileRow : tileRow);   // negate and mask to flip and remain in range
     return tileAddress + tileRow * TILE_ROW_BYTES;
 }
 
-void SpriteFetcher::getTile() {
+template<MODEL Model>
+void SpriteFetcher<Model>::getTile() {
     tileId = fetchedSprite->tileNumber;
     if (doubleHeightSprites) {
         bool onSecondTile = yPos >= fetchedSprite->yPos + 8;
@@ -81,19 +92,23 @@ void SpriteFetcher::getTile() {
     }
 }
 
-void SpriteFetcher::getTileDataLo() {
+template<MODEL Model>
+void SpriteFetcher<Model>::getTileDataLo() {
     rowBitPlaneLo = tileData[getTileRowAddress()];
 }
 
-void SpriteFetcher::getTileDataHi() {
+template<MODEL Model>
+void SpriteFetcher<Model>::getTileDataHi() {
     rowBitPlaneHi = tileData[getTileRowAddress() + 1];
 }
 
-void SpriteFetcher::sleep() {
+template<MODEL Model>
+void SpriteFetcher<Model>::sleep() {
     state = STATE::PUSH;
 }
 
-void SpriteFetcher::push() {
+template<MODEL Model>
+void SpriteFetcher<Model>::push() {
     Pixel pixel;
     pixel.palette = testFlags(fetchedSprite->spriteFlags, SPRITE_FLAG::PALETTE_NUMBER);
     pixel.backgroundPriority = testFlags(fetchedSprite->spriteFlags, SPRITE_FLAG::OBJ_TO_BG_PRIORITY);
@@ -124,3 +139,6 @@ void SpriteFetcher::push() {
     spriteBuffer.pop();
     fetchedSprite = nullptr;
 }
+
+template class Graphics::SpriteFetcher<MODEL::DMG>;
+template class Graphics::SpriteFetcher<MODEL::CGB>;

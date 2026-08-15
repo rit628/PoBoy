@@ -4,6 +4,7 @@
 #include "Opcodes.hpp"
 #include "MemoryConstants.hpp"
 #include "Register.hpp"
+#include "SystemConstants.hpp"
 #include <array>
 #include <cstdint>
 #include <cstring>
@@ -215,5 +216,6 @@ void CPU<BusType>::handleHaltBug() {
     }
 }
 
-template class Processing::CPU<Memory::Bus&>;
+template class Processing::CPU<Memory::Bus<MODEL::DMG>&>;
+template class Processing::CPU<Memory::Bus<MODEL::CGB>&>;
 template class Processing::CPU<Memory::FlatBus>;

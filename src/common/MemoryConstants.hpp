@@ -7,10 +7,9 @@
 namespace Memory {
 
     constexpr uint32_t MEMORY_SIZE           = 0x10000;
-    constexpr uint16_t BOOTROM_SIZE          = 0x0100;
     constexpr uint16_t ROM_BANK_SIZE         = 0x4000;
     constexpr uint16_t SRAM_BANK_SIZE        = 0x2000;
-    constexpr uint16_t WRAM_SIZE             = 0x2000;
+    constexpr uint16_t WRAM_BANK_SIZE        = 0x1000;
     constexpr uint8_t  IO_SIZE               = 0x80;
     constexpr uint8_t  HRAM_SIZE             = 0x7F;
 
@@ -19,13 +18,15 @@ namespace Memory {
     constexpr uint16_t ROM_BANK_1_START      = ROM_BANK_0_END;
     constexpr uint16_t ROM_BANK_1_END        = ROM_BANK_1_START + ROM_BANK_SIZE;
     constexpr uint16_t VRAM_START            = ROM_BANK_1_END;
-    constexpr uint16_t VRAM_END              = VRAM_START + Graphics::VRAM_SIZE;
+    constexpr uint16_t VRAM_END              = VRAM_START + Graphics::VRAM_BANK_SIZE;
     constexpr uint16_t CARTRIDGE_RAM_START   = VRAM_END;
     constexpr uint16_t CARTRIDGE_RAM_END     = CARTRIDGE_RAM_START + SRAM_BANK_SIZE;
-    constexpr uint16_t WRAM_START            = CARTRIDGE_RAM_END;
-    constexpr uint16_t WRAM_END              = WRAM_START + WRAM_SIZE;
-    constexpr uint16_t ECHO_RAM_START        = WRAM_END;
-    constexpr uint16_t ECHO_RAM_END          = ECHO_RAM_START + WRAM_SIZE - 0X0200;
+    constexpr uint16_t WRAM_BANK_0_START     = CARTRIDGE_RAM_END;
+    constexpr uint16_t WRAM_BANK_0_END       = WRAM_BANK_0_START + WRAM_BANK_SIZE;
+    constexpr uint16_t WRAM_BANK_1_START     = WRAM_BANK_0_END;
+    constexpr uint16_t WRAM_BANK_1_END       = WRAM_BANK_1_START + WRAM_BANK_SIZE;
+    constexpr uint16_t ECHO_RAM_START        = WRAM_BANK_1_END;
+    constexpr uint16_t ECHO_RAM_END          = ECHO_RAM_START + 2 * WRAM_BANK_SIZE - 0X0200;
     constexpr uint16_t OAM_START             = ECHO_RAM_END;
     constexpr uint16_t OAM_END               = OAM_START + Graphics::OAM_SIZE;
     constexpr uint16_t PROHIBITED_START      = OAM_END;
