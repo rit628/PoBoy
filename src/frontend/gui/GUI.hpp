@@ -1,6 +1,6 @@
 #pragma once
 #include "AudioStreamer.hpp"
-#include "DMG.hpp"
+#include "GameBoy.hpp"
 #include "InputManager.hpp"
 #include "Renderer.hpp"
 #include <SDL3/SDL.h>
@@ -37,5 +37,5 @@ class GUI {
         std::unique_ptr<AudioStreamer> audioStreamer;
         std::unique_ptr<InputManager> inputManager;
 
-        std::unique_ptr<DMG> gb;
+        std::unique_ptr<GameBoy> gb;
 };

@@ -35,7 +35,7 @@ GUI::GUI() {
     audioStreamer = std::make_unique<AudioStreamer>();
     inputManager = std::make_unique<InputManager>(*this);
 
-    gb = std::make_unique<DMG>(std::bind(&InputManager::readInput, std::ref(*inputManager))
+    gb = std::make_unique<GameBoy>(std::bind(&InputManager::readInput, std::ref(*inputManager))
                              , std::bind(&AudioStreamer::queueAudioData, std::ref(*audioStreamer), std::placeholders::_1)
                              , std::bind(&Renderer::renderFrame, std::ref(*renderer), std::placeholders::_1));
 }
