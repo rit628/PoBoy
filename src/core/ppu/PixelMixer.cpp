@@ -35,18 +35,16 @@ PixelMixer::PixelMixer(const uint8_t& bgp
                      {}
 
 void PixelMixer::tick() {
-    /* sprite fetching stalls pixel mixing and pushing */
+    backgroundFetcher.tick();
     bool spriteFetcherActive = spriteFetcher.spriteAvailable();
-    if (!backgroundFetcher.fifoEmpty() && !spriteFetcherActive) { [[ likely ]]
-        mixPixel(backgroundFetcher.fifoPop());
-    }
-
-    /* background and sprite fetchers mutually exclude vram access */
+    /* sprite fetcher cant operate until background fetcher releases vram */
     if (spriteFetcherActive && backgroundFetcher.asleep()) { [[ unlikely ]]
         spriteFetcher.tick();
     }
-    else {
-        backgroundFetcher.tick();
+    
+    /* sprite fetching stalls pixel mixing and pushing */
+    if (!backgroundFetcher.fifoEmpty() && !spriteFetcherActive) { [[ likely ]]
+        mixPixel(backgroundFetcher.fifoPop());
     }
 }
 
