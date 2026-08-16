@@ -247,6 +247,10 @@ uint8_t Bus<Model>::readIO(uint16_t registerAddress) {
         case OBP1:  return ppu.template readIO<OBP1>();
         case STAT:  return ppu.template readIO<STAT>();
         case VBK:   return ppu.template readIO<VBK>();
+        case BGPI:  return ppu.template readIO<BGPI>();
+        case BGPD:  return ppu.template readIO<BGPD>();
+        case OBPI:  return ppu.template readIO<OBPI>();
+        case OBPD:  return ppu.template readIO<OBPD>();
     }
     if (WAVEL <= registerAddress && registerAddress <= WAVEH) {
         return apu.readWaveRAM(registerAddress - WAVEL);
@@ -321,6 +325,10 @@ void Bus<Model>::writeIO(uint16_t registerAddress, uint8_t value) {
         case OBP1:  return ppu.template writeIO<OBP1>(value);
         case STAT:  return ppu.template writeIO<STAT>(value);
         case VBK:   return ppu.template writeIO<VBK>(value);
+        case BGPI:  return ppu.template writeIO<BGPI>(value);
+        case BGPD:  return ppu.template writeIO<BGPD>(value);
+        case OBPI:  return ppu.template writeIO<OBPI>(value);
+        case OBPD:  return ppu.template writeIO<OBPD>(value);
     }
     if (WAVEL <= registerAddress && registerAddress <= WAVEH) {
         return apu.writeWaveRAM(registerAddress - WAVEL, value);

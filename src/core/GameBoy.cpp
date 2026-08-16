@@ -73,3 +73,12 @@ void GameBoy::resetClock() {
     start = clock::now();
     cycleCount = 0;
 }
+
+MODEL GameBoy::getModel() {
+    if (std::holds_alternative<System<CGB>>(soc)) {
+        return CGB;
+    }
+    else {
+        return DMG;
+    }
+}

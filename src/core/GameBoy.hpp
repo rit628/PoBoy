@@ -23,6 +23,7 @@ class GameBoy {
         void frameAdvance();
         void synchronizeClock();
         void resetClock();
+        MODEL getModel();
 
     private:
         using enum MODEL;

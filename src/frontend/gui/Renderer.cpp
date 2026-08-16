@@ -21,20 +21,7 @@ Renderer::Renderer(SDL_Window* renderWindow) {
     SDL_SetRenderLogicalPresentation(renderer, Graphics::LCD_WIDTH, Graphics::LCD_HEIGHT, SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
     SDL_SetRenderVSync(renderer, SDL_RENDERER_VSYNC_ADAPTIVE);
 
-    palette = SDL_CreatePalette(4);
-    static constexpr std::array<SDL_Color, 4> paletteColors = {{
-        {230, 230, 230, 255},
-        {184, 184, 184, 255},
-        {120, 120, 120, 255},
-        {40, 40, 40, 255}
-    }};
-    SDL_SetPaletteColors(palette, paletteColors.data(), 0, 4);
-
-    sourceSurface = SDL_CreateSurface(Graphics::LCD_WIDTH, Graphics::LCD_HEIGHT, SDL_PIXELFORMAT_INDEX2LSB);
-    SDL_SetSurfacePalette(sourceSurface, palette);
-    conversionSurface = SDL_ConvertSurface(sourceSurface, SDL_PIXELFORMAT_XRGB8888);
-
-    if (!renderer || !renderTexture || !palette || !sourceSurface || !conversionSurface) {
+    if (!renderer || !renderTexture) {
         std::println(std::cerr, "Renderer failed to initialize: {}", SDL_GetError());
         exit(EXIT_FAILURE);
     }
@@ -57,6 +44,33 @@ void Renderer::setVsync() {
     else {
         SDL_SetRenderVSync(renderer, SDL_RENDERER_VSYNC_DISABLED);
     }
+}
+
+void Renderer::setNativePixelFormat(MODEL gbModel) {
+    if (gbModel == MODEL::CGB) {
+        sourceSurface = SDL_CreateSurface(Graphics::LCD_WIDTH, Graphics::LCD_HEIGHT, SDL_PIXELFORMAT_XBGR1555);
+    }
+    else {
+        palette = SDL_CreatePalette(4);
+        static constexpr std::array<SDL_Color, 4> paletteColors = {{
+            {230, 230, 230, 255},
+            {184, 184, 184, 255},
+            {120, 120, 120, 255},
+            {40, 40, 40, 255}
+        }};
+        SDL_SetPaletteColors(palette, paletteColors.data(), 0, 4);
+
+        sourceSurface = SDL_CreateSurface(Graphics::LCD_WIDTH, Graphics::LCD_HEIGHT, SDL_PIXELFORMAT_INDEX2LSB);
+        SDL_SetSurfacePalette(sourceSurface, palette);
+    }
+    conversionSurface = SDL_ConvertSurface(sourceSurface, SDL_PIXELFORMAT_XRGB8888);
+}
+
+void Renderer::clearFrame(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
+    SDL_SetRenderDrawColor(renderer, r, g, b, a);
+    SDL_RenderClear(renderer);
+    SDL_RenderPresent(renderer);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 }
 
 void Renderer::renderFrame(std::span<const uint8_t> framebuffer) {

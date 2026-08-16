@@ -3,9 +3,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <span>
+#include <type_traits>
 
 template<uint8_t S>
-concept BitStep = S == 1 || S == 2 || S == 4 || S == 8;
+concept BitStep = S == 1 || S == 2 || S == 4 || S == 8 || S == 16;
 
 template<size_t N, uint8_t Step> requires BitStep<Step>
 class BitBufferBase {
@@ -38,16 +39,20 @@ constexpr void BitBufferBase<N, Step>::incrementBit() noexcept {
 template<size_t N, uint8_t Step>
 class BitBuffer : public BitBufferBase<N, Step> {
     public:
-        constexpr void push(uint8_t value);
+        using ElementType = uint8_t;
+        static constexpr uint8_t ELEMENTS_PER_BYTE = 8 / Step;
+        static constexpr size_t BYTE_COUNT = N / ELEMENTS_PER_BYTE;
+
+        constexpr void push(ElementType value);
         constexpr std::span<const uint8_t> extract() noexcept;
 
     private:
-        std::array<uint8_t, N> buffer;
+        std::array<ElementType, BYTE_COUNT> buffer;
         size_t currentByte = 0;
 };
 
 template<size_t N, uint8_t Step>
-constexpr void BitBuffer<N, Step>::push(uint8_t value) {
+constexpr void BitBuffer<N, Step>::push(ElementType value) {
     buffer.at(currentByte) &= this->clearMask();
     buffer.at(currentByte) |= this->writeMask(value);
     this->incrementBit();
@@ -63,25 +68,30 @@ constexpr std::span<const uint8_t> BitBuffer<N, Step>::extract() noexcept {
     return result;
 }
 
-template<uint8_t Step>
-class BitBuffer<1, Step> : public BitBufferBase<1, Step> {
+/* regular buffer beyond sub byte step size */
+template<size_t N, uint8_t Step> requires (Step >= 8)
+class BitBuffer<N, Step> {
     public:
-        constexpr void push(uint8_t value) noexcept;
-        constexpr uint8_t extract() noexcept;
+        using ElementType = std::conditional_t<Step == 8, uint8_t, uint16_t>;
+        static constexpr uint8_t BYTES_PER_ELEMENT = Step / 8;
+        static constexpr size_t BYTE_COUNT = N * BYTES_PER_ELEMENT;
+
+        constexpr void push(ElementType value);
+        constexpr std::span<const uint8_t> extract() noexcept;
 
     private:
-        uint8_t buffer;
+        std::array<ElementType, N> buffer;
+        size_t index = 0;
 };
 
-template<uint8_t Step>
-constexpr void BitBuffer<1, Step>::push(uint8_t value) noexcept {
-    buffer &= this->clearMask();
-    buffer |= this->writeMask(value);
-    this->incrementBit();
+template<size_t N, uint8_t Step> requires (Step >= 8)
+constexpr void BitBuffer<N, Step>::push(ElementType value) {
+    buffer.at(index++) = value;
 }
 
-template<uint8_t Step>
-constexpr uint8_t BitBuffer<1, Step>::extract() noexcept {
-    this->currentBit = 0;
-    return buffer;
+template<size_t N, uint8_t Step> requires (Step >= 8)
+constexpr std::span<const uint8_t> BitBuffer<N, Step>::extract() noexcept {
+    auto rawBytes = std::span(buffer).subspan(0, index);
+    index = 0;
+    return std::span(reinterpret_cast<const uint8_t*>(rawBytes.data()), rawBytes.size_bytes());
 }

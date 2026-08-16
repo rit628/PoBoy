@@ -89,10 +89,10 @@ namespace Memory {
     constexpr uint16_t HDMA4    = 0xFF54;   // VRAM DMA destination low
     constexpr uint16_t HDMA5    = 0xFF55;   // VRAM DMA length/mode/start
     constexpr uint16_t RP       = 0xFF56;   // Infrared communications port
-    constexpr uint16_t BCPS     = 0xFF68;   // Background color palette specification / Background palette index
-    constexpr uint16_t BCPD     = 0xFF69;   // Background color palette data / Background palette data
-    constexpr uint16_t OCPS     = 0xFF6A;   // OBJ color palette specification / OBJ palette index
-    constexpr uint16_t OCPD     = 0xFF6B;   // OBJ color palette data / OBJ palette data
+    constexpr uint16_t BGPI     = 0xFF68;   // Background color palette specification / Background palette index
+    constexpr uint16_t BGPD     = 0xFF69;   // Background color palette data / Background palette data
+    constexpr uint16_t OBPI     = 0xFF6A;   // OBJ color palette specification / OBJ palette index
+    constexpr uint16_t OBPD     = 0xFF6B;   // OBJ color palette data / OBJ palette data
     constexpr uint16_t OPRI     = 0xFF6C;   // Object priority mode
     constexpr uint16_t SVBK     = 0xFF70;   // WRAM bank
     constexpr uint16_t PCM12    = 0xFF76;   // Audio digital outputs 1 & 2

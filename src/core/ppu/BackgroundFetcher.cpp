@@ -21,7 +21,15 @@ BackgroundFetcher<Model>::BackgroundFetcher(const uint8_t& xPos
                                    , windowY(windowY)
                                    , tileData(vram.template subspan<0, TILE_DATA_SIZE>())
                                    , tileMaps(vram.template subspan<TILE_DATA_SIZE, 2 * TILE_MAP_SIZE>())
-                                   {}
+                                   , tileDataBank0(tileData)
+                                   , tileDataBank1(tileData)
+                                   , attributeMaps(tileMaps)
+{
+    if constexpr (Model == MODEL::CGB) {
+        tileDataBank1 = vram.template subspan<VRAM_BANK_SIZE, TILE_DATA_SIZE>();
+        attributeMaps = vram.template subspan<VRAM_BANK_SIZE + TILE_DATA_SIZE, 2 * TILE_MAP_SIZE>();
+    }
+}
 
 template<MODEL Model>
 void BackgroundFetcher<Model>::frameReset() {
@@ -99,6 +107,10 @@ void BackgroundFetcher<Model>::getTile() {
     }
     uint16_t tileIdAddress = selectedTileMap * TILE_MAP_SIZE + yCoordinate * TILE_MAP_WIDTH + xCoordinate;
     tileId = tileMaps[tileIdAddress];
+    if constexpr (Model == MODEL::CGB) {
+        tileAttributes = attributeMaps[tileIdAddress];
+        tileData = testFlags(tileAttributes, ATTRIBUTE_FLAG::CGB_BANK) ? tileDataBank1 : tileDataBank0;
+    }
 }
 
 template<MODEL Model>
@@ -118,10 +130,14 @@ void BackgroundFetcher<Model>::sleep() {
 
 template<MODEL Model>
 void BackgroundFetcher<Model>::push() {
+    Pixel pixel;
+    if constexpr (Model == MODEL::CGB) {
+        pixel.palette = extractFlags(tileAttributes, ATTRIBUTE_FLAG::CGB_PALETTE);
+        pixel.priority = testFlags(tileAttributes, ATTRIBUTE_FLAG::PRIORITY);
+    }
     for (uint8_t i = 0; i < pixelFifo.capacity(); i++) {
         bool lsb = rowBitPlaneLo & (0x1 << (7 - i));
         bool msb = rowBitPlaneHi & (0x1 << (7 - i));
-        Pixel pixel;
         pixel.color = (msb << 1) | lsb;
         pixelFifo.push(pixel);
     }

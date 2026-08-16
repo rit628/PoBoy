@@ -52,6 +52,10 @@ namespace Graphics {
 
             std::span<const uint8_t, TILE_DATA_SIZE> tileData;
             std::span<const uint8_t, 2 * TILE_MAP_SIZE> tileMaps;
+            /* CGB only */
+            std::span<const uint8_t, TILE_DATA_SIZE> tileDataBank0, tileDataBank1;
+            std::span<const uint8_t, 2 * TILE_MAP_SIZE> attributeMaps;
+            uint8_t tileAttributes = 0;
     };
 
 }

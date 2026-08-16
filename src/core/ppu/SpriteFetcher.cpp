@@ -28,8 +28,8 @@ bool SpriteFetcher<Model>::spriteAvailable() {
     auto& sprite = spriteBuffer.front();
     if (sprite.xPos == xPos) {
         fetchedSprite = &sprite;
-        yFlip = testFlags(fetchedSprite->spriteFlags, SPRITE_FLAG::Y_FLIP);
-        xFlip = testFlags(fetchedSprite->spriteFlags, SPRITE_FLAG::X_FLIP);
+        yFlip = testFlags(fetchedSprite->spriteFlags, ATTRIBUTE_FLAG::Y_FLIP);
+        xFlip = testFlags(fetchedSprite->spriteFlags, ATTRIBUTE_FLAG::X_FLIP);
         return true;
     }
     return false;
@@ -110,8 +110,8 @@ void SpriteFetcher<Model>::sleep() {
 template<MODEL Model>
 void SpriteFetcher<Model>::push() {
     Pixel pixel;
-    pixel.palette = testFlags(fetchedSprite->spriteFlags, SPRITE_FLAG::PALETTE_NUMBER);
-    pixel.backgroundPriority = testFlags(fetchedSprite->spriteFlags, SPRITE_FLAG::OBJ_TO_BG_PRIORITY);
+    pixel.palette = testFlags(fetchedSprite->spriteFlags, ATTRIBUTE_FLAG::DMG_PALETTE);
+    pixel.priority = testFlags(fetchedSprite->spriteFlags, ATTRIBUTE_FLAG::PRIORITY);
     
     auto getMask = (xFlip) ? [](uint8_t pixelIndex) { return 0x1 << pixelIndex; }
                                              : [](uint8_t pixelIndex) { return 0x1 << (7 - pixelIndex); };

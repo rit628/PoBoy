@@ -98,6 +98,7 @@ void GUI::loadFile(const std::filesystem::path file) {
     if (!std::filesystem::exists(file)) return;
     using std::string_literals::operator""s;
     auto metadata = gb->loadRom(file);
+    renderer->setNativePixelFormat(gb->getModel());
     windowTitle = "PoBoy: "s + metadata.title.data();
     SDL_SetWindowTitle(window, windowTitle.c_str());
     running = true;
@@ -129,8 +130,7 @@ void GUI::updateFps() {
 }
 
 void GUI::renderInterface() {
-    static constexpr std::array<uint8_t, Graphics::FRAMEBUFFER_SIZE> blank{}; // white screen for now until a proper interface is made
-    renderer->renderFrame(blank);
+    renderer->clearFrame(0xFF, 0xFF, 0xFF, 0xFF); // white screen for now until a proper interface is made
 }
 
 template void GUI::updateSpeed<true>();

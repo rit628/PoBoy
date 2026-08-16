@@ -6,9 +6,8 @@ namespace Graphics {
 
     struct Pixel {
         uint8_t color = 0;
-        uint8_t palette = 0;            // unused in dmg bg fetcher
-        uint8_t spritePriority = 0;     // unused in dmg pipeline
-        uint8_t backgroundPriority = 0; // unused in dmg bg fetcher
+        uint8_t palette = 0;
+        uint8_t priority = 0;
     };
 
     class PixelFetcher {

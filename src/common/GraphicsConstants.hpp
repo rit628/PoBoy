@@ -26,21 +26,21 @@ namespace Graphics {
         PPU_MODE_BITS               = 0b00000011
     };
 
-    /*  Sprite Attributes */
-    enum class SPRITE_FLAG : uint8_t {
-        OBJ_TO_BG_PRIORITY  = 0b10000000,
+    /*  Tile Attributes */
+    enum class ATTRIBUTE_FLAG : uint8_t {
+        PRIORITY            = 0b10000000,
         Y_FLIP              = 0b01000000,
         X_FLIP              = 0b00100000,
-        PALETTE_NUMBER      = 0b00010000,
+        DMG_PALETTE         = 0b00010000,   // not used by background tiles
         CGB_BANK            = 0b00001000,
         CGB_PALETTE         = 0b00000111,
     };
 
     constexpr uint8_t  LCD_WIDTH                    = 160;
     constexpr uint8_t  LCD_HEIGHT                   = 144;
-    constexpr uint8_t  BITS_PER_PIXEL               = 2;
-    constexpr uint8_t  PIXELS_PER_BYTE              = 8 / BITS_PER_PIXEL;
-    constexpr uint16_t FRAMEBUFFER_SIZE             = (LCD_HEIGHT * LCD_WIDTH) / PIXELS_PER_BYTE;
+    constexpr uint16_t FRAMEBUFFER_SIZE             = LCD_HEIGHT * LCD_WIDTH;
+    template<MODEL Model>
+    constexpr uint8_t  BITS_PER_PIXEL               = (Model == MODEL::CGB) ? 16 : 2;
 
     constexpr uint8_t FRAME_LINES                   = 154;
     constexpr uint8_t VBLANK_LINES                  = 10;
@@ -55,6 +55,10 @@ namespace Graphics {
     constexpr uint16_t VRAM_BANK_SIZE               = 0x2000;
     template<MODEL Model>
     constexpr uint16_t VRAM_SIZE                    = VRAM_BANK_SIZE * (1 + (Model == MODEL::CGB));
+
+    constexpr uint8_t  PALETTE_SIZE                 = 4;
+    template<MODEL Model>
+    constexpr uint16_t PALETTE_RAM_BANK_SIZE        = 0x40 * (Model == MODEL::CGB);
 
     constexpr uint8_t SPRITE_COUNT                  = 40;
     constexpr uint8_t SPRITE_BYTES                  = 4;

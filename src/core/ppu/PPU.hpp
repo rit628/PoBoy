@@ -10,7 +10,7 @@
 
 namespace Graphics {
 
-    enum class PPU_MODE {
+    enum class PPU_MODE : uint8_t {
         OAM_SCAN = 2,
         PIXEL_TRANSFER = 3,
         HBLANK = 0,
@@ -55,6 +55,7 @@ namespace Graphics {
     
             std::array<uint8_t, VRAM_SIZE<Model>> vram;
             std::array<uint8_t, OAM_SIZE> oam;
+            std::array<uint8_t, PALETTE_RAM_BANK_SIZE<Model>> bgPaletteRam, spritePaletteRam;   // CGB only
             std::span<uint8_t, VRAM_BANK_SIZE> currentBank;
             bool enabled;
             uint16_t lineDotsElapsed;
@@ -72,11 +73,18 @@ namespace Graphics {
             uint8_t spritePalette0;     // OBP0 register
             uint8_t spritePalette1;     // OBP1 register
             /* STAT register components */
-            uint8_t interruptMask;  // STAT bits 6-3
+            uint8_t interruptMask;      // STAT bits 6-3
             PPU_MODE mode;              // STAT bits 1-0
 
             /* CGB registers */
-            uint8_t vramBank;           // VBK register
+            uint8_t vramBank;               // VBK register
+            /* BGPI register components */
+            bool bgpPaletteAutoIncrement;   // BGPI bit 7
+            uint8_t bgpAddress;             // BGPI bits 5-0
+            /* OBPI register components */
+            bool obpPaletteAutoIncrement;   // OBPI bit 7
+            uint8_t obpAddress;             // OBPI bits 5-0
+
 
             PixelMixer<Model> mixer{backgroundPalette
                                   , spritePalette0
@@ -86,7 +94,9 @@ namespace Graphics {
                                   , scrollY
                                   , windowX
                                   , windowY
-                                  , vram};
+                                  , vram
+                                  , bgPaletteRam
+                                  , spritePaletteRam};
     };
 
 }

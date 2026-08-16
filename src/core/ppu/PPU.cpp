@@ -44,9 +44,21 @@ void PPU<Model>::initialize() {
 
     if constexpr (Model == MODEL::CGB) {
         vramBank = 0;
+
+        bgpPaletteAutoIncrement = false;
+        bgpAddress = 0;
+
+        obpPaletteAutoIncrement = false;
+        obpAddress = 0;
     }
     else {
         vramBank = 0xFF;
+
+        bgpPaletteAutoIncrement = true;
+        bgpAddress = 0xFF;
+
+        obpPaletteAutoIncrement = true;
+        obpAddress = 0xFF;
     }
 
     mixer.extractFrame(); // resets pixel fifos to initial frame state
@@ -227,7 +239,13 @@ void PPU<Model>::disableLCD() {
     mode = PPU_MODE::HBLANK;
     statInterrupted = false;
     mixer.extractFrame();
-    static constexpr std::array<uint8_t, FRAMEBUFFER_SIZE> blank{};
+    static constexpr auto blank = []() consteval {
+        static constexpr auto BUFFER_SIZE = BitBuffer<FRAMEBUFFER_SIZE, BITS_PER_PIXEL<Model>>::BYTE_COUNT;
+        std::array<uint8_t, BUFFER_SIZE> buffer{};
+        constexpr uint8_t fillColor = (Model == MODEL::DMG) ? 0x00 : 0xFF;
+        buffer.fill(fillColor);
+        return buffer;
+    }();
     renderFrame(blank);
 }
 

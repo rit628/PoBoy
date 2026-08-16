@@ -16,11 +16,15 @@ PixelMixer<Model>::PixelMixer(const uint8_t& bgp
                      , const uint8_t& scy
                      , const uint8_t& wx
                      , const uint8_t& wy
-                     , std::span<const uint8_t, VRAM_SIZE<Model>> vram)
+                     , std::span<const uint8_t, VRAM_SIZE<Model>> vram
+                     , std::span<const uint8_t, PALETTE_RAM_BANK_SIZE<Model>> bgPaletteRam
+                     , std::span<const uint8_t, PALETTE_RAM_BANK_SIZE<Model>> spritePaletteRam)
                      : bgPalette(bgp)
                      , spritePalette0(obp0)
                      , spritePalette1(obp1)
                      , scrollX(scx)
+                     , bgPaletteRam(bgPaletteRam)
+                     , spritePaletteRam(spritePaletteRam)
                      , backgroundFetcher(currentColumn
                                        , ly
                                        , scx
@@ -87,7 +91,16 @@ void PixelMixer<Model>::updateFlags(uint8_t lcdControl) {
 
 template<MODEL Model>
 uint8_t PixelMixer<Model>::applyPalette(uint8_t palette, uint8_t colorIndex) {
-    return (palette >> (2 * colorIndex)) & 0b11;
+    /* color is the 2 bit nibble of palette starting at 2 * colorIndex */
+    return (palette >> (2 * colorIndex)) & (PALETTE_SIZE - 1);
+}
+
+template<MODEL Model>
+uint16_t PixelMixer<Model>::applyPalette(std::span<const uint8_t, PALETTE_RAM_BANK_SIZE<Model>> paletteRam, const Pixel& pixel) {
+    static constexpr uint8_t BYTES_PER_COLOR = 2;
+    uint8_t paletteAddress = BYTES_PER_COLOR * (PALETTE_SIZE * pixel.palette + pixel.color);
+    /* CGB colors are stored as little endian 15 bit BGR */
+    return (paletteRam[paletteAddress + 1] << 8 | paletteRam[paletteAddress]) & 0x7FFF;
 }
 
 template<MODEL Model>
@@ -96,7 +109,7 @@ void PixelMixer<Model>::mixPixel(const Pixel& backgroundPixel) {
     if (spritePixel.color == 0) {   // blank sprite
         emitBackgroundPixel(backgroundPixel);
     }
-    else if (spritePixel.backgroundPriority == 1 && backgroundPixel.color != 0) {   // transparency mixing
+    else if (spritePixel.priority == 1 && backgroundPixel.color != 0) {   // transparency mixing
         emitBackgroundPixel(backgroundPixel);
     }
     else {
@@ -104,14 +117,19 @@ void PixelMixer<Model>::mixPixel(const Pixel& backgroundPixel) {
     }
 }
 
-template<MODEL Model>
-void PixelMixer<Model>::emitBackgroundPixel(const Pixel& pixel) {
+template<>
+void PixelMixer<MODEL::DMG>::emitBackgroundPixel(const Pixel& pixel) {
     if (backgroundAndWindowEnabled) {
         emitPixel(applyPalette(bgPalette, pixel.color));
     }
     else {
         emitPixel(0b00);
     }
+}
+
+template<>
+void PixelMixer<MODEL::CGB>::emitBackgroundPixel(const Pixel& pixel) {
+    emitPixel(applyPalette(bgPaletteRam, pixel));
 }
 
 template<MODEL Model>
@@ -121,10 +139,10 @@ void PixelMixer<Model>::emitSpritePixel(const Pixel& pixel) {
 }
 
 template<MODEL Model>
-void PixelMixer<Model>::emitPixel(uint8_t colorIndex) {
+void PixelMixer<Model>::emitPixel(FrameBuffer::ElementType color) {
     if (pixelsToDiscard > 0) return void(--pixelsToDiscard);
     if (currentColumn++ < PIXEL_OVERSCAN) return;
-    framebuffer.push(colorIndex);
+    framebuffer.push(color);
 }
 
 template class Graphics::PixelMixer<MODEL::DMG>;
