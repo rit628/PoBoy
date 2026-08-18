@@ -26,7 +26,7 @@ namespace Memory {
     constexpr uint16_t WRAM_BANK_1_START     = WRAM_BANK_0_END;
     constexpr uint16_t WRAM_BANK_1_END       = WRAM_BANK_1_START + WRAM_BANK_SIZE;
     constexpr uint16_t ECHO_RAM_START        = WRAM_BANK_1_END;
-    constexpr uint16_t ECHO_RAM_END          = ECHO_RAM_START + 2 * WRAM_BANK_SIZE - 0X0200;
+    constexpr uint16_t ECHO_RAM_END          = ECHO_RAM_START + 2 * WRAM_BANK_SIZE - 0x0200;
     constexpr uint16_t OAM_START             = ECHO_RAM_END;
     constexpr uint16_t OAM_END               = OAM_START + Graphics::OAM_SIZE;
     constexpr uint16_t PROHIBITED_START      = OAM_END;

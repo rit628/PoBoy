@@ -277,7 +277,7 @@ void Bus<Model>::writeIO(uint16_t registerAddress, uint8_t value) {
         break;
         case SVBK:
             if constexpr (Model == MODEL::CGB) {
-                wramBank = value & 0x07;
+                wramBank = std::max(1, value & 0x07);
                 wram1 = std::span(wram).subspan(wramBank * WRAM_BANK_SIZE).template first<WRAM_BANK_SIZE>();
             }
         break;
