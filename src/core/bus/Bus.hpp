@@ -41,10 +41,15 @@ namespace Memory {
             std::array<uint8_t, WRAM_SIZE> wram;
             std::array<uint8_t, HRAM_SIZE> hram;
             std::span<uint8_t, WRAM_BANK_SIZE> wram0, wram1;
-            bool bootromDisabled;       // BANK register
-            uint8_t dmaSourceAddress;   // DMA register
+            bool bootromDisabled;           // BANK register
+            uint8_t dmaSourceAddress;       // DMA register
             /* CGB registers */
-            uint8_t wramBank;           // SVBK register
+            uint8_t wramBank;               // SVBK register
+            uint16_t vramDmaSource;         // HDMA1 and HDMA2 registers
+            uint16_t vramDmaDestination;    // HDMA3 and HDMA4 registers
+            /* HDMA5 register components */
+            bool hblankTransferMode;        // HMDA5 bit 7
+            uint8_t blocks;                 // HDMA5 bits 6-0
     };
 
 }

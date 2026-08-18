@@ -14,7 +14,7 @@ using namespace Graphics;
 template<MODEL Model>
 PPU<Model>::PPU(Interrupts::IMU& imu, std::function<void(std::span<const uint8_t>)> renderFrame)
         : imu(imu), renderFrame(renderFrame)
-        , currentBank(std::span(vram).template subspan<0, VRAM_BANK_SIZE>())
+        , vramBank(std::span(vram).template subspan<0, VRAM_BANK_SIZE>())
 {
     initialize();
 }
@@ -43,7 +43,7 @@ void PPU<Model>::initialize() {
     mode = PPU_MODE::HBLANK;
 
     if constexpr (Model == MODEL::CGB) {
-        vramBank = 0;
+        selectedBank = 0;
 
         bgpPaletteAutoIncrement = false;
         bgpAddress = 0;
@@ -52,7 +52,7 @@ void PPU<Model>::initialize() {
         obpAddress = 0;
     }
     else {
-        vramBank = 0xFF;
+        selectedBank = 0xFF;
 
         bgpPaletteAutoIncrement = true;
         bgpAddress = 0xFF;
@@ -172,13 +172,13 @@ void PPU<Model>::postTick() {
 template<MODEL Model>
 uint8_t PPU<Model>::readVRAM(uint16_t address) {
     if (mode == PPU_MODE::PIXEL_TRANSFER && enabled) return 0xFF;
-    return currentBank[address];
+    return vramBank[address];
 }
 
 template<MODEL Model>
 void PPU<Model>::writeVRAM(uint16_t address, uint8_t value) {
     if (mode == PPU_MODE::PIXEL_TRANSFER && enabled) return;
-    currentBank[address] = value;
+    vramBank[address] = value;
 }
 
 template<MODEL Model>
@@ -197,7 +197,12 @@ void PPU<Model>::writeOAM(uint16_t address, uint8_t value) {
 
 template<MODEL Model>
 void PPU<Model>::dmaTransferOAM(std::span<const uint8_t, OAM_SIZE> sourceRange) {
-    std::copy(sourceRange.begin(), sourceRange.end(), oam.begin());
+    std::ranges::copy(sourceRange, oam.begin());
+}
+
+template<MODEL Model>
+void PPU<Model>::dmaTransferVRAM(std::span<const uint8_t> sourceRange, uint16_t destinationStart) {
+    std::ranges::copy(sourceRange, vramBank.subspan(destinationStart).begin());
 }
 
 template<MODEL Model>

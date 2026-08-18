@@ -44,7 +44,7 @@ namespace Graphics {
             else return 0xFF;
         }
 
-        if constexpr (Register == VBK)  return 0xFE | vramBank;
+        if constexpr (Register == VBK)  return 0xFE | selectedBank;
         if constexpr (Register == BGPI) return 0x40 | bgpPaletteAutoIncrement << 7 | bgpAddress;
         if constexpr (Register == OBPI) return 0x40 | obpPaletteAutoIncrement << 7 | obpAddress;
     }
@@ -82,8 +82,8 @@ namespace Graphics {
         /* CGB registers */
         if constexpr (Model == CGB) {
             if constexpr (Register == VBK) {
-                vramBank = value & 0b1;
-                currentBank = std::span(vram).subspan(vramBank * VRAM_BANK_SIZE).template first<VRAM_BANK_SIZE>();
+                selectedBank = value & 0b1;
+                vramBank = std::span(vram).subspan(selectedBank * VRAM_BANK_SIZE).template first<VRAM_BANK_SIZE>();
             }
 
             if constexpr (Register == BGPI) {

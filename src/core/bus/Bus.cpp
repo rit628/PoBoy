@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <fstream>
 #include <ranges>
+#include <vector>
 
 using namespace Memory;
 
@@ -30,9 +31,19 @@ void Bus<Model>::initialize() {
     
     if constexpr (Model == MODEL::CGB) {
         wramBank = 0;
+        vramDmaSource = 0;
+        vramDmaDestination = 0;
+
+        hblankTransferMode = false;
+        blocks = 0;
     }
     else {
         wramBank = 0xFF;
+        vramDmaSource = 0xFFFF;
+        vramDmaDestination = 0xFFFF;
+
+        hblankTransferMode = true;
+        blocks = 0xFF;
     }
 }
 
@@ -203,6 +214,11 @@ uint8_t Bus<Model>::readIO(uint16_t registerAddress) {
         case BANK:  return 0xFE | bootromDisabled;
         case DMA:   return dmaSourceAddress;
         case SVBK:  return 0xF8 | wramBank;
+        case HDMA1: return 0xFF;
+        case HDMA2: return 0xFF;
+        case HDMA3: return 0xFF;
+        case HDMA4: return 0xFF;
+        case HDMA5: return hblankTransferMode << 7 | blocks;
 
         case SB:    return imu.readIO<SB>();
         case SC:    return imu.readIO<SC>();
@@ -260,12 +276,13 @@ uint8_t Bus<Model>::readIO(uint16_t registerAddress) {
 
 template<MODEL Model>
 void Bus<Model>::writeIO(uint16_t registerAddress, uint8_t value) {
+    using enum MODEL;
     switch (registerAddress) {
         case BANK:
             // bootrom can only be unmapped
             bootromDisabled = bootromDisabled || value;
         break;
-        case DMA:
+        case DMA: {
             // for now this will be emulated as an instant transfer for simplicity and compatibility with most games
             // timings and bus conflicts can be dealt with later if desired
             dmaSourceAddress = value;
@@ -274,11 +291,49 @@ void Bus<Model>::writeIO(uint16_t registerAddress, uint8_t value) {
                 sourceRange.at(i) = read((dmaSourceAddress << 8) | i);
             }
             ppu.dmaTransferOAM(sourceRange);
+        }
         break;
         case SVBK:
-            if constexpr (Model == MODEL::CGB) {
+            if constexpr (Model == CGB) {
                 wramBank = std::max(1, value & 0x07);
                 wram1 = std::span(wram).subspan(wramBank * WRAM_BANK_SIZE).template first<WRAM_BANK_SIZE>();
+            }
+        break;
+        case HDMA1:
+            if constexpr (Model == CGB) {
+                vramDmaSource = (vramDmaSource & 0x00FF) | (value << 8);
+            }
+        break;
+        case HDMA2:
+            if constexpr (Model == CGB) {
+                vramDmaSource = (vramDmaSource & 0xFF00) | (value & 0xF0);  // lower 4 bits ignored
+            }
+        break;
+        case HDMA3:
+            if constexpr (Model == CGB) {
+                vramDmaDestination = (vramDmaDestination & 0x00FF) | ((value & 0x1F) << 8); // upper 3 bits ignored
+            }
+        break;
+        case HDMA4:
+            if constexpr (Model == CGB) {
+                vramDmaDestination = (vramDmaDestination & 0xFF00) | (value & 0xF0);  // lower 4 bits ignored
+            }
+        break;
+        case HDMA5: 
+            if constexpr (Model == CGB) {
+                // for now implemented as instantaneous gdma
+                hblankTransferMode = value >> 7;
+                blocks = value & 0x7F;
+                if (hblankTransferMode) return;
+                uint16_t size = (blocks + 1) * 16;
+                std::vector<uint8_t> sourceRange;
+                sourceRange.reserve(size);
+                for (uint16_t i = 0; i < size; i++) {
+                    sourceRange.push_back(read(vramDmaSource + i));
+                }
+                ppu.dmaTransferVRAM(sourceRange, vramDmaDestination);
+                hblankTransferMode = true;
+                blocks = 0x7F;
             }
         break;
         

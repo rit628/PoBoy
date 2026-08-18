@@ -31,6 +31,7 @@ namespace Graphics {
             uint8_t readOAM(uint16_t address);
             void writeOAM(uint16_t address, uint8_t value);
             void dmaTransferOAM(std::span<const uint8_t, OAM_SIZE> sourceRange);
+            void dmaTransferVRAM(std::span<const uint8_t> sourceRange, uint16_t destinationStart);
             template<uint16_t Register>
             uint8_t readIO();
             template<uint16_t Register>
@@ -56,7 +57,7 @@ namespace Graphics {
             std::array<uint8_t, VRAM_SIZE<Model>> vram;
             std::array<uint8_t, OAM_SIZE> oam;
             std::array<uint8_t, PALETTE_RAM_BANK_SIZE<Model>> bgPaletteRam, spritePaletteRam;   // CGB only
-            std::span<uint8_t, VRAM_BANK_SIZE> currentBank;
+            std::span<uint8_t, VRAM_BANK_SIZE> vramBank;
             bool enabled;
             uint16_t lineDotsElapsed;
             uint32_t frameDotsElapsed;
@@ -77,7 +78,7 @@ namespace Graphics {
             PPU_MODE mode;              // STAT bits 1-0
 
             /* CGB registers */
-            uint8_t vramBank;               // VBK register
+            uint8_t selectedBank;           // VBK register
             /* BGPI register components */
             bool bgpPaletteAutoIncrement;   // BGPI bit 7
             uint8_t bgpAddress;             // BGPI bits 5-0
