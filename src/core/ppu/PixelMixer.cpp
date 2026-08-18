@@ -98,18 +98,21 @@ uint8_t PixelMixer<Model>::applyPalette(uint8_t palette, uint8_t colorIndex) {
 template<MODEL Model>
 uint16_t PixelMixer<Model>::applyPalette(std::span<const uint8_t, PALETTE_RAM_BANK_SIZE<Model>> paletteRam, const Pixel& pixel) {
     static constexpr uint8_t BYTES_PER_COLOR = 2;
-    uint8_t paletteAddress = BYTES_PER_COLOR * (PALETTE_SIZE * pixel.palette + pixel.color);
+    uint8_t paletteAddress = BYTES_PER_COLOR * (PALETTE_SIZE * pixel.paletteNumber + pixel.colorIndex);
     /* CGB colors are stored as little endian 15 bit BGR */
     return (paletteRam[paletteAddress + 1] << 8 | paletteRam[paletteAddress]) & 0x7FFF;
 }
 
-template<MODEL Model>
-void PixelMixer<Model>::mixPixel(const Pixel& backgroundPixel) {
-    Pixel spritePixel = (!spriteFetcher.fifoEmpty()) ? spriteFetcher.fifoPop() : Pixel{};
-    if (spritePixel.color == 0) {   // blank sprite
+template<>
+void PixelMixer<MODEL::DMG>::mixPixel(Pixel&& backgroundPixel) {
+    if (!backgroundAndWindowEnabled) backgroundPixel.colorIndex = 0;
+    if (spriteFetcher.fifoEmpty()) return emitBackgroundPixel(backgroundPixel);
+
+    Pixel spritePixel = spriteFetcher.fifoPop();
+    if (spritePixel.colorIndex == 0) {   // transparent sprite pixel -> bg
         emitBackgroundPixel(backgroundPixel);
     }
-    else if (spritePixel.priority == 1 && backgroundPixel.color != 0) {   // transparency mixing
+    else if (spritePixel.bgPriority && backgroundPixel.colorIndex != 0) {   // bg priority -> bg
         emitBackgroundPixel(backgroundPixel);
     }
     else {
@@ -118,24 +121,43 @@ void PixelMixer<Model>::mixPixel(const Pixel& backgroundPixel) {
 }
 
 template<>
-void PixelMixer<MODEL::DMG>::emitBackgroundPixel(const Pixel& pixel) {
-    if (backgroundAndWindowEnabled) {
-        emitPixel(applyPalette(bgPalette, pixel.color));
+void PixelMixer<MODEL::CGB>::mixPixel(Pixel&& backgroundPixel) {
+    if (spriteFetcher.fifoEmpty()) return emitBackgroundPixel(backgroundPixel);
+
+    Pixel spritePixel = spriteFetcher.fifoPop();
+    if (spritePixel.colorIndex == 0) {   // transparent sprite pixel -> bg
+        emitBackgroundPixel(backgroundPixel);
+    }
+    else if (!backgroundAndWindowEnabled || backgroundPixel.colorIndex == 0) {  // bg disabled or 0 index bg pixel -> sprite 
+        emitSpritePixel(spritePixel);
+    }
+    else if (backgroundPixel.bgPriority || spritePixel.bgPriority) {    // bg priority -> bg
+        emitBackgroundPixel(backgroundPixel);
     }
     else {
-        emitPixel(0b00);
+        emitSpritePixel(spritePixel);
     }
 }
 
-template<>
-void PixelMixer<MODEL::CGB>::emitBackgroundPixel(const Pixel& pixel) {
-    emitPixel(applyPalette(bgPaletteRam, pixel));
+template<MODEL Model>
+void PixelMixer<Model>::emitBackgroundPixel(const Pixel& pixel) {
+    if constexpr (Model == MODEL::DMG) {
+        emitPixel(applyPalette(bgPalette, pixel.colorIndex));
+    }
+    else {
+        emitPixel(applyPalette(bgPaletteRam, pixel));
+    }
 }
 
 template<MODEL Model>
 void PixelMixer<Model>::emitSpritePixel(const Pixel& pixel) {
-    uint8_t palette = (pixel.palette == 0) ? spritePalette0 : spritePalette1;
-    emitPixel(applyPalette(palette, pixel.color));
+    if constexpr (Model == MODEL::DMG) {
+        uint8_t palette = (pixel.paletteNumber == 0) ? spritePalette0 : spritePalette1;
+        emitPixel(applyPalette(palette, pixel.colorIndex));
+    }
+    else {
+        emitPixel(applyPalette(spritePaletteRam, pixel));
+    }
 }
 
 template<MODEL Model>

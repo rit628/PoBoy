@@ -81,4 +81,17 @@ namespace Graphics {
         self.onSecondDot = true;    // will get flipped by tick()
     }
 
+    inline auto PixelFetcher::createColorIndexExtractor(bool xFlip) {
+        auto getMask = (xFlip) ? [](uint8_t pixelIndex) { return 0x1 << pixelIndex; }
+                               : [](uint8_t pixelIndex) { return 0x1 << (7 - pixelIndex); };
+        
+        /* gets color index of pixel i in tile row from bit plane */
+        return [this, getMask](uint8_t pixelIndex) -> uint8_t {
+            uint8_t mask = getMask(pixelIndex);
+            bool lsb = rowBitPlaneLo & mask;
+            bool msb = rowBitPlaneHi & mask;
+            return (msb << 1) | lsb;
+        };
+    }
+
 }

@@ -1,13 +1,15 @@
 #pragma once
+#include "GraphicsConstants.hpp"
 #include "StaticQueue.hpp"
 #include <cstdint>
 
 namespace Graphics {
 
     struct Pixel {
-        uint8_t color = 0;
-        uint8_t palette = 0;
-        uint8_t priority = 0;
+        uint8_t colorIndex = 0;
+        uint8_t paletteNumber = 0;
+        bool bgPriority = false;
+        uint8_t spritePriority = MAX_SPRITES_PER_LINE;  // exclusively used for CGB oam index based drawing priority
     };
 
     class PixelFetcher {
@@ -27,6 +29,7 @@ namespace Graphics {
             void executeGetTileDataHi(this auto&& self);
             void executeSleep(this auto&& self);
             void executePush(this auto&& self);
+            auto createColorIndexExtractor(bool xFlip);
 
             STATE state = STATE::GET_TILE;
             bool onSecondDot = false;

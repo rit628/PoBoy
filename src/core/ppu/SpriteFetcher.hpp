@@ -12,6 +12,7 @@ namespace Graphics {
         uint8_t xPos = 0;
         uint8_t tileNumber = 0;
         uint8_t spriteFlags = 0;
+        uint8_t priority = 0;
     };
 
     template<MODEL Model>
@@ -48,11 +49,10 @@ namespace Graphics {
 
             StaticQueue<Sprite, MAX_SPRITES_PER_LINE> spriteBuffer;
             const Sprite* fetchedSprite = nullptr;
-            /* sprite flags */
-            bool yFlip = false;
-            bool xFlip = false;
 
             std::span<const uint8_t, TILE_DATA_SIZE> tileData;
+            /* CGB only */
+            std::span<const uint8_t, TILE_DATA_SIZE> tileDataBank0, tileDataBank1;
     };
 
 }

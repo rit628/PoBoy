@@ -1,6 +1,7 @@
 #include "BackgroundFetcher.hpp"
 #include "FlagOps.hpp"
 #include "GraphicsConstants.hpp"
+#include "SystemConstants.hpp"
 #include <cstdint>
 
 using namespace Graphics;
@@ -81,11 +82,18 @@ uint16_t BackgroundFetcher<Model>::getTileRowAddress() {
     uint16_t tileAddress = (unsignedAddressing) ? tileId * TILE_BYTES : 0x1000 + static_cast<int8_t>(tileId) * TILE_BYTES;
     uint8_t tileRow = 0;
     if (renderingWindow) {  // get window tile data
-        tileRow = currentWindowLine % 8;
+        tileRow = currentWindowLine % TILE_ROW_COUNT;
     }
     else {  // get background tile data
-        tileRow = (yPos + scrollY) % 8;
+        tileRow = (yPos + scrollY) % TILE_ROW_COUNT;
     }
+
+    if constexpr (Model == MODEL::CGB) {
+        if (testFlags(tileAttributes, ATTRIBUTE_FLAG::Y_FLIP)) {
+            tileRow ^= (TILE_ROW_COUNT - 1);    // inverts row index
+        }
+    }
+
     return tileAddress + tileRow * TILE_ROW_BYTES;
 }
 
@@ -94,16 +102,17 @@ void BackgroundFetcher<Model>::getTile() {
     uint8_t selectedTileMap = 0;
     uint8_t yCoordinate = 0;
     uint8_t xCoordinate = 0;
+    /* coordinate computation uses truncating division to round to nearest tile */
     if (renderingWindow) {  // get window tile
         selectedTileMap = windowTileMap;
-        yCoordinate = currentWindowLine / 8;
-        xCoordinate = currentWindowColumn / 8;
+        yCoordinate = currentWindowLine / TILE_ROW_COUNT;
+        xCoordinate = currentWindowColumn / TILE_COLUMN_COUNT;
     }
     else {  // get background tile
         selectedTileMap = backgroundTileMap;
         /* x and y coordinates of tile are computed in 8 bits to allow wraparound scrolling */
-        yCoordinate = ((yPos + scrollY) & 0xFF) / 8;
-        xCoordinate = ((xPos + scrollX) & 0xFF) / 8;
+        yCoordinate = ((yPos + scrollY) & 0xFF) / TILE_ROW_COUNT;
+        xCoordinate = ((xPos + scrollX) & 0xFF) / TILE_COLUMN_COUNT;
     }
     uint16_t tileIdAddress = selectedTileMap * TILE_MAP_SIZE + yCoordinate * TILE_MAP_WIDTH + xCoordinate;
     tileId = tileMaps[tileIdAddress];
@@ -130,15 +139,18 @@ void BackgroundFetcher<Model>::sleep() {
 
 template<MODEL Model>
 void BackgroundFetcher<Model>::push() {
+    bool xFlip = false; // bg tiles cannot be flipped on DMG
     Pixel pixel;
     if constexpr (Model == MODEL::CGB) {
-        pixel.palette = extractFlags(tileAttributes, ATTRIBUTE_FLAG::CGB_PALETTE);
-        pixel.priority = testFlags(tileAttributes, ATTRIBUTE_FLAG::PRIORITY);
+        pixel.paletteNumber = extractFlags(tileAttributes, ATTRIBUTE_FLAG::CGB_PALETTE);
+        pixel.bgPriority = testFlags(tileAttributes, ATTRIBUTE_FLAG::BG_PRIORITY);
+        xFlip = testFlags(tileAttributes, ATTRIBUTE_FLAG::X_FLIP);
     }
+
+    auto getColorIndex = createColorIndexExtractor(xFlip);
+
     for (uint8_t i = 0; i < pixelFifo.capacity(); i++) {
-        bool lsb = rowBitPlaneLo & (0x1 << (7 - i));
-        bool msb = rowBitPlaneHi & (0x1 << (7 - i));
-        pixel.color = (msb << 1) | lsb;
+        pixel.colorIndex = getColorIndex(i);
         pixelFifo.push(pixel);
     }
     if (renderingWindow) currentWindowColumn += 8;

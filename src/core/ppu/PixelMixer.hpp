@@ -36,7 +36,7 @@ namespace Graphics {
 
             uint8_t applyPalette(uint8_t palette, uint8_t colorIndex);
             uint16_t applyPalette(std::span<const uint8_t, PALETTE_RAM_BANK_SIZE<Model>> paletteRam, const Pixel& pixel);
-            void mixPixel(const Pixel& backgroundPixel);
+            void mixPixel(Pixel&& backgroundPixel);
             void emitBackgroundPixel(const Pixel& pixel);
             void emitSpritePixel(const Pixel& pixel);
             void emitPixel(FrameBuffer::ElementType color);

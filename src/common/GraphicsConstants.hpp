@@ -28,7 +28,7 @@ namespace Graphics {
 
     /*  Tile Attributes */
     enum class ATTRIBUTE_FLAG : uint8_t {
-        PRIORITY            = 0b10000000,
+        BG_PRIORITY         = 0b10000000,
         Y_FLIP              = 0b01000000,
         X_FLIP              = 0b00100000,
         DMG_PALETTE         = 0b00010000,   // not used by background tiles
@@ -70,6 +70,8 @@ namespace Graphics {
     constexpr uint16_t TILE_BYTES                   = 16;
     constexpr uint16_t TILE_DATA_SIZE               = TILE_COUNT * TILE_BYTES;
     constexpr uint8_t  TILE_ROW_BYTES               = 2;
+    constexpr uint8_t  TILE_ROW_COUNT               = TILE_BYTES / TILE_ROW_BYTES;
+    constexpr uint8_t  TILE_COLUMN_COUNT            = TILE_ROW_COUNT;
 
     constexpr uint8_t  TILE_MAP_WIDTH               = 32;
     constexpr uint8_t  TILE_MAP_HEIGHT              = 32;

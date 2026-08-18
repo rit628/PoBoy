@@ -87,7 +87,7 @@ namespace Graphics {
             }
 
             if constexpr (Register == BGPI) {
-                bgpPaletteAutoIncrement = value & 0x80;
+                bgpPaletteAutoIncrement = value >> 7;
                 bgpAddress = value & 0x3F;
             }
     
@@ -99,7 +99,7 @@ namespace Graphics {
             }
     
             if constexpr (Register == OBPI) {
-                obpPaletteAutoIncrement = value & 0x80;
+                obpPaletteAutoIncrement = value >> 7;
                 obpAddress = value & 0x3F;
             }
     
