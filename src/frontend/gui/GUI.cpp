@@ -96,10 +96,17 @@ void GUI::updateSpeed() {
 
 void GUI::loadFile(const std::filesystem::path file) {
     if (!std::filesystem::exists(file)) return;
-    using std::string_literals::operator""s;
     auto metadata = gb->loadRom(file);
-    renderer->setNativePixelFormat(gb->getModel());
-    windowTitle = "PoBoy: "s + metadata.title.data();
+    auto model = gb->getModel();
+    renderer->setNativePixelFormat(model);
+    windowTitle = "PoBoy: ";
+    if (model == MODEL::CGB && file.extension() == ".gbc") {
+        auto title = metadata.title.substr(0, metadata.title.size() - 5);
+        windowTitle += std::string(title.data(), title.size());
+    }
+    else {
+        windowTitle += metadata.title.data();
+    }
     SDL_SetWindowTitle(window, windowTitle.c_str());
     running = true;
     SDL_ResetHint(SDL_HINT_MAIN_CALLBACK_RATE);
