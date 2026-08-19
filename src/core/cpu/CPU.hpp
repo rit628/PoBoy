@@ -10,8 +10,8 @@ namespace Processing {
     template<typename BusType>
     class CPU {
         public:
-            CPU(std::function<void()> systemTick) requires (!std::is_reference_v<BusType>);
-            CPU(BusType& bus, std::function<void()> systemTick);
+            CPU() requires (!std::is_reference_v<BusType>);
+            CPU(BusType& bus);
             void initialize();
             void bootHLE(const Memory::CartridgeMetadata& cartData);
             void tick();
@@ -185,7 +185,6 @@ namespace Processing {
             void stop();
     
             BusType bus;
-            std::function<void()> systemTick;   // use std::function for simplicity
     
             /* Register File */
             Register16 PC; // program counter

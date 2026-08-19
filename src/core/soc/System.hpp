@@ -23,10 +23,6 @@ class System {
         void tick();
 
     private:
-        void systemTick();
-
-        uint64_t& cycleCount;
-
         Memory::Cartridge& cartridge;
         Interrupts::IMU imu;
         Audio::APU apu;

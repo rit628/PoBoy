@@ -7,13 +7,12 @@ System<Model>::System(uint64_t& cycleCount
                     , std::function<uint8_t()> readInput
                     , std::function<void(std::span<const float>)> queueAudioData
                     , std::function<void(std::span<const uint8_t>)> renderFrame)
-                    : cycleCount(cycleCount)
-                    , cartridge(cartridge)
+                    : cartridge(cartridge)
                     , imu(readInput)
                     , apu(imu, queueAudioData)
                     , ppu(imu, renderFrame)
-                    , bus(cartridge, imu, apu, ppu)
-                    , cpu(bus, std::bind(&System::systemTick, std::ref(*this))) 
+                    , bus(cycleCount, cartridge, imu, apu, ppu)
+                    , cpu(bus) 
                     {}
 
 template<MODEL Model>
@@ -29,18 +28,6 @@ void System<Model>::initialize(const Memory::CartridgeMetadata& cartData) {
 template<MODEL Model>
 void System<Model>::tick() {
     cpu.tick();
-}
-
-template<MODEL Model>
-void System<Model>::systemTick() {
-    imu.tick();
-    apu.tickDivider();
-    for (uint8_t i = 0; i < 4; i++) {
-        cartridge.tick();
-        apu.tick();
-        ppu.tick();
-        cycleCount++;
-    }
 }
 
 template class System<MODEL::DMG>;

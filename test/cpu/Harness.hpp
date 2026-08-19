@@ -19,7 +19,7 @@ if (!(expr)) { \
 
 class Harness : Processing::CPU<Memory::FlatBus> {
     public:
-        Harness();
+        Harness() = default;
         void test(boost::json::value& testConfig);
 
     private:
@@ -28,11 +28,7 @@ class Harness : Processing::CPU<Memory::FlatBus> {
         void compare(boost::json::value& final);
 
         std::string currentTest;
-        uint8_t ticksThisInstruction = 0;
 };
-
-inline Harness::Harness()
-    : CPU<Memory::FlatBus>([this](){ticksThisInstruction++;}) {}
 
 inline void Harness::test(boost::json::value& testConfig) {
     currentTest = testConfig.at("name").as_string();
@@ -74,11 +70,11 @@ inline void Harness::init(boost::json::value& initial) {
 inline void Harness::run(boost::json::value& cycles) {
     auto totalMCycles = cycles.as_array().size();
     size_t elapsedMCycles = 0;
-    ticksThisInstruction = 0;
+    bus.cycleCount = 0;
     while (elapsedMCycles != totalMCycles) {
-        ticksThisInstruction = 0;
+        bus.cycleCount = 0;
         tick();
-        elapsedMCycles += ticksThisInstruction;
+        elapsedMCycles += bus.cycleCount / 4;
         if (elapsedMCycles > totalMCycles) {
             throw std::runtime_error("invalid cycle count: " + std::to_string(elapsedMCycles) + " expected: " + std::to_string(totalMCycles));
         }

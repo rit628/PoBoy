@@ -1242,7 +1242,7 @@ namespace Processing {
     template<typename BusType>
     [[ gnu::always_inline ]] inline void CPU<BusType>::LD_0xF9(Register16& SP, Register16& HL, int) {
         load<16>(SP, HL);
-        systemTick();   // this load takes an extra cycle to simulate pipelining despite no argument decode
+        bus.tick();   // this load takes an extra cycle to simulate pipelining despite no argument decode
     }
     
     template<typename BusType>

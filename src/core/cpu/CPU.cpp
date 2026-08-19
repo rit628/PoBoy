@@ -47,15 +47,13 @@
 using namespace Processing;
 
 template<typename BusType>
-CPU<BusType>::CPU(std::function<void()> systemTick) requires (!std::is_reference_v<BusType>)
-                 : systemTick(systemTick)
+CPU<BusType>::CPU() requires (!std::is_reference_v<BusType>)
 {
     initialize();
 }
 
 template<typename BusType>
-CPU<BusType>::CPU(BusType& bus, std::function<void()> systemTick)
-                 : bus(bus), systemTick(systemTick)
+CPU<BusType>::CPU(BusType& bus) : bus(bus)
 {
     initialize();
 }
@@ -108,7 +106,7 @@ void CPU<BusType>::tick() {
     handleInterrupts();
 
     /* pause instruction execution while halted */
-    if (state == STATE::HALTED) return systemTick();
+    if (state == STATE::HALTED) return bus.tick();
     /* set IME since next opcode read will consume one M cycle */
     if (IME == INTERRUPT_MASTER_FLAG::ENABLE_PENDING) IME = INTERRUPT_MASTER_FLAG::ENABLED;
 
@@ -189,8 +187,8 @@ void CPU<BusType>::handleInterrupts() {
     auto handleInterrupt = [&, this]<Interrupts::INTERRUPT_FLAG Flag, uint8_t Address>() {
         if (testFlags(interrupts, Flag)) {
             /* noop ticks */
-            systemTick();
-            systemTick();
+            bus.tick();
+            bus.tick();
             IME = INTERRUPT_MASTER_FLAG::DISABLED;
             clearFlags(IF, Flag);
             write<false>(Memory::IF, IF);

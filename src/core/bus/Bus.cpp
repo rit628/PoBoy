@@ -13,8 +13,8 @@
 using namespace Memory;
 
 template<MODEL Model>
-Bus<Model>::Bus(Cartridge& cartridge, Interrupts::IMU& imu, Audio::APU& apu, Graphics::PPU<Model>& ppu)
-               : cartridge(cartridge), imu(imu), apu(apu), ppu(ppu)
+Bus<Model>::Bus(uint64_t& cycleCount, Cartridge& cartridge, Interrupts::IMU& imu, Audio::APU& apu, Graphics::PPU<Model>& ppu)
+               : cycleCount(cycleCount), cartridge(cartridge), imu(imu), apu(apu), ppu(ppu)
                , wram0(std::span(wram). template subspan<0, WRAM_BANK_SIZE>())
                , wram1(std::span(wram). template subspan<WRAM_BANK_SIZE, WRAM_BANK_SIZE>())
 {
@@ -78,6 +78,18 @@ void Bus<Model>::initHLE() {
     imu.initHLE();
     apu.initHLE();
     ppu.initHLE();
+}
+
+template<MODEL Model>
+void Bus<Model>::tick() {
+    imu.tick();
+    apu.tickDivider();
+    for (uint8_t i = 0; i < 4; i++) {
+        cartridge.tick();
+        apu.tick();
+        ppu.tick();
+        cycleCount++;
+    }
 }
 
 template<MODEL Model>

@@ -14,10 +14,11 @@ namespace Memory {
     template<MODEL Model>
     class Bus {
         public:
-            Bus(Cartridge& cartridge, Interrupts::IMU& imu, Audio::APU& apu, Graphics::PPU<Model>& ppu);
+            Bus(uint64_t& cycleCount, Cartridge& cartridge, Interrupts::IMU& imu, Audio::APU& apu, Graphics::PPU<Model>& ppu);
             void initialize();
             bool loadBootrom();
             void initHLE();
+            void tick();
     
             uint8_t read(uint16_t address);
             void write(uint16_t address, uint8_t value);
@@ -32,6 +33,8 @@ namespace Memory {
             static constexpr uint16_t BOOTROM_SIZE = 0x0100 + (Model == MODEL::CGB) * 0x0800;
             static constexpr uint16_t WRAM_SIZE    = WRAM_BANK_SIZE * (2 + 6 * (Model == MODEL::CGB));
     
+            uint64_t& cycleCount;
+
             Cartridge& cartridge;
             Interrupts::IMU& imu;
             Audio::APU& apu;

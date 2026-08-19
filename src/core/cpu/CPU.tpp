@@ -11,7 +11,7 @@ namespace Processing {
     template<bool Tick>
     inline uint8_t CPU<BusType>::read(uint16_t address) {
         auto result = bus.read(address);
-        if constexpr (Tick) systemTick();
+        if constexpr (Tick) bus.tick();
         return result;
     }
 
@@ -19,7 +19,7 @@ namespace Processing {
     template<bool Tick>
     inline void CPU<BusType>::write(uint16_t address, uint8_t value) {
         bus.write(address, value);
-        if constexpr (Tick) systemTick();
+        if constexpr (Tick) bus.tick();
     }
 
     template<typename BusType>
@@ -159,14 +159,14 @@ namespace Processing {
     inline void CPU<BusType>::loadAdjusted(Register<16> auto& target, Register<16> auto& value, int8_t adjust) {
         auto adjustedValue = addAndSetFlags(value, adjust);
         target = adjustedValue;
-        systemTick();   // extra cycle for opcode 0xF8
+        bus.tick();   // extra cycle for opcode 0xF8
     }
     
     template<typename BusType>
     template<size_t N>
     inline void CPU<BusType>::add(Register<N> auto& target, RegisterValue<N> value) {
         target = addAndSetFlags(target, value);
-        if constexpr (N == 16) systemTick();    // 16 bit add takes extra cycle
+        if constexpr (N == 16) bus.tick();    // 16 bit add takes extra cycle
     }
     
     template<typename BusType>
@@ -191,8 +191,8 @@ namespace Processing {
     inline void CPU<BusType>::addRelative(Register<16> auto& target, int8_t value) {
         target = addAndSetFlags(target, value);
         /* relative add takes 2 extra cycles */
-        systemTick();
-        systemTick();
+        bus.tick();
+        bus.tick();
     }
     
     template<typename BusType>
@@ -240,7 +240,7 @@ namespace Processing {
     template<typename BusType>
     inline void CPU<BusType>::decrement(Register<16> auto& target) {
         target--;
-        systemTick();   // 16 bit dec takes extra cycle
+        bus.tick();   // 16 bit dec takes extra cycle
     }
     
     template<typename BusType>
@@ -261,7 +261,7 @@ namespace Processing {
     template<typename BusType>
     inline void CPU<BusType>::increment(Register<16> auto& target) {
         target++;
-        systemTick();   // 16 bit inc takes extra cycle
+        bus.tick();   // 16 bit inc takes extra cycle
     }
     
     template<typename BusType>
@@ -526,7 +526,7 @@ namespace Processing {
     
     template<typename BusType>
     inline void CPU<BusType>::push(Register<16> auto& target) {
-        systemTick();   // match delay from pipelined decrement
+        bus.tick();   // match delay from pipelined decrement
         write(--SP, target.hi());
         write(--SP, target.lo());
     }
@@ -554,7 +554,7 @@ namespace Processing {
     template<typename BusType>
     inline void CPU<BusType>::jump(uint16_t address) {
         PC = address;
-        systemTick();
+        bus.tick();
     }
 
     template<typename BusType>
@@ -566,7 +566,7 @@ namespace Processing {
     template<typename BusType>
     inline void CPU<BusType>::jumpRelative(int8_t offset) {
         PC += offset;
-        systemTick();
+        bus.tick();
     }
 
     template<typename BusType>
@@ -578,14 +578,14 @@ namespace Processing {
     template<typename BusType>
     inline void CPU<BusType>::ret() {
         pop(PC);
-        systemTick();
+        bus.tick();
     }
 
     template<typename BusType>
     template<REGISTER_FLAG Flag, bool N>
     inline void CPU<BusType>::ret() {
         if (testCondition<Flag, N>()) ret();
-        systemTick();
+        bus.tick();
     }
     
     template<typename BusType>

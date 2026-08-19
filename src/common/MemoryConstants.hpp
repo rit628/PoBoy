@@ -158,15 +158,15 @@ namespace Memory {
         uint16_t globalChecksum = 0;
     };
 
-    class FlatBus {
-        public:
-            uint8_t read(uint16_t address) { return bus.at(address); }
-            void write(uint16_t address, uint8_t value) { bus.at(address) = value; }
-            void initialize() { bus.fill(0); }
-            void initHLE() { initialize(); }
+    struct FlatBus {
+        uint8_t read(uint16_t address) { return bus.at(address); }
+        void write(uint16_t address, uint8_t value) { bus.at(address) = value; }
+        void initialize() { bus.fill(0); cycleCount = 0; }
+        void initHLE() { initialize(); }
+        void tick() { cycleCount += 4; }
 
-        private:
-            std::array<uint8_t, Memory::MEMORY_SIZE> bus;
+        std::array<uint8_t, Memory::MEMORY_SIZE> bus;
+        uint64_t cycleCount;
     };
     
     constexpr uint32_t decodeRomSize(uint8_t encodedSize) {
