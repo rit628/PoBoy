@@ -13,6 +13,7 @@ SystemTimer::SystemTimer(IMU& imu) : imu(imu)
 void SystemTimer::initialize() {
     prevTimaBit = 0;
     reloadTima = false;
+    timaReloaded = false;
 
     systemCounter = 0;
     timerCounter = 0;
@@ -25,7 +26,7 @@ void SystemTimer::initialize() {
 template<uint16_t Register>
 uint8_t SystemTimer::readIO() {
     using namespace Memory;
-    if constexpr (Register == DIV)  return systemCounter >> 6;
+    if constexpr (Register == DIV)  return (systemCounter >> 6) & 0xFF;
     if constexpr (Register == TIMA) return timerCounter;
     if constexpr (Register == TMA)  return timerModulo;
 }
@@ -36,11 +37,22 @@ uint8_t SystemTimer::readIO<Memory::TAC>() {
 }
 
 template<uint16_t Register>
-void SystemTimer::writeIO(uint8_t value) {
+void SystemTimer::writeIO(uint8_t value [[ maybe_unused ]]) {
     using namespace Memory;
     if constexpr (Register == DIV)  return void(systemCounter = 0);
-    if constexpr (Register == TIMA) return void(timerCounter = value);
-    if constexpr (Register == TMA)  return void(timerModulo = value);
+}
+
+template<>
+void SystemTimer::writeIO<Memory::TMA>(uint8_t value) {
+    timerModulo = value;
+    if (timaReloaded) timerCounter = timerModulo;
+}
+
+template<>
+void SystemTimer::writeIO<Memory::TIMA>(uint8_t value) {
+    if (timaReloaded) return;
+    timerCounter = value;
+    reloadTima = false;
 }
 
 template<>
@@ -64,10 +76,12 @@ void SystemTimer::tick() {
     bool currTimaBit = bool(++systemCounter & overflowBit) && timerEnabled;
     bool timaTick = prevTimaBit > currTimaBit; // tick on falling edge
     prevTimaBit = currTimaBit;
+    timaReloaded = false;
 
     // TIMA reload on following m-cycle
     if (reloadTima) {
         reloadTima = false;
+        timaReloaded = true;
         timerCounter = timerModulo;
         imu.triggerInterrupt(INTERRUPT_FLAG::TIMER);
     }
@@ -81,5 +95,3 @@ template uint8_t SystemTimer::readIO<Memory::TIMA>();
 template uint8_t SystemTimer::readIO<Memory::TMA>();
 
 template void SystemTimer::writeIO<Memory::DIV>(uint8_t);
-template void SystemTimer::writeIO<Memory::TIMA>(uint8_t);
-template void SystemTimer::writeIO<Memory::TMA>(uint8_t);
