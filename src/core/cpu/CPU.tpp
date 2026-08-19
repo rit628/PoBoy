@@ -10,15 +10,16 @@ namespace Processing {
     template<typename BusType>
     template<bool Tick>
     inline uint8_t CPU<BusType>::read(uint16_t address) {
+        auto result = bus.read(address);
         if constexpr (Tick) systemTick();
-        return bus.read(address);
+        return result;
     }
 
     template<typename BusType>
     template<bool Tick>
     inline void CPU<BusType>::write(uint16_t address, uint8_t value) {
+        bus.write(address, value);
         if constexpr (Tick) systemTick();
-        return bus.write(address, value);
     }
 
     template<typename BusType>
