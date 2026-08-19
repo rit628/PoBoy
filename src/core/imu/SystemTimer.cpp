@@ -12,7 +12,7 @@ SystemTimer::SystemTimer(IMU& imu) : imu(imu)
 
 void SystemTimer::initialize() {
     prevTimaBit = 0;
-    timaReloadTCycle = 4;
+    reloadTima = false;
 
     systemCounter = 0;
     timerCounter = 0;
@@ -25,7 +25,7 @@ void SystemTimer::initialize() {
 template<uint16_t Register>
 uint8_t SystemTimer::readIO() {
     using namespace Memory;
-    if constexpr (Register == DIV)  return systemCounter >> 8; // DIV is upper byte of system counter
+    if constexpr (Register == DIV)  return systemCounter >> 6;
     if constexpr (Register == TIMA) return timerCounter;
     if constexpr (Register == TMA)  return timerModulo;
 }
@@ -52,7 +52,7 @@ void SystemTimer::writeIO<Memory::TAC>(uint8_t value) {
 void SystemTimer::initHLE() {
     using namespace Memory;
 
-    systemCounter = 0xAC00; // DIV (should be 0xAB but something may be wrong with the timer)
+    systemCounter = 0xAB00; // DIV
 
     writeIO<TIMA>(0x00);
     writeIO<TMA>(0x00);
@@ -65,13 +65,15 @@ void SystemTimer::tick() {
     bool timaTick = prevTimaBit > currTimaBit; // tick on falling edge
     prevTimaBit = currTimaBit;
 
-    // start reload from TIMA overflow
-    if (timaTick && ++timerCounter == 0) timaReloadTCycle = 0;
-    // TIMA takes 4 cycles to reload
-    if (timaReloadTCycle != 4 && ++timaReloadTCycle == 4) {
+    // TIMA reload on following m-cycle
+    if (reloadTima) {
+        reloadTima = false;
         timerCounter = timerModulo;
         imu.triggerInterrupt(INTERRUPT_FLAG::TIMER);
     }
+
+    // start reload from TIMA overflow
+    if (timaTick && ++timerCounter == 0) reloadTima = true;
 }
 
 template uint8_t SystemTimer::readIO<Memory::DIV>();

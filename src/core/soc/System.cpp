@@ -33,9 +33,10 @@ void System<Model>::tick() {
 
 template<MODEL Model>
 void System<Model>::systemTick() {
+    imu.tick();
+    apu.tickDivider();
     for (uint8_t i = 0; i < 4; i++) {
         cartridge.tick();
-        imu.tick();
         apu.tick();
         ppu.tick();
         cycleCount++;

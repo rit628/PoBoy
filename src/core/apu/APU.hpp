@@ -24,11 +24,11 @@ namespace Audio {
             void writeWaveRAM(uint8_t address, uint8_t value);
 
             void initHLE();
-            void tick();
+            void tick();        // per t-cycle
+            void tickDivider(); // per m-cycle
             
         private:
             void disableAudio();
-            void incrementDivider();
             void sampleChannels();
             void mixChannels();
             template<bool Left>

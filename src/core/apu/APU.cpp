@@ -109,7 +109,6 @@ void APU::initHLE() {
 }
 
 void APU::tick() {
-    incrementDivider();
     channel1.tick();
     channel2.tick();
     channel3.tick();
@@ -117,17 +116,7 @@ void APU::tick() {
     if (++discardedSamples == SAMPLES_TO_DISCARD) sampleChannels();
 }
 
-void APU::disableAudio() {
-    masterVolumeControl = 0;
-    soundPanControl = 0;
-    
-    channel1.disable();
-    channel2.disable();
-    channel3.disable();
-    channel4.disable();
-}
-
-void APU::incrementDivider() {
+void APU::tickDivider() {
     static constexpr uint8_t APU_DIV_BIT = 0x10;
     bool currDividerBit = imu.readIO<Memory::DIV>() & APU_DIV_BIT;
     bool increment = prevDividerBit > currDividerBit;
@@ -148,6 +137,16 @@ void APU::incrementDivider() {
         channel2.tickEnvelope();
         channel4.tickEnvelope();
     }
+}
+
+void APU::disableAudio() {
+    masterVolumeControl = 0;
+    soundPanControl = 0;
+    
+    channel1.disable();
+    channel2.disable();
+    channel3.disable();
+    channel4.disable();
 }
 
 void APU::sampleChannels() {

@@ -17,17 +17,17 @@ namespace Interrupts {
             void writeIO(uint8_t value);
             
             void initHLE();
-            void tick();
+            void tick();    // per m-cycle
 
         private:
-            static constexpr std::array<uint16_t, 4> timerClocks = {1024, 16, 64, 256};
+            static constexpr std::array<uint16_t, 4> timerClocks = {256, 4, 16, 64};    // m-cycle based
     
             IMU& imu;
     
             bool prevTimaBit;
-            uint8_t timaReloadTCycle;
+            bool reloadTima;
             
-            uint16_t systemCounter; // DIV register (bits 15-8) and clock counter (bits 7-0)
+            uint16_t systemCounter; // DIV register (bits 13-6) and clock counter (bits 5-0)
             uint8_t timerCounter;   // TIMA register
             uint8_t timerModulo;    // TMA register
 
