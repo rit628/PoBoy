@@ -35,6 +35,9 @@ void Bus<Model>::initialize() {
 
         hdmaTransferMode = false;
         blocks = 0;
+
+        doubleSpeedMode = false;
+        speedSwitchArmed = false;
     }
     else {
         wramBank = 0xFF;
@@ -43,6 +46,9 @@ void Bus<Model>::initialize() {
 
         hdmaTransferMode = true;
         blocks = 0xFF;
+
+        doubleSpeedMode = true;
+        speedSwitchArmed = true;
     }
 }
 
@@ -81,14 +87,33 @@ void Bus<Model>::initHLE() {
 
 template<MODEL Model>
 void Bus<Model>::tick(uint8_t tCycles) {
+    bool shiftApuDivBit = false;
+    if constexpr (Model == MODEL::CGB) shiftApuDivBit = doubleSpeedMode;
     imu.tick();
-    apu.tickDivider();
+    apu.tickDivider(shiftApuDivBit);
     for (uint8_t i = 0; i < tCycles; i++) {
         cartridge.tick();
         apu.tick();
         ppu.tick();
         cycleCount++;
     }
+}
+
+template<MODEL Model>
+void Bus<Model>::tick() {
+    if constexpr (Model == MODEL::CGB) {
+        if (doubleSpeedMode) tick(2);
+        else tick(4);
+    }
+    else {
+        tick(4);
+    }
+}
+
+template<MODEL Model>
+void Bus<Model>::switchSpeed() {
+    doubleSpeedMode = !doubleSpeedMode;
+    speedSwitchArmed = false;
 }
 
 template<MODEL Model>
@@ -258,6 +283,7 @@ uint8_t Bus<Model>::readIO(uint16_t registerAddress) {
         case HDMA3: return 0xFF;
         case HDMA4: return 0xFF;
         case HDMA5: return hdmaTransferMode << 7 | blocks;
+        case KEY1:  return 0x7E | doubleSpeedMode << 7 | speedSwitchArmed;
 
         case SB:    return imu.readIO<SB>();
         case SC:    return imu.readIO<SC>();
@@ -372,6 +398,11 @@ void Bus<Model>::writeIO(uint16_t registerAddress, uint8_t value) {
                 else {  // cancel hdma
                     hdmaTransferMode = true;
                 }
+            }
+        break;
+        case KEY1:
+            if constexpr (Model == CGB) {
+                speedSwitchArmed = value & 0x01;
             }
         break;
         

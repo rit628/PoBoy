@@ -1,6 +1,8 @@
 #pragma once
+#include "Bus.hpp"
 #include "CPU.hpp"
 #include "MemoryConstants.hpp"
+#include "SystemConstants.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <utility>
@@ -669,8 +671,13 @@ namespace Processing {
     
     template<typename BusType>
     inline void CPU<BusType>::stop() {
-        // this one is kind of ridiculous (and unused), just interpret as noop
-        // maybe will implement in the future for completeness
+        /* skip all of the stalling stuff for now */
+        if constexpr (std::is_same_v<BusType, Memory::Bus<MODEL::CGB>&>) {
+            bool switchArmed = read<false>(Memory::KEY1) & 0x01;
+            if (switchArmed) {
+                bus.switchSpeed();
+            }
+        }
     }
 
 }

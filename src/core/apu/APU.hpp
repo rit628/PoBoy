@@ -24,8 +24,8 @@ namespace Audio {
             void writeWaveRAM(uint8_t address, uint8_t value);
 
             void initHLE();
-            void tick();        // per t-cycle
-            void tickDivider(); // per m-cycle
+            void tick();                                // per t-cycle
+            void tickDivider(bool shiftBit = false);    // per m-cycle
             
         private:
             void disableAudio();

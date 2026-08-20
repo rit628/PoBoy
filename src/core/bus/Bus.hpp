@@ -18,7 +18,9 @@ namespace Memory {
             void initialize();
             bool loadBootrom();
             void initHLE();
-            void tick(uint8_t tCycles = 4);
+            void tick(uint8_t tCycles);
+            void tick();
+            void switchSpeed();
     
             uint8_t read(uint16_t address);
             void write(uint16_t address, uint8_t value);
@@ -50,12 +52,15 @@ namespace Memory {
             bool bootromDisabled;           // BANK register
             uint8_t dmaSourceAddress;       // DMA register
             /* CGB registers */
-            uint8_t wramBank;               // SVBK register
+            uint8_t wramBank;               // SVBK register            
             uint16_t vramDmaSource;         // HDMA1 and HDMA2 registers
             uint16_t vramDmaDestination;    // HDMA3 and HDMA4 registers
             /* HDMA5 register components */
             bool hdmaTransferMode;          // HMDA5 bit 7
             uint8_t blocks;                 // HDMA5 bits 6-0
+            /*  KEY1 register components */
+            bool doubleSpeedMode;           // KEY1 bit 7
+            bool speedSwitchArmed;          // KEY1 bit 0
     };
 
 }

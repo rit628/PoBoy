@@ -116,9 +116,9 @@ void APU::tick() {
     if (++discardedSamples == SAMPLES_TO_DISCARD) sampleChannels();
 }
 
-void APU::tickDivider() {
+void APU::tickDivider(bool shiftBit) {
     static constexpr uint8_t APU_DIV_BIT = 0x10;
-    bool currDividerBit = imu.readIO<Memory::DIV>() & APU_DIV_BIT;
+    bool currDividerBit = imu.readIO<Memory::DIV>() & (APU_DIV_BIT << shiftBit);
     bool increment = prevDividerBit > currDividerBit;
     prevDividerBit = currDividerBit;
     if (!audioEnabled || !increment) return; // only increment apu divider and tick channel units on falling edge
