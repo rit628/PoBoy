@@ -129,7 +129,7 @@ void GUI::updateFps() {
     if (currentTime - lastTime >= 1000) {
         float fps = frameCount * 1000.0 / (currentTime - lastTime);
         uint16_t speed = std::lround(fps / Graphics::FRAMES_PER_SECOND * 100);
-        auto newTitle = std::format("{} | FPS: {:.2f} ({}%)", windowTitle, fps, speed);
+        auto newTitle = std::format("{} | FPS: {:.2f} ({}%)", windowTitle.c_str(), fps, speed);
         SDL_SetWindowTitle(window, newTitle.c_str());
         lastTime = currentTime;
         frameCount = 0;
