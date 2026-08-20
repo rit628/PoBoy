@@ -1,6 +1,7 @@
 #pragma once
 #include "MBC.hpp"
 #include "MemoryConstants.hpp"
+#include <algorithm>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
@@ -19,10 +20,9 @@ namespace Memory {
     {
         if constexpr (hasSRAM()) {
             auto ramSize = decodeRamSize(encodedRamSize);
+            ramSize = std::max(uint32_t(SRAM_BANK_SIZE), ramSize);  // prevent span ub for mbc2 and roms with header mismatch
             sram.resize(ramSize, 0xFF);
-            if (ramSize >= SRAM_BANK_SIZE) { // prevent span ub for mbc2 and roms with header mismatch
-                sramBank = std::span(sram).template subspan<0, SRAM_BANK_SIZE>();
-            }
+            sramBank = std::span(sram).template subspan<0, SRAM_BANK_SIZE>();
         }
         if constexpr (RamType == SRAM_TYPE::BATTERY_BUFFERED) {
             if (std::filesystem::exists(saveFile)) {
