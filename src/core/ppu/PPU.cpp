@@ -50,6 +50,8 @@ void PPU<Model>::initialize() {
 
         obpPaletteAutoIncrement = false;
         obpAddress = 0;
+
+        hdmaTransferBlock = nullptr;
     }
     else {
         selectedBank = 0xFF;
@@ -59,6 +61,8 @@ void PPU<Model>::initialize() {
 
         obpPaletteAutoIncrement = true;
         obpAddress = 0xFF;
+
+        hdmaTransferBlock = nullptr;
     }
 
     mixer.extractFrame(); // resets pixel fifos to initial frame state
@@ -201,8 +205,11 @@ void PPU<Model>::dmaTransferOAM(std::span<const uint8_t, OAM_SIZE> sourceRange) 
 }
 
 template<MODEL Model>
-void PPU<Model>::dmaTransferVRAM(std::span<const uint8_t> sourceRange, uint16_t destinationStart) {
-    std::ranges::copy(sourceRange, vramBank.subspan(destinationStart).begin());
+void PPU<Model>::setHdmaCallback(std::function<void()> callback) {
+    hdmaTransferBlock = callback;
+    if (mode == PPU_MODE::HBLANK && hdmaTransferBlock != nullptr) {    // if initialized during hblank transfer a block immediately
+        hdmaTransferBlock();
+    }
 }
 
 template<MODEL Model>
@@ -233,6 +240,9 @@ template<PPU_MODE Mode>
 void PPU<Model>::updateMode() {
     mode = Mode;
     attemptStatusInterrupt();
+    if constexpr (Model == MODEL::CGB && Mode == PPU_MODE::HBLANK) {
+        if (hdmaTransferBlock != nullptr) hdmaTransferBlock();
+    }
 }
 
 template<MODEL Model>
@@ -241,7 +251,7 @@ void PPU<Model>::disableLCD() {
     frameDotsElapsed = 0;
     lineDotsElapsed = 0;
     currentLine = 0;
-    mode = PPU_MODE::HBLANK;
+    updateMode<PPU_MODE::HBLANK>();
     statInterrupted = false;
     mixer.extractFrame();
     static constexpr auto blank = []() consteval {

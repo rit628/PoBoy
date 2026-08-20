@@ -31,7 +31,7 @@ namespace Graphics {
             uint8_t readOAM(uint16_t address);
             void writeOAM(uint16_t address, uint8_t value);
             void dmaTransferOAM(std::span<const uint8_t, OAM_SIZE> sourceRange);
-            void dmaTransferVRAM(std::span<const uint8_t> sourceRange, uint16_t destinationStart);
+            void setHdmaCallback(std::function<void()> callback);
             template<uint16_t Register>
             uint8_t readIO();
             template<uint16_t Register>
@@ -86,6 +86,7 @@ namespace Graphics {
             bool obpPaletteAutoIncrement;   // OBPI bit 7
             uint8_t obpAddress;             // OBPI bits 5-0
 
+            std::function<void()> hdmaTransferBlock;   // use std::function for simplicity
 
             PixelMixer<Model> mixer{backgroundPalette
                                   , spritePalette0

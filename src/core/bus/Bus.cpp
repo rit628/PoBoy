@@ -8,7 +8,6 @@
 #include <filesystem>
 #include <fstream>
 #include <ranges>
-#include <vector>
 
 using namespace Memory;
 
@@ -34,7 +33,7 @@ void Bus<Model>::initialize() {
         vramDmaSource = 0;
         vramDmaDestination = 0;
 
-        hblankTransferMode = false;
+        hdmaTransferMode = false;
         blocks = 0;
     }
     else {
@@ -42,7 +41,7 @@ void Bus<Model>::initialize() {
         vramDmaSource = 0xFFFF;
         vramDmaDestination = 0xFFFF;
 
-        hblankTransferMode = true;
+        hdmaTransferMode = true;
         blocks = 0xFF;
     }
 }
@@ -81,10 +80,10 @@ void Bus<Model>::initHLE() {
 }
 
 template<MODEL Model>
-void Bus<Model>::tick() {
+void Bus<Model>::tick(uint8_t tCycles) {
     imu.tick();
     apu.tickDivider();
-    for (uint8_t i = 0; i < 4; i++) {
+    for (uint8_t i = 0; i < tCycles; i++) {
         cartridge.tick();
         apu.tick();
         ppu.tick();
@@ -135,6 +134,34 @@ void Bus<Model>::writeEchoRam(uint16_t address, uint8_t value) {
         else {
             wram1[address - WRAM_BANK_SIZE] = value;
         }
+    }
+}
+
+template<MODEL Model>
+void Bus<Model>::gdmaDispatch() {
+    hdmaTransferMode = false;
+    while (!hdmaTransferMode) {
+        hdmaTransferBlock();
+    }
+}
+
+template<MODEL Model>
+void Bus<Model>::hdmaDispatch() {
+    hdmaTransferMode = false;
+    ppu.setHdmaCallback(std::bind(&Bus<Model>::hdmaTransferBlock, std::ref(*this)));
+}
+
+template<MODEL Model>
+void Bus<Model>::hdmaTransferBlock() {
+    for (uint16_t i = 0; i < 0x10; i++) {
+        auto value = read(vramDmaSource++);
+        ppu.writeVRAM(vramDmaDestination++, value);
+        tick(2); // cpu is halted during hdma so tick everything else here at 2 t-cycles/byte (might cause issues due to double speed)
+    }
+    if (blocks-- == 0) {    // end hdma
+        hdmaTransferMode = true;
+        blocks = 0x7F;
+        ppu.setHdmaCallback(nullptr);
     }
 }
 
@@ -230,7 +257,7 @@ uint8_t Bus<Model>::readIO(uint16_t registerAddress) {
         case HDMA2: return 0xFF;
         case HDMA3: return 0xFF;
         case HDMA4: return 0xFF;
-        case HDMA5: return hblankTransferMode << 7 | blocks;
+        case HDMA5: return hdmaTransferMode << 7 | blocks;
 
         case SB:    return imu.readIO<SB>();
         case SC:    return imu.readIO<SC>();
@@ -333,19 +360,18 @@ void Bus<Model>::writeIO(uint16_t registerAddress, uint8_t value) {
         break;
         case HDMA5: 
             if constexpr (Model == CGB) {
-                // for now implemented as instantaneous gdma
-                hblankTransferMode = value >> 7;
+                bool hdmaInProgress = !hdmaTransferMode;
+                hdmaTransferMode = value >> 7;
                 blocks = value & 0x7F;
-                if (hblankTransferMode) return;
-                uint16_t size = (blocks + 1) * 16;
-                std::vector<uint8_t> sourceRange;
-                sourceRange.reserve(size);
-                for (uint16_t i = 0; i < size; i++) {
-                    sourceRange.push_back(read(vramDmaSource + i));
+                if (hdmaTransferMode) {
+                    hdmaDispatch();
                 }
-                ppu.dmaTransferVRAM(sourceRange, vramDmaDestination);
-                hblankTransferMode = true;
-                blocks = 0x7F;
+                else if (!hdmaInProgress) {
+                    gdmaDispatch();
+                }
+                else {  // cancel hdma
+                    hdmaTransferMode = true;
+                }
             }
         break;
         

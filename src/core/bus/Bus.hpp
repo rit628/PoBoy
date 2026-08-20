@@ -18,7 +18,7 @@ namespace Memory {
             void initialize();
             bool loadBootrom();
             void initHLE();
-            void tick();
+            void tick(uint8_t tCycles = 4);
     
             uint8_t read(uint16_t address);
             void write(uint16_t address, uint8_t value);
@@ -27,6 +27,9 @@ namespace Memory {
             bool inBootromRange(uint16_t address);
             uint8_t readEchoRam(uint16_t address);
             void writeEchoRam(uint16_t address, uint8_t value);
+            void gdmaDispatch();
+            void hdmaDispatch();
+            void hdmaTransferBlock();
             uint8_t readIO(uint16_t registerAddress);
             void writeIO(uint16_t registerAddress, uint8_t value);
 
@@ -51,7 +54,7 @@ namespace Memory {
             uint16_t vramDmaSource;         // HDMA1 and HDMA2 registers
             uint16_t vramDmaDestination;    // HDMA3 and HDMA4 registers
             /* HDMA5 register components */
-            bool hblankTransferMode;        // HMDA5 bit 7
+            bool hdmaTransferMode;          // HMDA5 bit 7
             uint8_t blocks;                 // HDMA5 bits 6-0
     };
 
