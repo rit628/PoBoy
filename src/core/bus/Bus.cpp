@@ -12,7 +12,7 @@
 using namespace Memory;
 
 template<MODEL Model>
-Bus<Model>::Bus(uint64_t& cycleCount, Cartridge& cartridge, Interrupts::IMU& imu, Audio::APU& apu, Graphics::PPU<Model>& ppu)
+Bus<Model>::Bus(uint64_t& cycleCount, Cartridge& cartridge, Interrupts::IMU& imu, Audio::APU<Model>& apu, Graphics::PPU<Model>& ppu)
                : cycleCount(cycleCount), cartridge(cartridge), imu(imu), apu(apu), ppu(ppu)
                , wram0(std::span(wram). template subspan<0, WRAM_BANK_SIZE>())
                , wram1(std::span(wram). template subspan<WRAM_BANK_SIZE, WRAM_BANK_SIZE>())
@@ -294,27 +294,27 @@ uint8_t Bus<Model>::readIO(uint16_t registerAddress) {
         case TAC:   return imu.readIO<TAC>();
         case P1:    return imu.readIO<P1>();
 
-        case NR50:  return apu.readIO<NR50>();
-        case NR51:  return apu.readIO<NR51>();
-        case NR52:  return apu.readIO<NR52>();
-        case NR10:  return apu.readIO<NR10>();
-        case NR11:  return apu.readIO<NR11>();
-        case NR12:  return apu.readIO<NR12>();
-        case NR13:  return apu.readIO<NR13>();
-        case NR14:  return apu.readIO<NR14>();
-        case NR21:  return apu.readIO<NR21>();
-        case NR22:  return apu.readIO<NR22>();
-        case NR23:  return apu.readIO<NR23>();
-        case NR24:  return apu.readIO<NR24>();
-        case NR30:  return apu.readIO<NR30>();
-        case NR31:  return apu.readIO<NR31>();
-        case NR32:  return apu.readIO<NR32>();
-        case NR33:  return apu.readIO<NR33>();
-        case NR34:  return apu.readIO<NR34>();
-        case NR41:  return apu.readIO<NR41>();
-        case NR42:  return apu.readIO<NR42>();
-        case NR43:  return apu.readIO<NR43>();
-        case NR44:  return apu.readIO<NR44>();
+        case NR50:  return apu.template readIO<NR50>();
+        case NR51:  return apu.template readIO<NR51>();
+        case NR52:  return apu.template readIO<NR52>();
+        case NR10:  return apu.template readIO<NR10>();
+        case NR11:  return apu.template readIO<NR11>();
+        case NR12:  return apu.template readIO<NR12>();
+        case NR13:  return apu.template readIO<NR13>();
+        case NR14:  return apu.template readIO<NR14>();
+        case NR21:  return apu.template readIO<NR21>();
+        case NR22:  return apu.template readIO<NR22>();
+        case NR23:  return apu.template readIO<NR23>();
+        case NR24:  return apu.template readIO<NR24>();
+        case NR30:  return apu.template readIO<NR30>();
+        case NR31:  return apu.template readIO<NR31>();
+        case NR32:  return apu.template readIO<NR32>();
+        case NR33:  return apu.template readIO<NR33>();
+        case NR34:  return apu.template readIO<NR34>();
+        case NR41:  return apu.template readIO<NR41>();
+        case NR42:  return apu.template readIO<NR42>();
+        case NR43:  return apu.template readIO<NR43>();
+        case NR44:  return apu.template readIO<NR44>();
 
         case LY:    return ppu.template readIO<LY>();
         case LYC:   return ppu.template readIO<LYC>();
@@ -415,27 +415,27 @@ void Bus<Model>::writeIO(uint16_t registerAddress, uint8_t value) {
         case TAC:   return imu.writeIO<TAC>(value);
         case P1:    return imu.writeIO<P1>(value);
 
-        case NR50:  return apu.writeIO<NR50>(value);
-        case NR51:  return apu.writeIO<NR51>(value);
-        case NR52:  return apu.writeIO<NR52>(value);
-        case NR10:  return apu.writeIO<NR10>(value);
-        case NR11:  return apu.writeIO<NR11>(value);
-        case NR12:  return apu.writeIO<NR12>(value);
-        case NR13:  return apu.writeIO<NR13>(value);
-        case NR14:  return apu.writeIO<NR14>(value);
-        case NR21:  return apu.writeIO<NR21>(value);
-        case NR22:  return apu.writeIO<NR22>(value);
-        case NR23:  return apu.writeIO<NR23>(value);
-        case NR24:  return apu.writeIO<NR24>(value);
-        case NR30:  return apu.writeIO<NR30>(value);
-        case NR31:  return apu.writeIO<NR31>(value);
-        case NR32:  return apu.writeIO<NR32>(value);
-        case NR33:  return apu.writeIO<NR33>(value);
-        case NR34:  return apu.writeIO<NR34>(value);
-        case NR41:  return apu.writeIO<NR41>(value);
-        case NR42:  return apu.writeIO<NR42>(value);
-        case NR43:  return apu.writeIO<NR43>(value);
-        case NR44:  return apu.writeIO<NR44>(value);
+        case NR50:  return apu.template writeIO<NR50>(value);
+        case NR51:  return apu.template writeIO<NR51>(value);
+        case NR52:  return apu.template writeIO<NR52>(value);
+        case NR10:  return apu.template writeIO<NR10>(value);
+        case NR11:  return apu.template writeIO<NR11>(value);
+        case NR12:  return apu.template writeIO<NR12>(value);
+        case NR13:  return apu.template writeIO<NR13>(value);
+        case NR14:  return apu.template writeIO<NR14>(value);
+        case NR21:  return apu.template writeIO<NR21>(value);
+        case NR22:  return apu.template writeIO<NR22>(value);
+        case NR23:  return apu.template writeIO<NR23>(value);
+        case NR24:  return apu.template writeIO<NR24>(value);
+        case NR30:  return apu.template writeIO<NR30>(value);
+        case NR31:  return apu.template writeIO<NR31>(value);
+        case NR32:  return apu.template writeIO<NR32>(value);
+        case NR33:  return apu.template writeIO<NR33>(value);
+        case NR34:  return apu.template writeIO<NR34>(value);
+        case NR41:  return apu.template writeIO<NR41>(value);
+        case NR42:  return apu.template writeIO<NR42>(value);
+        case NR43:  return apu.template writeIO<NR43>(value);
+        case NR44:  return apu.template writeIO<NR44>(value);
 
         case LY:    return ppu.template writeIO<LY>(value);
         case LYC:   return ppu.template writeIO<LYC>(value);

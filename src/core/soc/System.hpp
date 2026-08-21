@@ -25,7 +25,7 @@ class System {
     private:
         Memory::Cartridge& cartridge;
         Interrupts::IMU imu;
-        Audio::APU apu;
+        Audio::APU<Model> apu;
         Graphics::PPU<Model> ppu;
         Memory::Bus<Model> bus;
         Processing::CPU<Memory::Bus<Model>&> cpu;

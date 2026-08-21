@@ -14,7 +14,7 @@ namespace Memory {
     template<MODEL Model>
     class Bus {
         public:
-            Bus(uint64_t& cycleCount, Cartridge& cartridge, Interrupts::IMU& imu, Audio::APU& apu, Graphics::PPU<Model>& ppu);
+            Bus(uint64_t& cycleCount, Cartridge& cartridge, Interrupts::IMU& imu, Audio::APU<Model>& apu, Graphics::PPU<Model>& ppu);
             void initialize();
             bool loadBootrom();
             void initHLE();
@@ -42,7 +42,7 @@ namespace Memory {
 
             Cartridge& cartridge;
             Interrupts::IMU& imu;
-            Audio::APU& apu;
+            Audio::APU<Model>& apu;
             Graphics::PPU<Model>& ppu;
 
             std::array<uint8_t, BOOTROM_SIZE> bootrom;

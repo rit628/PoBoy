@@ -4,6 +4,7 @@
 #include "NoiseChannel.hpp"
 #include "PulseChannel.hpp"
 #include "StaticQueue.hpp"
+#include "SystemConstants.hpp"
 #include "WaveChannel.hpp"
 #include <array>
 #include <cstdint>
@@ -11,6 +12,7 @@
 
 namespace Audio {
     
+    template<MODEL Model>
     class APU {
         public:
             APU(Interrupts::IMU& imu, std::function<void(std::span<const float>)> queueAudioData);
@@ -26,9 +28,12 @@ namespace Audio {
             void initHLE();
             void tick();                                // per t-cycle
             void tickDivider(bool shiftBit = false);    // per m-cycle
+
+            static constexpr float BASE_FILTER_CHARGE_RATE = (Model == MODEL::DMG) ? 0.999958f : 0.998943f;
             
         private:
             void disableAudio();
+            void enableAudio();
             void sampleChannels();
             void mixChannels();
             template<bool Left>
@@ -61,3 +66,5 @@ namespace Audio {
     };
 
 }
+
+#include "APU.tpp"

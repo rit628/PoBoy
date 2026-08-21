@@ -2,20 +2,24 @@
 #include "AudioConstants.hpp"
 #include "ConstevalMath.hpp"
 #include "MemoryConstants.hpp"
+#include "SystemConstants.hpp"
 #include <cstdint>
 #include <type_traits>
 
 using namespace Audio;
 
-constexpr float FILTER_CAPACITOR_CHARGE_RATE = cpow(0.999958f, cround(SAMPLES_TO_DISCARD));
+template<MODEL Model>
+constexpr float FILTER_CAPACITOR_CHARGE_RATE = cpow(APU<Model>::BASE_FILTER_CHARGE_RATE, cround(SAMPLES_TO_DISCARD));
 
-APU::APU(Interrupts::IMU& imu, std::function<void(std::span<const float>)> queueAudioData)
+template<MODEL Model>
+APU<Model>::APU(Interrupts::IMU& imu, std::function<void(std::span<const float>)> queueAudioData)
         : imu(imu), queueAudioData(queueAudioData)
 {
     initialize();
 }
 
-void APU::initialize() {
+template<MODEL Model>
+void APU<Model>::initialize() {
     masterVolumeControl = 0;
     soundPanControl = 0;
     audioEnabled = false;
@@ -33,54 +37,18 @@ void APU::initialize() {
     channel4.initialize();
 }
 
-template<uint16_t Register>
-uint8_t APU::readIO() {
-    using namespace Memory;
-    if constexpr (Register == NR50) return masterVolumeControl;
-    if constexpr (Register == NR51) return soundPanControl;
-    if constexpr (NR10 <= Register && Register <= NR14) return channel1.readIO<Register - NR10>();
-    if constexpr (NR21 <= Register && Register <= NR24) return channel2.readIO<Register - NR21 + 1>();
-    if constexpr (NR30 <= Register && Register <= NR34) return channel3.readIO<Register - NR30>();
-    if constexpr (NR41 <= Register && Register <= NR44) return channel4.readIO<Register - NR41 + 1>();
-}
-
-template<>
-uint8_t APU::readIO<Memory::NR52>() {
-    return 0x70
-         | audioEnabled << 7
-         | channel4.on() << 3
-         | channel3.on() << 2
-         | channel2.on() << 1
-         | channel1.on();
-}
-
-template<uint16_t Register>
-void APU::writeIO(uint8_t value) {
-    using namespace Memory;
-    if (!audioEnabled) return;  // register writes ignored when powered off
-    if constexpr (Register == NR50) masterVolumeControl = value;
-    if constexpr (Register == NR51) soundPanControl = value;
-    if constexpr (NR10 <= Register && Register <= NR14) channel1.writeIO<Register - NR10>(value);
-    if constexpr (NR21 <= Register && Register <= NR24) channel2.writeIO<Register - NR21 + 1>(value);
-    if constexpr (NR30 <= Register && Register <= NR34) channel3.writeIO<Register - NR30>(value);
-    if constexpr (NR41 <= Register && Register <= NR44) channel4.writeIO<Register - NR41 + 1>(value);
-}
-
-template<>
-void APU::writeIO<Memory::NR52>(uint8_t value) {
-    audioEnabled = value & 0x80;
-    if (!audioEnabled) disableAudio();
-}
-
-uint8_t APU::readWaveRAM(uint8_t address) {
+template<MODEL Model>
+uint8_t APU<Model>::readWaveRAM(uint8_t address) {
     return channel3.readWaveRAM(address);
 }
 
-void APU::writeWaveRAM(uint8_t address, uint8_t value) {
+template<MODEL Model>
+void APU<Model>::writeWaveRAM(uint8_t address, uint8_t value) {
     return channel3.writeWaveRAM(address, value);
 }
 
-void APU::initHLE() {
+template<MODEL Model>
+void APU<Model>::initHLE() {
     using namespace Memory;
 
     audioEnabled = true;    // enable register writes
@@ -108,7 +76,8 @@ void APU::initHLE() {
     writeIO<NR52>(0xF1);
 }
 
-void APU::tick() {
+template<MODEL Model>
+void APU<Model>::tick() {
     channel1.tick();
     channel2.tick();
     channel3.tick();
@@ -116,13 +85,13 @@ void APU::tick() {
     if (++discardedSamples == SAMPLES_TO_DISCARD) sampleChannels();
 }
 
-void APU::tickDivider(bool shiftBit) {
+template<MODEL Model>
+void APU<Model>::tickDivider(bool shiftBit) {
     static constexpr uint8_t APU_DIV_BIT = 0x10;
     bool currDividerBit = imu.readIO<Memory::DIV>() & (APU_DIV_BIT << shiftBit);
     bool increment = prevDividerBit > currDividerBit;
     prevDividerBit = currDividerBit;
     if (!audioEnabled || !increment) return; // only increment apu divider and tick channel units on falling edge
-    ++apuDivider;
     if (!(apuDivider & 0x01)) { // sound length tick every other increment
         channel1.tickLength();
         channel2.tickLength();
@@ -137,9 +106,11 @@ void APU::tickDivider(bool shiftBit) {
         channel2.tickEnvelope();
         channel4.tickEnvelope();
     }
+    ++apuDivider;
 }
 
-void APU::disableAudio() {
+template<MODEL Model>
+void APU<Model>::disableAudio() {
     masterVolumeControl = 0;
     soundPanControl = 0;
     
@@ -149,7 +120,18 @@ void APU::disableAudio() {
     channel4.disable();
 }
 
-void APU::sampleChannels() {
+template<MODEL Model>
+void APU<Model>::enableAudio() {
+    apuDivider = 0;
+    
+    channel1.initialize();
+    channel2.initialize();
+    channel3.initialize();
+    channel4.initialize();
+}
+
+template<MODEL Model>
+void APU<Model>::sampleChannels() {
     if (audioEnabled) {
         sample<&APU::channel1>();
         sample<&APU::channel2>();
@@ -163,7 +145,8 @@ void APU::sampleChannels() {
     if (samples.full()) queueAudioData(samples.extract());
 }
 
-void APU::mixChannels() {
+template<MODEL Model>
+void APU<Model>::mixChannels() {
     float left = 0, right = 0;
     for (uint8_t i = 0; i < dacs.size(); i++) {
         left += getChannelPan<true>(i) * dacs.at(i);
@@ -176,29 +159,32 @@ void APU::mixChannels() {
     addSample(left, right);
 }
 
-template<bool Left>
-bool APU::getChannelPan(uint8_t channel) {
+template<MODEL Model>template<bool Left>
+bool APU<Model>::getChannelPan(uint8_t channel) {
     if constexpr (Left) return (soundPanControl >> 4) & (1 << channel);
     else return soundPanControl & (1 << channel);
 }
 
+template<MODEL Model>
 template<bool Left>
-uint8_t APU::getVolume() {
+uint8_t APU<Model>::getVolume() {
     if constexpr (Left) return ((masterVolumeControl & 0x70) >> 4) + 1;
     else return (masterVolumeControl & 0x07) + 1;
 }
 
-float APU::highPassFilter(float sample) {
+template<MODEL Model>
+float APU<Model>::highPassFilter(float sample) {
     float filtered = 0.0;
     if (channel1.dacEnabled() || channel2.dacEnabled() || channel3.dacEnabled() || channel4.dacEnabled()) {
         filtered = sample - filterCapacitor;
-        filterCapacitor = sample - filtered * FILTER_CAPACITOR_CHARGE_RATE;
+        filterCapacitor = sample - filtered * FILTER_CAPACITOR_CHARGE_RATE<Model>;
     }
     return filtered;
 }
 
+template<MODEL Model>
 template<auto Channel>
-void APU::sample() {
+void APU<Model>::sample() {
     uint8_t digitalSample = (this->*Channel).getDigitalSample();
     float analogSample = 0.0f;
     if ((this->*Channel).dacEnabled()) {
@@ -221,59 +207,12 @@ void APU::sample() {
     if constexpr (isChannel(&APU::channel4)) dacs.at(3) = analogSample;
 }
 
-void APU::addSample(float left, float right) {
+template<MODEL Model>
+void APU<Model>::addSample(float left, float right) {
     discardedSamples = 0;
     samples.push(highPassFilter(left));
     samples.push(highPassFilter(right));
 }
 
-template uint8_t APU::readIO<Memory::NR50>();
-template uint8_t APU::readIO<Memory::NR51>();
-
-template uint8_t APU::readIO<Memory::NR10>();
-template uint8_t APU::readIO<Memory::NR11>();
-template uint8_t APU::readIO<Memory::NR12>();
-template uint8_t APU::readIO<Memory::NR13>();
-template uint8_t APU::readIO<Memory::NR14>();
-
-template uint8_t APU::readIO<Memory::NR21>();
-template uint8_t APU::readIO<Memory::NR22>();
-template uint8_t APU::readIO<Memory::NR23>();
-template uint8_t APU::readIO<Memory::NR24>();
-
-template uint8_t APU::readIO<Memory::NR30>();
-template uint8_t APU::readIO<Memory::NR31>();
-template uint8_t APU::readIO<Memory::NR32>();
-template uint8_t APU::readIO<Memory::NR33>();
-template uint8_t APU::readIO<Memory::NR34>();
-
-template uint8_t APU::readIO<Memory::NR41>();
-template uint8_t APU::readIO<Memory::NR42>();
-template uint8_t APU::readIO<Memory::NR43>();
-template uint8_t APU::readIO<Memory::NR44>();
-
-
-template void APU::writeIO<Memory::NR50>(uint8_t);
-template void APU::writeIO<Memory::NR51>(uint8_t);
-
-template void APU::writeIO<Memory::NR10>(uint8_t);
-template void APU::writeIO<Memory::NR11>(uint8_t);
-template void APU::writeIO<Memory::NR12>(uint8_t);
-template void APU::writeIO<Memory::NR13>(uint8_t);
-template void APU::writeIO<Memory::NR14>(uint8_t);
-
-template void APU::writeIO<Memory::NR21>(uint8_t);
-template void APU::writeIO<Memory::NR22>(uint8_t);
-template void APU::writeIO<Memory::NR23>(uint8_t);
-template void APU::writeIO<Memory::NR24>(uint8_t);
-
-template void APU::writeIO<Memory::NR30>(uint8_t);
-template void APU::writeIO<Memory::NR31>(uint8_t);
-template void APU::writeIO<Memory::NR32>(uint8_t);
-template void APU::writeIO<Memory::NR33>(uint8_t);
-template void APU::writeIO<Memory::NR34>(uint8_t);
-
-template void APU::writeIO<Memory::NR41>(uint8_t);
-template void APU::writeIO<Memory::NR42>(uint8_t);
-template void APU::writeIO<Memory::NR43>(uint8_t);
-template void APU::writeIO<Memory::NR44>(uint8_t);
+template class Audio::APU<MODEL::DMG>;
+template class Audio::APU<MODEL::CGB>;
