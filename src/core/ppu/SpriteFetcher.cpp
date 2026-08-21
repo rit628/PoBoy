@@ -78,9 +78,11 @@ void SpriteFetcher<Model>::updateFlags(uint8_t lcdControl) {
 template<MODEL Model>
 void SpriteFetcher<Model>::fetchReset() {
     resetState();
-    spriteBuffer.pop();
-    fetchedSprite = nullptr;
     pixelFifo.clear();
+    if (fetchedSprite != nullptr) {
+        fetchedSprite = nullptr;
+        spriteBuffer.pop();
+    }
 }
 
 template<MODEL Model>
