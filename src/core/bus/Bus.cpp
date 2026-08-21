@@ -75,10 +75,33 @@ bool Bus<Model>::loadBootrom() {
     return true;
 }
 
-template<MODEL Model>
-void Bus<Model>::initHLE() {
+template<>
+void Bus<MODEL::DMG>::initHLE() {
     bootromDisabled = true;     // unmap bootrom
     dmaSourceAddress = 0xFF;    // DMA
+
+    imu.initHLE();
+    apu.initHLE();
+    ppu.initHLE();
+}
+
+template<>
+void Bus<MODEL::CGB>::initHLE() {
+    bootromDisabled = true;         // unmap bootrom
+    dmaSourceAddress = 0x00;        // DMA
+
+    vramDmaSource = 0xFFFF;         // HDMA 1-2
+    vramDmaDestination = 0xFFFF;    // HDMA 3-4
+
+    /* HDMA5 */
+    hdmaTransferMode = true;
+    blocks = 0x7E;
+
+    /* KEY1 */
+    doubleSpeedMode = false;
+    speedSwitchArmed = false;
+
+    write(SVBK, 0xF8);
 
     imu.initHLE();
     apu.initHLE();

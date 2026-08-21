@@ -69,8 +69,8 @@ void CPU<BusType>::initialize() {
     state = STATE::RUNNING;
 }
 
-template<typename BusType>
-void CPU<BusType>::bootHLE(const Memory::CartridgeMetadata& cartData) {
+template<>
+void CPU<Memory::Bus<MODEL::DMG>&>::bootHLE(const Memory::CartridgeMetadata& cartData) {
     A = 0x01;
     F.set(REGISTER_FLAG::Z);
     F.clear(REGISTER_FLAG::N);
@@ -88,6 +88,25 @@ void CPU<BusType>::bootHLE(const Memory::CartridgeMetadata& cartData) {
     E = 0xD8;
     H = 0x01;
     L = 0x4D;
+    PC = 0x0100;
+    SP = 0xFFFE;
+
+    bus.initHLE();
+}
+
+template<>
+void CPU<Memory::Bus<MODEL::CGB>&>::bootHLE(const Memory::CartridgeMetadata& cartData [[ maybe_unused ]]) {
+    A = 0x11;
+    F.set(REGISTER_FLAG::Z);
+    F.clear(REGISTER_FLAG::N);
+    F.clear(REGISTER_FLAG::H);
+    F.clear(REGISTER_FLAG::C);
+    B = 0x00;
+    C = 0x00;
+    D = 0xFF;
+    E = 0x56;
+    H = 0x00;
+    L = 0x0D;
     PC = 0x0100;
     SP = 0xFFFE;
 

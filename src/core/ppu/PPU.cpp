@@ -68,21 +68,44 @@ void PPU<Model>::initialize() {
     mixer.extractFrame(); // resets pixel fifos to initial frame state
 }
 
-template<MODEL Model>
-void PPU<Model>::initHLE() {
+template<>
+void PPU<MODEL::DMG>::initHLE() {
     using namespace Memory;
+
+    currentLine = 0x00; // LY
 
     writeIO<LCDC>   (0x91);
     writeIO<STAT>   (0x85);
     writeIO<SCY>    (0x00);
     writeIO<SCX>    (0x00);
-    writeIO<LY>     (0x00);
     writeIO<LYC>    (0x00);
     writeIO<BGP>    (0xFC);
     writeIO<OBP0>   (0xFF);  // random/uninitialized (treat as 0xFF)
     writeIO<OBP1>   (0xFF);  // random/uninitialized (treat as 0xFF)
     writeIO<WY>     (0x00);
     writeIO<WX>     (0x00);
+}
+
+template<>
+void PPU<MODEL::CGB>::initHLE() {
+    using namespace Memory;
+
+    currentLine = 0x90; // LY
+
+    writeIO<LCDC>   (0x91);
+    writeIO<STAT>   (0x81);  // depends on header contents and inputs in back compat mode
+    writeIO<SCY>    (0x00);
+    writeIO<SCX>    (0x00);
+    writeIO<LYC>    (0x00);
+    writeIO<BGP>    (0xFC);
+    writeIO<OBP0>   (0xFF);  // random/uninitialized (treat as 0xFF)
+    writeIO<OBP1>   (0xFF);  // random/uninitialized (treat as 0xFF)
+    writeIO<WY>     (0x00);
+    writeIO<WX>     (0x00);
+
+    writeIO<VBK>(0xFE);
+    writeIO<BGPI>(0xC0);
+    writeIO<OBPI>(0xC1);
 }
 
 template<MODEL Model>
