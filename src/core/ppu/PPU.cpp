@@ -90,7 +90,7 @@ template<>
 void PPU<MODEL::CGB>::initHLE() {
     using namespace Memory;
 
-    currentLine = 0x90; // LY
+    currentLine = 0x00; // LY
 
     writeIO<LCDC>   (0x91);
     writeIO<STAT>   (0x81);  // depends on header contents and inputs in back compat mode
