@@ -676,6 +676,7 @@ namespace Processing {
             bool switchArmed = read<false>(Memory::KEY1) & 0x01;
             if (switchArmed) {
                 bus.switchSpeed();
+                write<false>(Memory::DIV, 0);
             }
         }
     }
