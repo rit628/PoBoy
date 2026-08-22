@@ -32,6 +32,7 @@ namespace Memory {
             void gdmaDispatch();
             void hdmaDispatch();
             void hdmaTransferBlock();
+            void hdmaCancel();
             uint8_t readIO(uint16_t registerAddress);
             void writeIO(uint16_t registerAddress, uint8_t value);
 

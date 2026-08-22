@@ -207,10 +207,15 @@ void Bus<Model>::hdmaTransferBlock() {
         tick(2); // cpu is halted during hdma so tick everything else here at 2 t-cycles/byte (might cause issues due to double speed)
     }
     if (blocks-- == 0) {    // end hdma
-        hdmaTransferMode = true;
-        blocks = 0x7F;
-        ppu.setHdmaCallback(nullptr);
+        blocks &= 0x7F;
+        hdmaCancel();
     }
+}
+
+template<MODEL Model>
+void Bus<Model>::hdmaCancel() {
+    hdmaTransferMode = true;
+    ppu.setHdmaCallback(nullptr);
 }
 
 template<MODEL Model>
@@ -419,7 +424,7 @@ void Bus<Model>::writeIO(uint16_t registerAddress, uint8_t value) {
                     gdmaDispatch();
                 }
                 else {  // cancel hdma
-                    hdmaTransferMode = true;
+                    hdmaCancel();
                 }
             }
         break;
