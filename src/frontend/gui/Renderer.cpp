@@ -29,9 +29,7 @@ Renderer::Renderer(SDL_Window* renderWindow) {
 }
 
 Renderer::~Renderer() {
-    SDL_DestroySurface(conversionSurface);
-    SDL_DestroySurface(sourceSurface);
-    SDL_DestroyPalette(palette);
+    destroySurfacesAndPalettes();
     SDL_DestroyTexture(renderTexture);
     SDL_DestroyRenderer(renderer);
 }
@@ -47,6 +45,7 @@ void Renderer::setVsync() {
 }
 
 void Renderer::setNativePixelFormat(MODEL gbModel) {
+    destroySurfacesAndPalettes();
     if (gbModel == MODEL::CGB) {
         sourceSurface = SDL_CreateSurface(Graphics::LCD_WIDTH, Graphics::LCD_HEIGHT, SDL_PIXELFORMAT_XBGR1555);
     }
@@ -80,6 +79,15 @@ void Renderer::renderFrame(std::span<const uint8_t> framebuffer) {
     SDL_RenderClear(renderer);
     SDL_RenderTexture(renderer, renderTexture, NULL, NULL);
     SDL_RenderPresent(renderer);
+}
+
+void Renderer::destroySurfacesAndPalettes() {
+    if (conversionSurface) SDL_DestroySurface(conversionSurface);
+    if (sourceSurface) SDL_DestroySurface(sourceSurface);
+    if (palette) SDL_DestroyPalette(palette);
+    conversionSurface = nullptr;
+    sourceSurface = nullptr;
+    palette = nullptr;
 }
 
 template void Renderer::setVsync<true>();

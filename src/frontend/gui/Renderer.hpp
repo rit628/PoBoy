@@ -17,6 +17,8 @@ class Renderer {
         void renderFrame(std::span<const uint8_t> framebuffer);
 
     private:
+        void destroySurfacesAndPalettes();
+
         SDL_Window* renderWindow = nullptr;
         
         SDL_Renderer* renderer = nullptr;
