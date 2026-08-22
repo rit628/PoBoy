@@ -1,4 +1,5 @@
 #include <SDL3/SDL_events.h>
+#include <SDL3/SDL_stdinc.h>
 
 extern "C" {
 
@@ -6,8 +7,9 @@ extern "C" {
         SDL_Event e;
         SDL_zero(e);
         e.type = SDL_EVENT_DROP_FILE;
-        e.drop.data = filename;
+        e.drop.data = SDL_strdup(filename);
         SDL_PushEvent(&e);
+        SDL_free(&e.drop.data);
     }
 
     void pushKeyboardEvent(int scancode, bool pressed) {
