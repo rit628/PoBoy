@@ -73,7 +73,7 @@ jobs:
           echo "target=${{ matrix.artifact }}" >> $GITHUB_ENV
 
       - name: Build
-        run: python3 dmg_build.py -m release -t ${{ env.target }} ${{ env.executable }}
+        run: python3 gb_build.py -m release -t ${{ env.target }} ${{ env.executable }}
 
       - name: Package
         run: |
