@@ -22,7 +22,6 @@ Memory::CartridgeMetadata GameBoy::loadRom(const std::filesystem::path& romFile)
     resetClock();
     auto cartData = cartridge.loadRom(romFile);
     bool useCgb = cartData.cgbFlag == 0xC0 || cartData.cgbFlag == 0x80;
-    useCgb = false; // for now until stable
     if (useCgb) {
         auto& cgb = soc.emplace<System<CGB>>(cycleCount, cartridge, readInput, queueAudioData, renderFrame);
         cgb.initialize(cartData);
