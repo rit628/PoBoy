@@ -1,8 +1,8 @@
 # PoBoy
 
-A somewhat accurate Game Boy emulator written in modern C++.
+A somewhat accurate Game Boy and Game Boy Color emulator written in modern C++.
 
-Includes a reusable DMG core written in portable C++ and a basic frontend GUI built with SDL3 (as well as a toy TUI for terminal usage).
+Includes a reusable DMG and CGB core written in portable C++ and a basic frontend GUI built with SDL3 (as well as a toy TUI for terminal usage).
 
 ## Features
 * Instruction stepped, M-Cycle granular CPU emulation
@@ -10,7 +10,7 @@ Includes a reusable DMG core written in portable C++ and a basic frontend GUI bu
 * Pixel FIFO based PPU emulation
 * Fully functional APU emulation with per T-Cycle audio sampling and stereo sound
 * Full interrupt, joypad, and timer emulation
-* Full DMG bootrom support
+* Full DMG and CGB bootrom support with HLE fallbacks
 * Full support for ROM only cartridges and cartridges with the following bank mapper chips:
     * MBC1 (including battery buffered SRAM)
     * MBC2 (including battery buffered SRAM)
@@ -29,7 +29,6 @@ Includes a reusable DMG core written in portable C++ and a basic frontend GUI bu
 * Additional bug emulation (OAM corruption, Wave RAM corruption, etc.)
 * Cartridge rumble and gyroscope hardware emulation
 * Remaining memory bank controller chip emulation (MBC6, MBC7, MM01, HuC1, HuC-3)
-* CGB emulation
 
 # Notes and Usage
 At the moment, the frontend is quite primitive as the primary focus of this project was writing a reasonably accurate DMG core. More features will be added once a proper GUI library is added.
