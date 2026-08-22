@@ -25,13 +25,14 @@ void EnvelopeGenerator::tick() {
     if (!enabled || currentPeriod == 0) return;
     if (--timer == 0) {
         timer = currentPeriod;
-        if (currentDirection == DIRECTION::INCREASING) {
+        if (currentDirection == DIRECTION::INCREASING && currentVolume < DIGITAL_SAMPLE_MAX) {
             ++currentVolume;
-            enabled = currentVolume < DIGITAL_SAMPLE_MAX;
+        }
+        else if (currentDirection == DIRECTION::DECREASING && currentVolume > 0) {
+            --currentVolume;
         }
         else {
-            --currentVolume;
-            enabled = currentVolume > 0;
+            enabled = false;
         }
     }
 }
