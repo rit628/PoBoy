@@ -40,6 +40,7 @@ void PPU<Model>::initialize() {
     spritePalette1 = 0;
 
     interruptMask = 0x80;
+    lineCoincidence = false;
     mode = PPU_MODE::HBLANK;
 
     if constexpr (Model == MODEL::CGB) {
@@ -121,11 +122,19 @@ void PPU<Model>::tick() {
 }
 
 template<MODEL Model>
+void PPU<Model>::tickLineCoincidence() {
+    /* update ly == lyc every m-cycle ppu is enabled */
+    if (!enabled) return;
+    lineCoincidence = currentLine == lineCompare;
+    attemptStatusInterrupt();
+}
+
+template<MODEL Model>
 template<PPU_MODE Mode>
 void PPU<Model>::tickDispatch() {
     tick<Mode>();
-    lineDotsElapsed++;
-    frameDotsElapsed++;
+    ++lineDotsElapsed;
+    ++frameDotsElapsed;
     postTick<Mode>();
 }
 
@@ -156,8 +165,8 @@ void PPU<Model>::postTick() {
     using enum PPU_MODE;
     if constexpr (Mode == OAM_SCAN) {
         if (lineDotsElapsed >= DOTS_PER_OAM_SCAN_MODE) [[ unlikely ]] {
-            mixer.scanlineInitialize();
             updateMode<PIXEL_TRANSFER>();
+            mixer.scanlineInitialize();
         }
     }
     else if constexpr (Mode == PIXEL_TRANSFER) {
@@ -182,10 +191,8 @@ void PPU<Model>::postTick() {
         if (lineDotsElapsed >= DOTS_PER_LINE) [[ unlikely ]]
             incrementLine();
         
-        if (currentLine == 153 && lineDotsElapsed == 4) [[ unlikely ]] { // scanline 153 quirk
+        if (currentLine == 153 && lineDotsElapsed == 4) [[ unlikely ]] // scanline 153 quirk
             currentLine = 0;
-            attemptStatusInterrupt();
-        }
 
         if (frameDotsElapsed >= DOTS_PER_FRAME) [[ unlikely ]] {
             updateMode<OAM_SCAN>();
@@ -239,13 +246,12 @@ template<MODEL Model>
 void PPU<Model>::attemptStatusInterrupt() {
     if (!enabled) return;
     using enum STAT_FLAG;
-    uint8_t stat = readIO<Memory::STAT>();
     uint8_t modeNumber = std::to_underlying(mode);
     bool interruptUnblocked = !statInterrupted;
-    statInterrupted = testFlags(stat, LYC_INTERRUPT_ENABLE, LYC_INTERRUPT_BIT)
-                   || (modeNumber == 0 && testFlags(stat, MODE_0_INTERRUPT_ENABLE))
-                   || (modeNumber == 1 && testFlags(stat, MODE_1_INTERRUPT_ENABLE))
-                   || (modeNumber == 2 && testFlags(stat, MODE_2_INTERRUPT_ENABLE));
+    statInterrupted = (lineCoincidence && testFlags(interruptMask, LYC_INTERRUPT_ENABLE))
+                   || (modeNumber == 0 && testFlags(interruptMask, MODE_0_INTERRUPT_ENABLE))
+                   || (modeNumber == 1 && testFlags(interruptMask, MODE_1_INTERRUPT_ENABLE))
+                   || (modeNumber == 2 && testFlags(interruptMask, MODE_2_INTERRUPT_ENABLE));
     if (interruptUnblocked && statInterrupted) {
         imu.triggerInterrupt(Interrupts::INTERRUPT_FLAG::LCD_STAT);
     }
@@ -254,8 +260,7 @@ void PPU<Model>::attemptStatusInterrupt() {
 template<MODEL Model>
 void PPU<Model>::incrementLine() {
     lineDotsElapsed = 0;
-    currentLine++;
-    attemptStatusInterrupt();
+    ++currentLine;
 }
 
 template<MODEL Model>
@@ -270,12 +275,12 @@ void PPU<Model>::updateMode() {
 
 template<MODEL Model>
 void PPU<Model>::disableLCD() {
+    updateMode<PPU_MODE::HBLANK>();
+    currentLine = 0;
+    statInterrupted = false;
     /* reset ppu state and render blank frame to emulate lcd shutting off */
     frameDotsElapsed = 0;
     lineDotsElapsed = 0;
-    currentLine = 0;
-    updateMode<PPU_MODE::HBLANK>();
-    statInterrupted = false;
     mixer.extractFrame();
     static constexpr auto blank = []() consteval {
         static constexpr auto BUFFER_SIZE = BitBuffer<FRAMEBUFFER_SIZE, BITS_PER_PIXEL<Model>>::BYTE_COUNT;

@@ -114,6 +114,7 @@ void Bus<Model>::tick(uint8_t tCycles) {
     if constexpr (Model == MODEL::CGB) shiftApuDivBit = doubleSpeedMode;
     imu.tick();
     apu.tickDivider(shiftApuDivBit);
+    ppu.tickLineCoincidence();
     for (uint8_t i = 0; i < tCycles; i++) {
         cartridge.tick();
         apu.tick();

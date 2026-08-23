@@ -24,7 +24,8 @@ namespace Graphics {
             void initialize();
 
             void initHLE();
-            void tick();
+            void tick();                    // per t-cycle
+            void tickLineCoincidence();     // per m-cycle
 
             uint8_t readVRAM(uint16_t address);
             void writeVRAM(uint16_t address, uint8_t value);
@@ -75,6 +76,7 @@ namespace Graphics {
             uint8_t spritePalette1;     // OBP1 register
             /* STAT register components */
             uint8_t interruptMask;      // STAT bits 6-3
+            bool lineCoincidence;       // STAT bit 2
             PPU_MODE mode;              // STAT bits 1-0
 
             /* CGB registers */

@@ -15,10 +15,9 @@ namespace Graphics {
         using enum MODEL;
 
         if constexpr (Register == STAT) {
-            if (!enabled) return 0x80 | interruptMask;   // bits 0-2 return 0 when lcd is off
             return 0x80
                 | interruptMask
-                | (lineCompare == currentLine) << 2
+                | lineCoincidence << 2
                 | std::to_underlying(mode);
         }
 
@@ -66,7 +65,6 @@ namespace Graphics {
         
         if constexpr (Register == STAT) {
             interruptMask = value & 0x78;   // bits 0-2 and 7 are read only
-            attemptStatusInterrupt();
         }
 
         if constexpr (Register == LY)   return;
