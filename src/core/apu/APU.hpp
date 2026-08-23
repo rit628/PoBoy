@@ -29,8 +29,6 @@ namespace Audio {
             void tick();                                // per t-cycle
             void tickDivider(bool shiftBit = false);    // per m-cycle
 
-            static constexpr float BASE_FILTER_CHARGE_RATE = (Model == MODEL::DMG) ? 0.999958f : 0.998943f;
-            
         private:
             void disableAudio();
             void enableAudio();
@@ -40,7 +38,7 @@ namespace Audio {
             bool getChannelPan(uint8_t channel);
             template<bool Left>
             uint8_t getVolume();
-            float highPassFilter(float sample);
+            float highPassFilter(float sample, float& capacitor);
             template<auto Channel>
             void sample();
             void addSample(float left, float right);
@@ -56,7 +54,7 @@ namespace Audio {
             bool prevDividerBit;
             StaticQueue<float, 1 << 10> samples;
             uint8_t discardedSamples;
-            float filterCapacitor;
+            float leftFilterCapacitor, rightFilterCapacitor;
             std::array<float, CHANNEL_COUNT> dacs;
 
             SweepChannel channel1;

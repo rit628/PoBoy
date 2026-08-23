@@ -8,8 +8,7 @@
 
 using namespace Audio;
 
-template<MODEL Model>
-constexpr float FILTER_CAPACITOR_CHARGE_RATE = cpow(APU<Model>::BASE_FILTER_CHARGE_RATE, cround(SAMPLES_TO_DISCARD));
+constexpr float FILTER_CAPACITOR_CHARGE_RATE = cpow(0.999958f, cround(SAMPLES_TO_DISCARD));
 
 template<MODEL Model>
 APU<Model>::APU(Interrupts::IMU& imu, std::function<void(std::span<const float>)> queueAudioData)
@@ -28,7 +27,8 @@ void APU<Model>::initialize() {
     prevDividerBit = 0;
     samples.extract();  // empty samples
     discardedSamples = 0;
-    filterCapacitor = 0.0f;
+    leftFilterCapacitor = 0.0f;
+    rightFilterCapacitor = 0.0f;
     dacs.fill(0);
 
     channel1.initialize();
@@ -173,11 +173,11 @@ uint8_t APU<Model>::getVolume() {
 }
 
 template<MODEL Model>
-float APU<Model>::highPassFilter(float sample) {
-    float filtered = 0.0;
+float APU<Model>::highPassFilter(float sample, float& capacitor) {
+    float filtered = 0.0f;
     if (channel1.dacEnabled() || channel2.dacEnabled() || channel3.dacEnabled() || channel4.dacEnabled()) {
-        filtered = sample - filterCapacitor;
-        filterCapacitor = sample - filtered * FILTER_CAPACITOR_CHARGE_RATE<Model>;
+        filtered = sample - capacitor;
+        capacitor = sample - filtered * FILTER_CAPACITOR_CHARGE_RATE;
     }
     return filtered;
 }
@@ -210,8 +210,8 @@ void APU<Model>::sample() {
 template<MODEL Model>
 void APU<Model>::addSample(float left, float right) {
     discardedSamples = 0;
-    samples.push(highPassFilter(left));
-    samples.push(highPassFilter(right));
+    samples.push(highPassFilter(left, leftFilterCapacitor));
+    samples.push(highPassFilter(right, rightFilterCapacitor));
 }
 
 template class Audio::APU<MODEL::DMG>;
