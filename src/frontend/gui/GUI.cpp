@@ -12,7 +12,7 @@
 #include <string>
 
 GUI::GUI() {
-    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS)) {
+    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_GAMEPAD)) {
         std::println(std::cerr, "SDL failed to initialize: {}", SDL_GetError());
         exit(EXIT_FAILURE);
     }
