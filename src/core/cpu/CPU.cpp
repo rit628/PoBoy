@@ -5,9 +5,7 @@
 #include "MemoryConstants.hpp"
 #include "Register.hpp"
 #include "SystemConstants.hpp"
-#include <array>
 #include <cstdint>
-#include <cstring>
 
 #define DEBUG_PRINT false
 
@@ -115,13 +113,6 @@ void CPU<Memory::Bus<MODEL::CGB>&>::bootHLE(const Memory::CartridgeMetadata& car
 
 template<typename BusType>
 void CPU<BusType>::tick() {
-    /* Unprefixed Opcode Argument Constants */
-    uint8_t $00 = 0x00, $08 = 0x08, $10 = 0x10, $18 = 0x18, $20 = 0x20, $28 = 0x28, $30 = 0x30, $38 = 0x38;
-    uint16_t a16 = 0, n16 = 0;
-    uint8_t n8 = 0, a8 = 0;
-    int8_t e8 = 0;
-    RegisterView& F_Z = F, F_NZ = F, F_C = F, F_NC = F;
-
     handleInterrupts();
 
     /* pause instruction execution while halted */
@@ -129,7 +120,7 @@ void CPU<BusType>::tick() {
     /* set IME since next opcode read will consume one M cycle */
     if (IME == INTERRUPT_MASTER_FLAG::ENABLE_PENDING) IME = INTERRUPT_MASTER_FLAG::ENABLED;
 
-    auto opcode = read(PC++);
+    auto opcode = read8();
     handleHaltBug();
     switch (static_cast<OPCODE_UNPREFIXED>(opcode)) {
         #define OPCODE_BEGIN(code, name, bytecount, ...) \
@@ -139,18 +130,11 @@ void CPU<BusType>::tick() {
             #define CYCLES_TAKEN(...)
             #define CYCLES_SKIPPED(...)
             #define FLAG_VALUE(...)
-            #define OPERAND(name, type, bytecount, immediate, postop, ...) \
-            if constexpr (bytecount > 0) { \
-                static std::array<uint8_t, bytecount> bytes; \
-                for (auto&& byte : bytes) { \
-                    byte = read(PC++); \
-                } \
-                std::memcpy(&name, bytes.data(), bytecount); \
-            } \
+            #define OPERAND(name, type, bytecount, immediate, postop, ...)
             DEBUG_PRINT_ARGS(name, type, bytecount, immediate, postop)
             #define OPCODE_END(code, name, args...) \
             DEBUG_PRINT_NEWLINE() \
-            return name##_##code(args); \
+            return decodeUnprefixed<code>(); \
         }
         #include "unprefixed.inc"
         #undef OPCODE_BEGIN
@@ -161,7 +145,7 @@ void CPU<BusType>::tick() {
         #undef OPCODE_END
     }
 
-    opcode = read(PC++);
+    opcode = read8();
     switch (static_cast<OPCODE_CBPREFIXED>(opcode)) {
         #define OPCODE_BEGIN(code, name, bytecount, ...) \
         case OPCODE_CBPREFIXED::name##_##code: { \
@@ -173,7 +157,7 @@ void CPU<BusType>::tick() {
             DEBUG_PRINT_ARGS(name, type, bytecount, immediate, postop)
             #define OPCODE_END(code, name, args...) \
             DEBUG_PRINT_NEWLINE() \
-            return name##_##code(args); \
+            return decodePrefixed<code>(); \
         }
         #include "cbprefixed.inc"
         #undef OPCODE_BEGIN

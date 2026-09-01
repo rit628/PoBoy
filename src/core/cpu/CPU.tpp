@@ -3,7 +3,6 @@
 #include "CPU.hpp"
 #include "MemoryConstants.hpp"
 #include "SystemConstants.hpp"
-#include <cstddef>
 #include <cstdint>
 #include <utility>
 
@@ -22,6 +21,18 @@ namespace Processing {
     inline void CPU<BusType>::write(uint16_t address, uint8_t value) {
         bus.write(address, value);
         if constexpr (Tick) bus.tick();
+    }
+
+    template<typename BusType>
+    inline uint8_t CPU<BusType>::read8() {
+        return read(PC++);
+    }
+
+    template<typename BusType>
+    inline uint16_t CPU<BusType>::read16() {
+        uint8_t lsb = read8();
+        uint8_t msb = read8();
+        return msb << 8 | lsb;
     }
 
     template<typename BusType>
@@ -106,75 +117,77 @@ namespace Processing {
     }
     
     template<typename BusType>
-    template<size_t N>
-    inline void CPU<BusType>::load(Register<N> auto& target, RegisterValue<N> value) {
+    inline void CPU<BusType>::load(Register<8> auto& target, uint8_t value) {
+        target = value;
+    }
+
+    template<typename BusType>
+    inline void CPU<BusType>::load(Register<8> auto& target, uint16_t address) {
+        target = read(address);
+    }
+
+    template<typename BusType>
+    inline void CPU<BusType>::load(uint16_t address, uint8_t value) {
+        write(address, value);
+    }
+
+    template<typename BusType>
+    void CPU<BusType>::load16(Register<16> auto& target, uint16_t value) {
         target = value;
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::loadIndirect(uint16_t address, uint8_t value) {
-        write(address, value);
-    }
-    
-    template<typename BusType>
-    inline void CPU<BusType>::loadIndirect(uint16_t address, uint16_t value) {
+    inline void CPU<BusType>::load16(uint16_t address, uint16_t value) {
         write(address, value & 0x00FF);
-        write(address + 1, (value & 0xFF00) >> 8);
+        write(address + 1, value >> 8);
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::loadIndirect(Register<8> auto& target, uint16_t address) {
-        target = read(address);
-    }
-    
-    template<typename BusType>
-    inline void CPU<BusType>::loadHiIndirect(Register<8> auto& target, uint8_t address) {
+    inline void CPU<BusType>::loadHi(Register<8> auto& target, uint8_t address) {
         target = read(static_cast<uint16_t>(address) | 0xFF00);
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::loadHiIndirect(uint16_t address, uint8_t value) {
-        write(static_cast<uint16_t>(address) | 0xFF00, value);
+    inline void CPU<BusType>::loadHi(uint8_t address, uint8_t value) {
+        write(static_cast<uint8_t>(address) | 0xFF00, value);
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::loadIncrement(Register<8> auto& target, Register<16> auto& address) {
-        target = read(address++);
+    inline void CPU<BusType>::loadIncrement(Register<8> auto& target, Register<16> auto& indirectAddress) {
+        target = read(indirectAddress++);
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::loadIncrement(Register<16> auto& address, uint8_t value) {
-        write(address++, value);
+    inline void CPU<BusType>::loadIncrement(Register<16> auto& indirectAddress, uint8_t value) {
+        write(indirectAddress++, value);
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::loadDecrement(Register<8> auto& target, Register<16> auto& address) {
-        target = read(address--);
+    inline void CPU<BusType>::loadDecrement(Register<8> auto& target, Register<16> auto& indirectAddress) {
+        target = read(indirectAddress--);
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::loadDecrement(Register<16> auto& address, uint8_t value) {
-        write(address--, value);
+    inline void CPU<BusType>::loadDecrement(Register<16> auto& indirectAddress, uint8_t value) {
+        write(indirectAddress--, value);
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::loadAdjusted(Register<16> auto& target, Register<16> auto& value, int8_t adjust) {
-        auto adjustedValue = addAndSetFlags(value, adjust);
+    inline void CPU<BusType>::loadAdjusted(Register<16> auto& target, Register<16> auto& value, int8_t adjustment) {
+        auto adjustedValue = addAndSetFlags(value, adjustment);
         target = adjustedValue;
         bus.tick();   // extra cycle for opcode 0xF8
     }
     
     template<typename BusType>
-    template<size_t N>
-    inline void CPU<BusType>::add(Register<N> auto& target, RegisterValue<N> value) {
+    inline void CPU<BusType>::add(Register<8> auto& target, uint8_t value) {
         target = addAndSetFlags(target, value);
-        if constexpr (N == 16) bus.tick();    // 16 bit add takes extra cycle
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::addIndirect(Register<8> auto& target, uint16_t address) {
-        auto value = read(address);
-        add<8>(target, value);
+    inline void CPU<BusType>::add(Register<8> auto& target, Register<16> auto& indirectAddress) {
+        auto value = read(indirectAddress);
+        add(target, value);
     }
     
     template<typename BusType>
@@ -184,9 +197,15 @@ namespace Processing {
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::adcIndirect(Register<8> auto& target, uint16_t address) {
-        auto value = read(address);
+    inline void CPU<BusType>::adc(Register<8> auto& target, Register<16> auto& indirectAddress) {
+        auto value = read(indirectAddress);
         adc(target, value);
+    }
+
+    template<typename BusType>
+    inline void CPU<BusType>::add16(Register<16> auto& target, uint16_t value) {
+        target = addAndSetFlags(target, value);
+        bus.tick();    // 16 bit add takes extra cycle
     }
     
     template<typename BusType>
@@ -203,8 +222,8 @@ namespace Processing {
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::subIndirect(Register<8> auto& target, uint16_t address) {
-        auto value = read(address);
+    inline void CPU<BusType>::sub(Register<8> auto& target, Register<16> auto& indirectAddress) {
+        auto value = read(indirectAddress);
         sub(target, value);
     }
     
@@ -215,8 +234,8 @@ namespace Processing {
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::sbcIndirect(Register<8> auto& target, uint16_t address) {
-        auto value = read(address);
+    inline void CPU<BusType>::sbc(Register<8> auto& target, Register<16> auto& indirectAddress) {
+        auto value = read(indirectAddress);
         sbc(target, value);
     }
     
@@ -226,8 +245,8 @@ namespace Processing {
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::compareIndirect(uint8_t lhs, uint16_t address) {
-        auto rhs = read(address);
+    inline void CPU<BusType>::compare(uint8_t lhs, Register<16> auto& indirectAddress) {
+        auto rhs = read(indirectAddress);
         compare(lhs, rhs);
     }
     
@@ -238,18 +257,18 @@ namespace Processing {
         target = subtractAndSetFlags(target, 1);
         (carrySet) ? F.set(C) : F.clear(C); // ensure C remains unmodified
     }
-    
+
     template<typename BusType>
-    inline void CPU<BusType>::decrement(Register<16> auto& target) {
-        target--;
-        bus.tick();   // 16 bit dec takes extra cycle
+    inline void CPU<BusType>::decrement(Register<16> auto& indirectAddress) {
+        auto value = read(indirectAddress);
+        decrement(value);
+        write(indirectAddress, value);
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::decrementIndirect(uint16_t address) {
-        auto value = read(address);
-        decrement(value);
-        write(address, value);
+    inline void CPU<BusType>::decrement16(Register<16> auto& target) {
+        --target;
+        bus.tick();   // 16 bit dec takes extra cycle
     }
     
     template<typename BusType>
@@ -259,18 +278,18 @@ namespace Processing {
         target = addAndSetFlags(target, 1);
         (carrySet) ? F.set(C) : F.clear(C); // ensure C remains unmodified
     }
-    
+
     template<typename BusType>
-    inline void CPU<BusType>::increment(Register<16> auto& target) {
-        target++;
-        bus.tick();   // 16 bit inc takes extra cycle
+    inline void CPU<BusType>::increment(Register<16> auto& indirectAddress) {
+        auto value = read(indirectAddress);
+        increment(value);
+        write(indirectAddress, value);
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::incrementIndirect(uint16_t address) {
-        auto value = read(address);
-        increment(value);
-        write(address, value);
+    inline void CPU<BusType>::increment16(Register<16> auto& target) {
+        ++target;
+        bus.tick();   // 16 bit inc takes extra cycle
     }
     
     template<typename BusType>
@@ -284,8 +303,8 @@ namespace Processing {
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::bitAndIndirect(Register<8> auto& lhs, uint16_t address) {
-        auto rhs = read(address);
+    inline void CPU<BusType>::bitAnd(Register<8> auto& lhs, Register<16> auto& indirectAddress) {
+        auto rhs = read(indirectAddress);
         bitAnd(lhs, rhs);
     }
     
@@ -308,8 +327,8 @@ namespace Processing {
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::bitOrIndirect(Register<8> auto& lhs, uint16_t address) {
-        auto rhs = read(address);
+    inline void CPU<BusType>::bitOr(Register<8> auto& lhs, Register<16> auto& indirectAddress) {
+        auto rhs = read(indirectAddress);
         bitOr(lhs, rhs);
     }
     
@@ -324,8 +343,8 @@ namespace Processing {
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::bitXorIndirect(Register<8> auto& lhs, uint16_t address) {
-        auto rhs = read(address);
+    inline void CPU<BusType>::bitXor(Register<8> auto& lhs, Register<16> auto& indirectAddress) {
+        auto rhs = read(indirectAddress);
         bitXor(lhs, rhs);
     }
     
@@ -339,8 +358,8 @@ namespace Processing {
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::bitTestIndirect(uint8_t bitIndex, uint16_t address) {
-        auto target = read(address);
+    inline void CPU<BusType>::bitTest(uint8_t bitIndex, Register<16> auto& indirectAddress) {
+        auto target = read(indirectAddress);
         bitTest(bitIndex, target);
     }
     
@@ -351,10 +370,10 @@ namespace Processing {
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::bitResetIndirect(uint8_t bitIndex, uint16_t address) {
-        auto value = read(address);
+    inline void CPU<BusType>::bitReset(uint8_t bitIndex, Register<16> auto& indirectAddress) {
+        auto value = read(indirectAddress);
         bitReset(bitIndex, value);
-        write(address, value);
+        write(indirectAddress, value);
     }
     
     template<typename BusType>
@@ -364,10 +383,10 @@ namespace Processing {
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::bitSetIndirect(uint8_t bitIndex, uint16_t address) {
-        auto value = read(address);
+    inline void CPU<BusType>::bitSet(uint8_t bitIndex, Register<16> auto& indirectAddress) {
+        auto value = read(indirectAddress);
         bitSet(bitIndex, value);
-        write(address, value);
+        write(indirectAddress, value);
     }
     
     template<typename BusType>
@@ -384,10 +403,10 @@ namespace Processing {
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::rotateLeftIndirect(uint16_t address) {
-        auto value = read(address);
+    inline void CPU<BusType>::rotateLeft(Register<16> auto& indirectAddress) {
+        auto value = read(indirectAddress);
         rotateLeft(value);
-        write(address, value);
+        write(indirectAddress, value);
     }
     
     template<typename BusType>
@@ -403,10 +422,10 @@ namespace Processing {
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::rotateLeftCircularIndirect(uint16_t address) {
-        auto value = read(address);
+    inline void CPU<BusType>::rotateLeftCircular(Register<16> auto& indirectAddress) {
+        auto value = read(indirectAddress);
         rotateLeftCircular(value);
-        write(address, value);
+        write(indirectAddress, value);
     }
     
     template<typename BusType>
@@ -423,10 +442,10 @@ namespace Processing {
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::rotateRightIndirect(uint16_t address) {
-        auto value = read(address);
+    inline void CPU<BusType>::rotateRight(Register<16> auto& indirectAddress) {
+        auto value = read(indirectAddress);
         rotateRight(value);
-        write(address, value);
+        write(indirectAddress, value);
     }
     
     template<typename BusType>
@@ -442,10 +461,10 @@ namespace Processing {
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::rotateRightCircularIndirect(uint16_t address) {
-        auto value = read(address);
+    inline void CPU<BusType>::rotateRightCircular(Register<16> auto& indirectAddress) {
+        auto value = read(indirectAddress);
         rotateRightCircular(value);
-        write(address, value);
+        write(indirectAddress, value);
     }
     
     template<typename BusType>
@@ -460,10 +479,10 @@ namespace Processing {
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::shiftLeftArithmeticIndirect(uint16_t address) {
-        auto value = read(address);
+    inline void CPU<BusType>::shiftLeftArithmetic(Register<16> auto& indirectAddress) {
+        auto value = read(indirectAddress);
         shiftLeftArithmetic(value);
-        write(address, value);
+        write(indirectAddress, value);
     }
     
     template<typename BusType>
@@ -479,10 +498,10 @@ namespace Processing {
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::shiftRightArithmeticIndirect(uint16_t address) {
-        auto value = read(address);
+    inline void CPU<BusType>::shiftRightArithmetic(Register<16> auto& indirectAddress) {
+        auto value = read(indirectAddress);
         shiftRightArithmetic(value);
-        write(address, value);
+        write(indirectAddress, value);
     }
     
     template<typename BusType>
@@ -497,10 +516,10 @@ namespace Processing {
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::shiftRightLogicalIndirect(uint16_t address) {
-        auto value = read(address);
+    inline void CPU<BusType>::shiftRightLogical(Register<16> auto& indirectAddress) {
+        auto value = read(indirectAddress);
         shiftRightLogical(value);
-        write(address, value);
+        write(indirectAddress, value);
     }
     
     template<typename BusType>
@@ -514,10 +533,10 @@ namespace Processing {
     }
     
     template<typename BusType>
-    inline void CPU<BusType>::swapIndirect(uint16_t address) {
-        auto value = read(address);
+    inline void CPU<BusType>::swap(Register<16> auto& indirectAddress) {
+        auto value = read(indirectAddress);
         swap(value);
-        write(address, value);
+        write(indirectAddress, value);
     }
     
     template<typename BusType>
