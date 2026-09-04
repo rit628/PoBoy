@@ -9,10 +9,10 @@
 namespace Memory {
 
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
-    MBC<RamType, AdditionalHardware>::MBC(std::filesystem::path romFile, std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize)
+    MBC<RamType, AdditionalHardware>::MBC(std::filesystem::path romFile, std::span<uint8_t> rom, uint8_t encodedRamSize)
                                          : saveFile(romFile.replace_extension("sav"))
                                          , rom(rom)
-                                         , romBankCount(decodeRomBankCount(encodedRomSize))
+                                         , romBankCount(rom.size() / ROM_BANK_SIZE)
                                          , ramBankCount(decodeRamBankCount(encodedRamSize))
                                          , bank0(rom.subspan<0, ROM_BANK_SIZE>())
                                          , bank1(rom.subspan<ROM_BANK_1_START, ROM_BANK_SIZE>())
@@ -124,8 +124,8 @@ namespace Memory {
 
     /* MBC0 */
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
-    MBC0<RamType, AdditionalHardware>::MBC0(std::filesystem::path romFile, std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize)
-                                     : MBC<RamType, AdditionalHardware>(romFile, rom, encodedRomSize, encodedRamSize) {}
+    MBC0<RamType, AdditionalHardware>::MBC0(std::filesystem::path romFile, std::span<uint8_t> rom, uint8_t encodedRamSize)
+                                     : MBC<RamType, AdditionalHardware>(romFile, rom, encodedRamSize) {}
 
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
     inline void MBC0<RamType, AdditionalHardware>::handleBankWrite(uint16_t, uint8_t) { /* no MBC chip */ }
@@ -142,8 +142,8 @@ namespace Memory {
 
     /* MBC1 */
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
-    MBC1<RamType, AdditionalHardware>::MBC1(std::filesystem::path romFile, std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize)
-                                     : MBC<RamType, AdditionalHardware>(romFile, rom, encodedRomSize, encodedRamSize) {}
+    MBC1<RamType, AdditionalHardware>::MBC1(std::filesystem::path romFile, std::span<uint8_t> rom, uint8_t encodedRamSize)
+                                     : MBC<RamType, AdditionalHardware>(romFile, rom, encodedRamSize) {}
 
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
     inline void MBC1<RamType, AdditionalHardware>::handleBankWrite(uint16_t address, uint8_t value) {
@@ -179,8 +179,8 @@ namespace Memory {
 
     /* MBC2 */
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
-    MBC2<RamType, AdditionalHardware>::MBC2(std::filesystem::path romFile, std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize)
-                                     : MBC<RamType, AdditionalHardware>(romFile, rom, encodedRomSize, encodedRamSize)
+    MBC2<RamType, AdditionalHardware>::MBC2(std::filesystem::path romFile, std::span<uint8_t> rom, uint8_t encodedRamSize)
+                                     : MBC<RamType, AdditionalHardware>(romFile, rom, encodedRamSize)
     { 
         /* mbc2 always comes with 512 half bytes of sram */
         this->sram.resize(512, 0xFF);
@@ -214,8 +214,8 @@ namespace Memory {
 
     /* MBC3 */
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
-    MBC3<RamType, AdditionalHardware>::MBC3(std::filesystem::path romFile, std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize)
-                                     : MBC<RamType, AdditionalHardware>(romFile, rom, encodedRomSize, encodedRamSize) {}
+    MBC3<RamType, AdditionalHardware>::MBC3(std::filesystem::path romFile, std::span<uint8_t> rom, uint8_t encodedRamSize)
+                                     : MBC<RamType, AdditionalHardware>(romFile, rom, encodedRamSize) {}
 
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
     inline constexpr bool MBC3<RamType, AdditionalHardware>::hasRTC() {
@@ -315,8 +315,8 @@ namespace Memory {
 
     /* MBC5 */
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
-    MBC5<RamType, AdditionalHardware>::MBC5(std::filesystem::path romFile, std::span<uint8_t> rom, uint8_t encodedRomSize, uint8_t encodedRamSize)
-                                     : MBC<RamType, AdditionalHardware>(romFile, rom, encodedRomSize, encodedRamSize) {}
+    MBC5<RamType, AdditionalHardware>::MBC5(std::filesystem::path romFile, std::span<uint8_t> rom, uint8_t encodedRamSize)
+                                     : MBC<RamType, AdditionalHardware>(romFile, rom, encodedRamSize) {}
 
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
     inline void MBC5<RamType, AdditionalHardware>::handleBankWrite(uint16_t address, uint8_t value) {
