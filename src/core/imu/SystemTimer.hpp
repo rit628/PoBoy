@@ -27,6 +27,7 @@ namespace Interrupts {
             bool prevTimaBit;
             bool reloadTima;
             bool timaReloaded;
+            uint16_t overflowBit;
             
             uint16_t systemCounter; // DIV register (bits 13-6) and clock counter (bits 5-0)
             uint8_t timerCounter;   // TIMA register

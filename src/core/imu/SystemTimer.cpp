@@ -14,6 +14,7 @@ void SystemTimer::initialize() {
     prevTimaBit = 0;
     reloadTima = false;
     timaReloaded = false;
+    overflowBit = timerClocks.at(0) >> 1;
 
     systemCounter = 0;
     timerCounter = 0;
@@ -59,6 +60,7 @@ template<>
 void SystemTimer::writeIO<Memory::TAC>(uint8_t value) {
     timerEnabled = value & 0b100;
     selectedClock = value & 0b011;
+    overflowBit = timerClocks.at(selectedClock) >> 1;
 }
 
 void SystemTimer::initHLE() {
@@ -72,7 +74,6 @@ void SystemTimer::initHLE() {
 }
 
 void SystemTimer::tick() {
-    uint16_t overflowBit = timerClocks.at(selectedClock) >> 1;
     bool currTimaBit = bool(++systemCounter & overflowBit) && timerEnabled;
     bool timaTick = prevTimaBit > currTimaBit; // tick on falling edge
     prevTimaBit = currTimaBit;
