@@ -43,6 +43,14 @@ namespace Audio {
             void sample();
             void addSample(float left, float right);
 
+            static constexpr std::array<float, 16> DAC_TABLE = []() consteval {
+                std::array<float, 16> lut{};
+                for (uint8_t i = 0; i < lut.size(); i++) {
+                    lut.at(i) = -2 * (float(i) / DIGITAL_SAMPLE_MAX) + 1;
+                }
+                return lut;
+            }();
+
             Interrupts::IMU& imu;
             std::function<void(std::span<const float>)> queueAudioData;
 

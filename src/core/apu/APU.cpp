@@ -188,7 +188,7 @@ void APU<Model>::sample() {
     uint8_t digitalSample = (this->*Channel).getDigitalSample();
     float analogSample = 0.0f;
     if ((this->*Channel).dacEnabled()) {
-        analogSample = -2 * (float(digitalSample) / DIGITAL_SAMPLE_MAX) + 1;
+        analogSample = DAC_TABLE.at(digitalSample);
     }
 
     constexpr auto isChannel = [](auto targetChannel) consteval {
