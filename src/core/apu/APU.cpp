@@ -186,10 +186,7 @@ template<MODEL Model>
 template<auto Channel>
 void APU<Model>::sample() {
     uint8_t digitalSample = (this->*Channel).getDigitalSample();
-    float analogSample = 0.0f;
-    if ((this->*Channel).dacEnabled()) {
-        analogSample = DAC_TABLE.at(digitalSample);
-    }
+    float analogSample = (this->*Channel).dacEnabled() ? DAC_TABLE.at(digitalSample) : 0;
 
     constexpr auto isChannel = [](auto targetChannel) consteval {
         /* ensure we dont compare different pointer types */

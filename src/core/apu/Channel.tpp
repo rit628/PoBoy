@@ -14,7 +14,6 @@ namespace Audio {
     template<VOLUME_TYPE VolumeType, TICK_RATE TickRate>
     inline void Channel<VolumeType, TickRate>::initBase() {
         enabled = false;
-        digitalSample = 0;
         periodTimer = 0;
         lengthController.initialize();
         if constexpr (VolumeType == VOLUME_TYPE::ENVELOPE) this->envelopeGenerator.initialize();
@@ -29,17 +28,16 @@ namespace Audio {
 
     template<VOLUME_TYPE VolumeType, TICK_RATE TickRate>
     inline void Channel<VolumeType, TickRate>::tick(this auto&& self) {
-        if (!self.enabled) return void(self.digitalSample = 0);
+        if (!self.enabled) return;
         if (--self.periodTimer == 0) {
             self.resetPeriodTimer();
             self.advanceOutput();
         }
-        self.digitalSample = self.sample();
     }
 
     template<VOLUME_TYPE VolumeType, TICK_RATE TickRate>
-    inline uint8_t Channel<VolumeType, TickRate>::getDigitalSample() {
-        return digitalSample;
+    inline uint8_t Channel<VolumeType, TickRate>::getDigitalSample(this auto&& self) {
+        return self.enabled ? self.sample() : 0;
     }
 
     template<VOLUME_TYPE VolumeType, TICK_RATE TickRate>

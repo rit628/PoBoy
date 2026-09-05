@@ -24,7 +24,7 @@ namespace Audio {
             Channel();
             void initialize(this auto&& self);
             void tick(this auto&& self);
-            uint8_t getDigitalSample();
+            uint8_t getDigitalSample(this auto&& self);
             void tickLength();
             void tickEnvelope() requires (VolumeType == VOLUME_TYPE::ENVELOPE);
             bool dacEnabled(this auto&& self);
@@ -49,7 +49,6 @@ namespace Audio {
             static constexpr uint16_t LENGTH_MAX    = 64 << (4 - std::to_underlying(TickRate));
 
             bool enabled;
-            uint8_t digitalSample;
             uint16_t periodTimer;
             LengthController<LENGTH_MAX> lengthController;    // Manages NRx1 bits 5-0 and NRx4 bit 6
 
