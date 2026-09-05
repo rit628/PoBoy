@@ -193,14 +193,22 @@ namespace Processing {
             Register16 PC; // program counter
             Register16 SP; // stack pointer
     
-            Register16 AF, BC, DE, HL; // general purpose 16bit
+            Register16 AF, BC, DE, HL; // general purpose 16 bit
     
-            RegisterView A{AF.hi()}; // accumulator
-            RegisterView F{AF.lo()}; // flags
+            RegisterView<ORDER::HI> A{AF.hi()}; // accumulator
+            RegisterView<ORDER::LO> F{AF.lo()}; // flags
     
-            RegisterView B{BC.hi()}, C{BC.lo()}; // general purpose 8bit BC
-            RegisterView D{DE.hi()}, E{DE.lo()}; // general purpose 8bit DE
-            RegisterView H{HL.hi()}, L{HL.lo()}; // general purpose 8bit HL
+            /* general purpose 8 bit BC */
+            RegisterView<ORDER::HI> B{BC.hi()};
+            RegisterView<ORDER::LO> C{BC.lo()};
+
+            /* general purpose 8 bit DE */
+            RegisterView<ORDER::HI> D{DE.hi()};
+            RegisterView<ORDER::LO> E{DE.lo()};
+
+            /* general purpose 8 bit HL */
+            RegisterView<ORDER::HI> H{HL.hi()};
+            RegisterView<ORDER::LO> L{HL.lo()};
     
             INTERRUPT_MASTER_FLAG IME; // interrupt master enable flag
             

@@ -44,7 +44,13 @@ namespace Processing {
         protected:
             value_t reg = 0;
     };
+
+    enum class ORDER : bool {
+        HI,
+        LO
+    };
     
+    template<ORDER Order>
     class RegisterView;
     
     template<typename T, size_t Bits>
@@ -66,8 +72,8 @@ namespace Processing {
     class Register16 : public RegisterBase<16> {
         public:
             Register16(value_t value = 0) : RegisterBase<16>(value) { }
-            constexpr RegisterView hi();
-            constexpr RegisterView lo();
+            constexpr RegisterView<ORDER::HI> hi();
+            constexpr RegisterView<ORDER::LO> lo();
             void setHi(uint8_t val) {
                 reg &= 0x00FF; // mask hi
                 reg |= (static_cast<uint16_t>(val) << 8);
@@ -78,17 +84,15 @@ namespace Processing {
             }
     };
     
+    template<ORDER Order>
     class RegisterView : public RegisterTag<8> {
         public:
-            enum class ORDER : bool {
-                HI,
-                LO
-            };
     
-            constexpr RegisterView(Register16& reg, ORDER order) : reg(reg), order(order) {}
+            constexpr RegisterView(Register16& reg) : reg(reg) {}
     
             RegisterView& operator=(uint8_t rhs) {
-                (order == ORDER::HI) ? reg.setHi(rhs) : reg.setLo(rhs);
+                if constexpr (Order == ORDER::HI) reg.setHi(rhs);
+                else reg.setLo(rhs);
                 return *this;
             }
             RegisterView& operator+=(uint8_t rhs) {
@@ -131,21 +135,21 @@ namespace Processing {
             RegisterView& operator--() { *this = *this - 1; return *this; }
             Register8 operator--(int) { Register8 temp = uint8_t(*this); *this = *this - 1; return temp; } // return anonymous reg8
     
-            operator uint8_t() const { return (order == ORDER::HI) ? ((reg & 0xFF00) >> 8) : (reg & 0x00FF); }
+            operator uint8_t() const {
+                if constexpr (Order == ORDER::HI) return (reg & 0xFF00) >> 8;
+                else return reg & 0x00FF;
+            }
     
         private:
             Register16& reg;
-            const ORDER order;
     };
     
-    constexpr RegisterView Register16::hi() {
-        using ORDER = RegisterView::ORDER;
-        return RegisterView(*this, ORDER::HI);
+    constexpr RegisterView<ORDER::HI> Register16::hi() {
+        return RegisterView<ORDER::HI>(*this);
     }
     
-    constexpr RegisterView Register16::lo() {
-        using ORDER = RegisterView::ORDER;
-        return RegisterView(*this, ORDER::LO);
+    constexpr RegisterView<ORDER::LO> Register16::lo() {
+        return RegisterView<ORDER::LO>(*this);
     }
     
 }
