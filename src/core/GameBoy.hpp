@@ -27,13 +27,13 @@ class GameBoy {
 
     private:
         using enum MODEL;
-        using clock = std::chrono::steady_clock;
+        using Clock = std::chrono::steady_clock;
 
         const std::function<uint8_t()> readInput;
         const std::function<void(std::span<const float>)> queueAudioData;
         const std::function<void(std::span<const uint8_t>)> renderFrame;
         
-        clock::time_point start;
+        Clock::time_point start;
         uint64_t cycleCount;
 
         Memory::Cartridge cartridge;

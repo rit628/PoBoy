@@ -48,17 +48,19 @@ void GameBoy::run(std::stop_token stoken) {
 }
 
 void GameBoy::frameAdvance() {
-    uint64_t prevCycles = cycleCount;
-    while (cycleCount - prevCycles < Graphics::DOTS_PER_FRAME) {
-        std::visit(overloaded {
-            [](std::monostate) {},
-            [](auto&& soc) { soc.tick(); }
-        }, soc);
-    }
+    std::visit(overloaded {
+        [](std::monostate) {},
+        [this](auto&& soc) {
+            uint64_t prevCycles = cycleCount;
+            while (cycleCount - prevCycles < Graphics::DOTS_PER_FRAME) {
+                soc.tick();
+            }
+        }
+    }, soc);
 }
 
 void GameBoy::synchronizeClock() {
-    auto now = clock::now();
+    auto now = Clock::now();
     auto elapsed = std::chrono::duration<double, std::micro>(now - start);
     auto expectedElapsed = cycleCount * CLOCK_US;
 
@@ -69,7 +71,7 @@ void GameBoy::synchronizeClock() {
 }
 
 void GameBoy::resetClock() {
-    start = clock::now();
+    start = Clock::now();
     cycleCount = 0;
 }
 
