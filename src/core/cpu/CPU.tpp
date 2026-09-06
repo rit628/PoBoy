@@ -3,6 +3,7 @@
 #include "CPU.hpp"
 #include "MemoryConstants.hpp"
 #include "SystemConstants.hpp"
+#include <bit>
 #include <cstdint>
 #include <utility>
 
@@ -392,8 +393,8 @@ namespace Processing {
     template<typename BusType>
     inline void CPU<BusType>::rotateLeft(Integer<8> auto& target) {
         using enum REGISTER_FLAG;
-        uint8_t carry = getCarry(); // carry becomes new lsb
         bool msb = target & 0x80;
+        uint8_t carry = getCarry(); // carry becomes new lsb
         target = (target << 1) | carry; // rotate through carry
     
         setZero(target);
@@ -412,13 +413,12 @@ namespace Processing {
     template<typename BusType>
     inline void CPU<BusType>::rotateLeftCircular(Integer<8> auto& target) {
         using enum REGISTER_FLAG;
-        uint8_t msb = (target & 0x80) >> 7; // msb becomes new lsb
-        target = (target << 1) | msb; 
+        target = std::rotl(static_cast<uint8_t>(target), 1);
     
         setZero(target);
         F.clear(N);
         F.clear(H);
-        (msb) ? F.set(C) : F.clear(C); // carry = former msb
+        (target & 0x01) ? F.set(C) : F.clear(C); // carry = former msb
     }
     
     template<typename BusType>
@@ -431,8 +431,8 @@ namespace Processing {
     template<typename BusType>
     inline void CPU<BusType>::rotateRight(Integer<8> auto& target) {
         using enum REGISTER_FLAG;
-        uint8_t carry = getCarry() << 7; // carry becomes new msb
         bool lsb = target & 0x01;
+        uint8_t carry = getCarry() << 7; // carry becomes new msb
         target = (target >> 1) | carry; // rotate through carry
     
         setZero(target);
@@ -451,13 +451,12 @@ namespace Processing {
     template<typename BusType>
     inline void CPU<BusType>::rotateRightCircular(Integer<8> auto& target) {
         using enum REGISTER_FLAG;
-        uint8_t lsb = (target & 0x01) << 7; // lsb becomes new msb
-        target = (target >> 1) | lsb;
+        target = std::rotr(static_cast<uint8_t>(target), 1);
     
         setZero(target);
         F.clear(N);
         F.clear(H);
-        (lsb) ? F.set(C) : F.clear(C); // carry = former lsb
+        (target & 0x80) ? F.set(C) : F.clear(C); // carry = former lsb
     }
     
     template<typename BusType>
