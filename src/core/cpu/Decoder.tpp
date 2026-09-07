@@ -122,7 +122,7 @@ namespace Processing {
             else if constexpr (Row == 6) setCarryFlag();
             else if constexpr (Row == 7) complementCarryFlag();
 
-            if constexpr (Row < 4) clearFlag(REGISTER_FLAG::Z); // rotate A opcodes clear Z unconditionally
+            if constexpr (Row < 4) clearFlag<REGISTER_FLAG::Z>(); // rotate A opcodes clear Z unconditionally
         }
     }
 
@@ -183,7 +183,7 @@ namespace Processing {
                 constexpr auto reg = decodeRegisterPair<(Row >> 1), false>();
                 pop(this->*reg);
                 if constexpr (reg == &CPU<BusType>::AF) {
-                    AF.setLo(F & 0xF0); // lower 4 bits of F must always be 0
+                    F &= 0xF0; // lower 4 bits of F must always be 0
                 }
             }
             else if constexpr (Row == 1) {

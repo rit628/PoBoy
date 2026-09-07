@@ -72,15 +72,15 @@ void CPU<Memory::Bus<MODEL::DMG>&>::bootHLE(const Memory::CartridgeMetadata& car
     A = 0x01;
     {   // set F
         using enum REGISTER_FLAG;
-        setFlag(Z);
-        clearFlag(N);
+        setFlag<Z>();
+        clearFlag<N>();
         if (cartData.headerChecksum == 0x00) {
-            clearFlag(H);
-            clearFlag(C);
+            clearFlag<H>();
+            clearFlag<C>();
         }
         else {
-            setFlag(H);
-            setFlag(C);
+            setFlag<H>();
+            setFlag<C>();
         }
     }
     B = 0x00;
@@ -100,10 +100,10 @@ void CPU<Memory::Bus<MODEL::CGB>&>::bootHLE(const Memory::CartridgeMetadata& car
     A = 0x11;
     {   // set F
         using enum REGISTER_FLAG;
-        setFlag(REGISTER_FLAG::Z);
-        clearFlag(REGISTER_FLAG::N);
-        clearFlag(REGISTER_FLAG::H);
-        clearFlag(REGISTER_FLAG::C);
+        setFlag<Z>();
+        clearFlag<N>();
+        clearFlag<H>();
+        clearFlag<C>();
     }
     B = 0x00;
     C = 0x00;

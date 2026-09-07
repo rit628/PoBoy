@@ -43,9 +43,12 @@ namespace Processing {
             void decodePrefixed();
 
             /* F register ops */
-            void setFlag(REGISTER_FLAG bitFlag);
-            void clearFlag(REGISTER_FLAG bitFlag);
-            bool testFlag(REGISTER_FLAG bitFlag);
+            template<REGISTER_FLAG Flag>
+            void setFlag();
+            template<REGISTER_FLAG Flag>
+            void clearFlag();
+            template<REGISTER_FLAG Flag>
+            bool testFlag();
 
             template<bool Tick = true>
             uint8_t read(uint16_t address);
