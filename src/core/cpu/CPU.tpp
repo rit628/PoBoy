@@ -10,6 +10,21 @@
 namespace Processing {
 
     template<typename BusType>
+    inline void CPU<BusType>::setFlag(REGISTER_FLAG bitFlag) {
+        setFlags(F, bitFlag);
+    }
+
+    template<typename BusType>
+    inline void CPU<BusType>::clearFlag(REGISTER_FLAG bitFlag) {
+        clearFlags(F, bitFlag);
+    }
+
+    template<typename BusType>
+    inline bool CPU<BusType>::testFlag(REGISTER_FLAG bitFlag) {
+        return testFlags(F, bitFlag);
+    }
+
+    template<typename BusType>
     template<bool Tick>
     inline uint8_t CPU<BusType>::read(uint16_t address) {
         auto result = bus.read(address);
@@ -31,9 +46,9 @@ namespace Processing {
 
     template<typename BusType>
     inline uint16_t CPU<BusType>::read16() {
-        uint8_t lsb = read8();
-        uint8_t msb = read8();
-        return msb << 8 | lsb;
+        uint8_t lo = read8();
+        uint8_t hi = read8();
+        return hi << 8 | lo;
     }
 
     template<typename BusType>
@@ -51,7 +66,7 @@ namespace Processing {
     template<typename BusType>
     inline void CPU<BusType>::setZero(uint8_t result) {
         using enum REGISTER_FLAG;
-        (result == 0) ? F.set(Z) : F.clear(Z);
+        (result == 0) ? setFlag(Z) : clearFlag(Z);
     }
     
     template<typename BusType>
@@ -60,13 +75,13 @@ namespace Processing {
         uint8_t result = a + b + carry;
     
         setZero(result);
-        F.clear(N);
+        clearFlag(N);
     
         // set half carry (H): mask upper 4 bits and check if exceeds lower 4
-        (((a & 0x0F) + (b & 0x0F) + carry) > 0x0F) ? F.set(H) : F.clear(H);
+        (((a & 0x0F) + (b & 0x0F) + carry) > 0x0F) ? setFlag(H) : clearFlag(H);
     
         // set carry (C): check if greater than uint8_t max
-        ((static_cast<uint16_t>(a) + static_cast<uint16_t>(b) + carry) > 0xFF) ? F.set(C) : F.clear(C);
+        ((static_cast<uint16_t>(a) + static_cast<uint16_t>(b) + carry) > 0xFF) ? setFlag(C) : clearFlag(C);
         
         return result;
     }
@@ -76,13 +91,13 @@ namespace Processing {
         using enum REGISTER_FLAG;
         uint16_t result = a + b;
     
-        F.clear(N);
+        clearFlag(N);
     
         // set half carry (H): mask upper 4 bits and check if exceeds lower 12
-        (((a & 0x0FFF) + (b & 0x0FFF)) > 0x0FFF) ? F.set(H) : F.clear(H);
+        (((a & 0x0FFF) + (b & 0x0FFF)) > 0x0FFF) ? setFlag(H) : clearFlag(H);
     
         // set carry (C): check if greater than uint16_t max
-        ((static_cast<uint32_t>(a) + static_cast<uint32_t>(b)) > 0xFFFF) ? F.set(C) : F.clear(C);
+        ((static_cast<uint32_t>(a) + static_cast<uint32_t>(b)) > 0xFFFF) ? setFlag(C) : clearFlag(C);
         
         return result;
     }
@@ -94,8 +109,8 @@ namespace Processing {
         
         // clear Z and N flags unconditionally
         using enum REGISTER_FLAG;
-        F.clear(Z);
-        F.clear(N);
+        clearFlag(Z);
+        clearFlag(N);
     
         return a + b;
     }
@@ -106,13 +121,13 @@ namespace Processing {
         uint8_t result = static_cast<int16_t>(a) - static_cast<int16_t>(b) - carry;
     
         setZero(result);
-        F.set(N);
+        setFlag(N);
     
         // set half carry (H): mask upper 4 bits and check if negative (borrow from bit 4)
-        ((static_cast<int8_t>(a & 0x0F) - static_cast<int8_t>(b & 0x0F) - carry) < 0) ? F.set(H) : F.clear(H);
+        ((static_cast<int8_t>(a & 0x0F) - static_cast<int8_t>(b & 0x0F) - carry) < 0) ? setFlag(H) : clearFlag(H);
     
         // set carry (C): check if result is negative (borrow required)
-        ((static_cast<int16_t>(a) - static_cast<int16_t>(b) - carry) < 0) ? F.set(C) : F.clear(C);
+        ((static_cast<int16_t>(a) - static_cast<int16_t>(b) - carry) < 0) ? setFlag(C) : clearFlag(C);
     
         return result;
     }
@@ -256,7 +271,7 @@ namespace Processing {
         using enum REGISTER_FLAG;
         bool carrySet = getCarry();
         target = subtractAndSetFlags(target, 1);
-        (carrySet) ? F.set(C) : F.clear(C); // ensure C remains unmodified
+        (carrySet) ? setFlag(C) : clearFlag(C); // ensure C remains unmodified
     }
 
     template<typename BusType>
@@ -277,7 +292,7 @@ namespace Processing {
         using enum REGISTER_FLAG;
         bool carrySet = getCarry();
         target = addAndSetFlags(target, 1);
-        (carrySet) ? F.set(C) : F.clear(C); // ensure C remains unmodified
+        (carrySet) ? setFlag(C) : clearFlag(C); // ensure C remains unmodified
     }
 
     template<typename BusType>
@@ -298,9 +313,9 @@ namespace Processing {
         using enum REGISTER_FLAG;
         lhs &= rhs;
         setZero(lhs);
-        F.clear(N);
-        F.set(H);
-        F.clear(C);
+        clearFlag(N);
+        setFlag(H);
+        clearFlag(C);
     }
     
     template<typename BusType>
@@ -313,8 +328,8 @@ namespace Processing {
     inline void CPU<BusType>::bitNot(Register<8> auto& target) {
         using enum REGISTER_FLAG;
         target = ~target;
-        F.set(N);
-        F.set(H);
+        setFlag(N);
+        setFlag(H);
     }
     
     template<typename BusType>
@@ -322,9 +337,9 @@ namespace Processing {
         using enum REGISTER_FLAG;
         lhs |= rhs;
         setZero(lhs);
-        F.clear(N);
-        F.clear(H);
-        F.clear(C);
+        clearFlag(N);
+        clearFlag(H);
+        clearFlag(C);
     }
     
     template<typename BusType>
@@ -338,9 +353,9 @@ namespace Processing {
         using enum REGISTER_FLAG;
         lhs ^= rhs;
         setZero(lhs);
-        F.clear(N);
-        F.clear(H);
-        F.clear(C);
+        clearFlag(N);
+        clearFlag(H);
+        clearFlag(C);
     }
     
     template<typename BusType>
@@ -353,9 +368,9 @@ namespace Processing {
     inline void CPU<BusType>::bitTest(uint8_t bitIndex, uint8_t target) {
         using enum REGISTER_FLAG;
         uint8_t test = 1 << bitIndex;
-        (test & target) ? F.clear(Z) : F.set(Z);
-        F.clear(N);
-        F.set(H);
+        (test & target) ? clearFlag(Z) : setFlag(Z);
+        clearFlag(N);
+        setFlag(H);
     }
     
     template<typename BusType>
@@ -398,9 +413,9 @@ namespace Processing {
         target = (target << 1) | carry; // rotate through carry
     
         setZero(target);
-        F.clear(N);
-        F.clear(H);
-        (msb) ? F.set(C) : F.clear(C); // carry = former msb
+        clearFlag(N);
+        clearFlag(H);
+        (msb) ? setFlag(C) : clearFlag(C); // carry = former msb
     }
     
     template<typename BusType>
@@ -416,9 +431,9 @@ namespace Processing {
         target = std::rotl(static_cast<uint8_t>(target), 1);
     
         setZero(target);
-        F.clear(N);
-        F.clear(H);
-        (target & 0x01) ? F.set(C) : F.clear(C); // carry = former msb
+        clearFlag(N);
+        clearFlag(H);
+        (target & 0x01) ? setFlag(C) : clearFlag(C); // carry = former msb
     }
     
     template<typename BusType>
@@ -436,9 +451,9 @@ namespace Processing {
         target = (target >> 1) | carry; // rotate through carry
     
         setZero(target);
-        F.clear(N);
-        F.clear(H);
-        (lsb) ? F.set(C) : F.clear(C); // carry = former lsb
+        clearFlag(N);
+        clearFlag(H);
+        (lsb) ? setFlag(C) : clearFlag(C); // carry = former lsb
     }
     
     template<typename BusType>
@@ -454,9 +469,9 @@ namespace Processing {
         target = std::rotr(static_cast<uint8_t>(target), 1);
     
         setZero(target);
-        F.clear(N);
-        F.clear(H);
-        (target & 0x80) ? F.set(C) : F.clear(C); // carry = former lsb
+        clearFlag(N);
+        clearFlag(H);
+        (target & 0x80) ? setFlag(C) : clearFlag(C); // carry = former lsb
     }
     
     template<typename BusType>
@@ -472,9 +487,9 @@ namespace Processing {
         bool msb = target & 0x80;
         target <<= 1;
         setZero(target);
-        F.clear(N);
-        F.clear(H);
-        (msb) ? F.set(C) : F.clear(C);
+        clearFlag(N);
+        clearFlag(H);
+        (msb) ? setFlag(C) : clearFlag(C);
     }
     
     template<typename BusType>
@@ -491,9 +506,9 @@ namespace Processing {
         uint8_t msb = target & 0x80;
         target = (target >> 1) | msb; // preserve msb
         setZero(target);
-        F.clear(N);
-        F.clear(H);
-        (lsb) ? F.set(C) : F.clear(C);
+        clearFlag(N);
+        clearFlag(H);
+        (lsb) ? setFlag(C) : clearFlag(C);
     }
     
     template<typename BusType>
@@ -509,9 +524,9 @@ namespace Processing {
         bool lsb = target & 0x01;
         target >>= 1;
         setZero(target);
-        F.clear(N);
-        F.clear(H);
-        (lsb) ? F.set(C) : F.clear(C);
+        clearFlag(N);
+        clearFlag(H);
+        (lsb) ? setFlag(C) : clearFlag(C);
     }
     
     template<typename BusType>
@@ -526,9 +541,9 @@ namespace Processing {
         using enum REGISTER_FLAG;
         target = (target << 4) | (target >> 4);
         setZero(target);
-        F.clear(N);
-        F.clear(H);
-        F.clear(C);
+        clearFlag(N);
+        clearFlag(H);
+        clearFlag(C);
     }
     
     template<typename BusType>
@@ -547,14 +562,14 @@ namespace Processing {
     template<typename BusType>
     inline void CPU<BusType>::push(Register<16> auto& target) {
         bus.tick();   // match delay from pipelined decrement
-        write(--SP, target.hi());
-        write(--SP, target.lo());
+        write(--SP, target.getHi());
+        write(--SP, target.getLo());
     }
     
     template<typename BusType>
     template<REGISTER_FLAG Flag, bool N>
     inline bool CPU<BusType>::testCondition() {
-        bool condition = F.test(Flag);
+        bool condition = testFlag(Flag);
         if constexpr (N) condition = !condition;
         return condition;
     }
@@ -623,17 +638,17 @@ namespace Processing {
     template<typename BusType>
     inline void CPU<BusType>::complementCarryFlag() {
         using enum REGISTER_FLAG;
-        F.clear(N);
-        F.clear(H);
-        (F.test(C)) ? F.clear(C) : F.set(C);
+        clearFlag(N);
+        clearFlag(H);
+        (testFlag(C)) ? clearFlag(C) : setFlag(C);
     }
     
     template<typename BusType>
     inline void CPU<BusType>::setCarryFlag() {
         using enum REGISTER_FLAG;
-        F.clear(N);
-        F.clear(H);
-        F.set(C);
+        clearFlag(N);
+        clearFlag(H);
+        setFlag(C);
     }
     
     template<typename BusType>
@@ -664,27 +679,27 @@ namespace Processing {
     inline void CPU<BusType>::decimalAdjustAccumulator() {
         using enum REGISTER_FLAG;
         uint8_t adjustment = 0;
-        if (F.test(N)) {
-            if (F.test(H)) {
+        if (testFlag(N)) {
+            if (testFlag(H)) {
                 adjustment += 0x06;
             }
-            if (F.test(C)) {
+            if (testFlag(C)) {
                 adjustment += 0x60;
             }
             A -= adjustment;
         }
         else {
-            if (F.test(H) || ((A & 0x0F) > 0x09)) {
+            if (testFlag(H) || ((A & 0x0F) > 0x09)) {
                 adjustment += 0x06;
             }
-            if (F.test(C) || (A > 0x99)) {
+            if (testFlag(C) || (A > 0x99)) {
                 adjustment += 0x60;
-                F.set(C);
+                setFlag(C);
             }
             A += adjustment;
         }
         setZero(A);
-        F.clear(H);
+        clearFlag(H);
     }
     
     template<typename BusType>

@@ -1,5 +1,4 @@
 #pragma once
-#include "FlagOps.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <type_traits>
@@ -20,39 +19,31 @@ namespace Processing {
     template<size_t Bits> requires (Bits == 8 || Bits == 16)
     class RegisterBase : public RegisterTag<Bits> {
         public:
-            using value_t = std::conditional_t<Bits == 8, uint8_t, uint16_t>;
-            RegisterBase(value_t val = 0) : reg(val) {}
+            using ValueType = std::conditional_t<Bits == 8, uint8_t, uint16_t>;
+            RegisterBase(ValueType val = 0) : reg(val) {}
     
-            RegisterBase<Bits>& operator=(value_t val) { reg = val; return *this; }
-            RegisterBase<Bits>& operator+=(value_t val) { reg += val; return *this; }
-            RegisterBase<Bits>& operator+=(int8_t val) { reg += val; return *this; }
-            RegisterBase<Bits>& operator-=(value_t val) { reg -= val; return *this; }
-            RegisterBase<Bits>& operator-=(int8_t val) { reg -= val; return *this; }
-            RegisterBase<Bits>& operator&=(value_t rhs) { reg &= rhs; return *this; }
-            RegisterBase<Bits>& operator|=(value_t rhs) { reg |= rhs; return *this; }
-            RegisterBase<Bits>& operator^=(value_t rhs) { reg ^= rhs; return *this; }
-            RegisterBase<Bits>& operator<<=(value_t rhs) { reg <<= rhs; return *this; }
-            RegisterBase<Bits>& operator>>=(value_t rhs) { reg >>= rhs; return *this; }
+            RegisterBase<Bits>& operator=(ValueType val)    { reg = val; return *this; }
+            RegisterBase<Bits>& operator+=(ValueType val)   { reg += val; return *this; }
+            RegisterBase<Bits>& operator+=(int8_t val)      { reg += val; return *this; }
+            RegisterBase<Bits>& operator-=(ValueType val)   { reg -= val; return *this; }
+            RegisterBase<Bits>& operator-=(int8_t val)      { reg -= val; return *this; }
+            RegisterBase<Bits>& operator&=(ValueType rhs)   { reg &= rhs; return *this; }
+            RegisterBase<Bits>& operator|=(ValueType rhs)   { reg |= rhs; return *this; }
+            RegisterBase<Bits>& operator^=(ValueType rhs)   { reg ^= rhs; return *this; }
+            RegisterBase<Bits>& operator<<=(ValueType rhs)  { reg <<= rhs; return *this; }
+            RegisterBase<Bits>& operator>>=(ValueType rhs)  { reg >>= rhs; return *this; }
     
-            RegisterBase<Bits>& operator++() { ++reg; return *this; }
-            RegisterBase<Bits> operator++(int) { auto temp = *this; reg++; return temp; }
-            RegisterBase<Bits>& operator--() { --reg; return *this; }
-            RegisterBase<Bits> operator--(int) { auto temp = *this; reg--; return temp; }
+            RegisterBase<Bits>& operator++()    { ++reg; return *this; }
+            ValueType operator++(int)  { ValueType temp = *this; reg++; return temp; }
+            RegisterBase<Bits>& operator--()    { --reg; return *this; }
+            ValueType operator--(int)  { ValueType temp = *this; reg--; return temp; }
     
-            operator value_t() const { return reg; }
+            operator ValueType() const { return reg; }
     
         protected:
-            value_t reg = 0;
+            ValueType reg = 0;
     };
 
-    enum class ORDER : bool {
-        HI,
-        LO
-    };
-    
-    template<ORDER Order>
-    class RegisterView;
-    
     template<typename T, size_t Bits>
     concept Register = std::derived_from<T, RegisterTag<Bits>>;
     
@@ -71,9 +62,9 @@ namespace Processing {
     
     class Register16 : public RegisterBase<16> {
         public:
-            Register16(value_t value = 0) : RegisterBase<16>(value) { }
-            constexpr RegisterView<ORDER::HI> hi();
-            constexpr RegisterView<ORDER::LO> lo();
+            Register16(ValueType value = 0) : RegisterBase<16>(value) { }
+            uint8_t getHi() { return reg >> 8; };
+            uint8_t getLo() { return reg & 0xFF; };
             void setHi(uint8_t val) {
                 reg &= 0x00FF; // mask hi
                 reg |= (static_cast<uint16_t>(val) << 8);
@@ -84,73 +75,40 @@ namespace Processing {
             }
     };
     
-    template<ORDER Order>
-    class RegisterView : public RegisterTag<8> {
+    class RegisterPair : public RegisterTag<16> {
         public:
+            constexpr RegisterPair(Register8& hi, Register8& lo) : hi(hi), lo(lo) {}
+
+            uint8_t getHi() { return hi; };
+            uint8_t getLo() { return lo; };
+            void setHi(uint8_t val) { hi = val; }
+            void setLo(uint8_t val) { lo = val; }
     
-            constexpr RegisterView(Register16& reg) : reg(reg) {}
+            RegisterPair& operator=(uint16_t rhs) {
+                hi = rhs >> 8;
+                lo = rhs & 0xFF;
+                return *this;
+            }
+            
+            RegisterPair& operator+=(uint16_t rhs)  { return *this = *this + rhs; }
+            RegisterPair& operator-=(uint16_t rhs)  { return *this = *this - rhs; }
+            RegisterPair& operator&=(uint16_t rhs)  { return *this = *this & rhs; }
+            RegisterPair& operator|=(uint16_t rhs)  { return *this = *this | rhs; }
+            RegisterPair& operator^=(uint16_t rhs)  { return *this = *this ^ rhs; }
+            RegisterPair& operator<<=(uint16_t rhs) { return *this = *this << rhs; }
+            RegisterPair& operator>>=(uint16_t rhs) { return *this = *this >> rhs; }
     
-            RegisterView& operator=(uint8_t rhs) {
-                if constexpr (Order == ORDER::HI) reg.setHi(rhs);
-                else reg.setLo(rhs);
-                return *this;
-            }
-            RegisterView& operator+=(uint8_t rhs) {
-                *this = *this + rhs;
-                return *this;
-            }
-            RegisterView& operator-=(uint8_t rhs) {
-                *this = *this - rhs;
-                return *this;
-            }
-            RegisterView& operator&=(uint8_t rhs) {
-                *this = (*this & rhs);
-                return *this;
-            }
-            RegisterView& operator|=(uint8_t rhs) {
-                *this = (*this | rhs);
-                return *this;
-            }
-            RegisterView& operator^=(uint8_t rhs) {
-                *this = (*this ^ rhs);
-                return *this;
-            }
-            RegisterView& operator<<=(uint8_t rhs) {
-                *this = (*this << rhs);
-                return *this;
-            }
-            RegisterView& operator>>=(uint8_t rhs) {
-                *this = (*this >> rhs);
-                return *this;
-            }
+            RegisterPair& operator++()  { return *this = *this + 1; }
+            uint16_t operator++(int)    { uint16_t temp = *this; *this = *this + 1; return temp; }
+            RegisterPair& operator--()  { return *this = *this - 1; }
+            uint16_t operator--(int)    { uint16_t temp = *this; *this = *this - 1; return temp; }
     
-            // only implementing for ops with F register
-            void set(REGISTER_FLAG bitFlag) { setFlags(*this, bitFlag); }
-            void clear(REGISTER_FLAG bitFlag) { clearFlags(*this, bitFlag); }
-            bool test(REGISTER_FLAG bitFlag) { return testFlags(*this, bitFlag); }
-    
-            // cant use r16++ due to hi/lo byte difference
-            RegisterView& operator++() { *this = *this + 1; return *this; }
-            Register8 operator++(int) { Register8 temp = uint8_t(*this); *this = *this + 1; return temp; } // return anonymous reg8
-            RegisterView& operator--() { *this = *this - 1; return *this; }
-            Register8 operator--(int) { Register8 temp = uint8_t(*this); *this = *this - 1; return temp; } // return anonymous reg8
-    
-            operator uint8_t() const {
-                if constexpr (Order == ORDER::HI) return (reg & 0xFF00) >> 8;
-                else return reg & 0x00FF;
-            }
+            operator uint16_t() const { return hi << 8 | lo; }
     
         private:
-            Register16& reg;
+            Register8& hi;
+            Register8& lo;
     };
-    
-    constexpr RegisterView<ORDER::HI> Register16::hi() {
-        return RegisterView<ORDER::HI>(*this);
-    }
-    
-    constexpr RegisterView<ORDER::LO> Register16::lo() {
-        return RegisterView<ORDER::LO>(*this);
-    }
     
 }
 

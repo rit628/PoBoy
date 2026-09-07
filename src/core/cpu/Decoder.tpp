@@ -122,7 +122,7 @@ namespace Processing {
             else if constexpr (Row == 6) setCarryFlag();
             else if constexpr (Row == 7) complementCarryFlag();
 
-            if constexpr (Row < 4) F.clear(REGISTER_FLAG::Z); // rotate A opcodes clear Z unconditionally
+            if constexpr (Row < 4) clearFlag(REGISTER_FLAG::Z); // rotate A opcodes clear Z unconditionally
         }
     }
 
@@ -193,7 +193,7 @@ namespace Processing {
                 reti();
             }
             else if constexpr (Row == 5) {
-                PC = HL;    // This jump takes no extra cycles due to pipelining with fetch
+                PC = static_cast<uint16_t>(HL);    // This jump takes no extra cycles due to pipelining with fetch
             }
             else {
                 load16(SP, HL);

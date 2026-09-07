@@ -42,6 +42,11 @@ namespace Processing {
             template<uint8_t Opcode>
             void decodePrefixed();
 
+            /* F register ops */
+            void setFlag(REGISTER_FLAG bitFlag);
+            void clearFlag(REGISTER_FLAG bitFlag);
+            bool testFlag(REGISTER_FLAG bitFlag);
+
             template<bool Tick = true>
             uint8_t read(uint16_t address);
             template<bool Tick = true>
@@ -192,23 +197,10 @@ namespace Processing {
             /* Register File */
             Register16 PC; // program counter
             Register16 SP; // stack pointer
-    
-            Register16 AF, BC, DE, HL; // general purpose 16 bit
-    
-            RegisterView<ORDER::HI> A{AF.hi()}; // accumulator
-            RegisterView<ORDER::LO> F{AF.lo()}; // flags
-    
-            /* general purpose 8 bit BC */
-            RegisterView<ORDER::HI> B{BC.hi()};
-            RegisterView<ORDER::LO> C{BC.lo()};
 
-            /* general purpose 8 bit DE */
-            RegisterView<ORDER::HI> D{DE.hi()};
-            RegisterView<ORDER::LO> E{DE.lo()};
-
-            /* general purpose 8 bit HL */
-            RegisterView<ORDER::HI> H{HL.hi()};
-            RegisterView<ORDER::LO> L{HL.lo()};
+            Register8 A, F, B, C, D, E, H, L;  // general purpose 8 bit
+    
+            RegisterPair AF{A, F}, BC{B, C}, DE{D, E}, HL{H, L}; // general purpose 16 bit
     
             INTERRUPT_MASTER_FLAG IME; // interrupt master enable flag
             

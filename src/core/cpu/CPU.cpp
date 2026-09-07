@@ -70,15 +70,18 @@ void CPU<BusType>::initialize() {
 template<>
 void CPU<Memory::Bus<MODEL::DMG>&>::bootHLE(const Memory::CartridgeMetadata& cartData) {
     A = 0x01;
-    F.set(REGISTER_FLAG::Z);
-    F.clear(REGISTER_FLAG::N);
-    if (cartData.headerChecksum == 0x00) {
-        F.clear(REGISTER_FLAG::H);
-        F.clear(REGISTER_FLAG::C);
-    }
-    else {
-        F.set(REGISTER_FLAG::H);
-        F.set(REGISTER_FLAG::C);
+    {   // set F
+        using enum REGISTER_FLAG;
+        setFlag(Z);
+        clearFlag(N);
+        if (cartData.headerChecksum == 0x00) {
+            clearFlag(H);
+            clearFlag(C);
+        }
+        else {
+            setFlag(H);
+            setFlag(C);
+        }
     }
     B = 0x00;
     C = 0x13;
@@ -95,10 +98,13 @@ void CPU<Memory::Bus<MODEL::DMG>&>::bootHLE(const Memory::CartridgeMetadata& car
 template<>
 void CPU<Memory::Bus<MODEL::CGB>&>::bootHLE(const Memory::CartridgeMetadata& cartData [[ maybe_unused ]]) {
     A = 0x11;
-    F.set(REGISTER_FLAG::Z);
-    F.clear(REGISTER_FLAG::N);
-    F.clear(REGISTER_FLAG::H);
-    F.clear(REGISTER_FLAG::C);
+    {   // set F
+        using enum REGISTER_FLAG;
+        setFlag(REGISTER_FLAG::Z);
+        clearFlag(REGISTER_FLAG::N);
+        clearFlag(REGISTER_FLAG::H);
+        clearFlag(REGISTER_FLAG::C);
+    }
     B = 0x00;
     C = 0x00;
     D = 0xFF;
@@ -212,7 +218,7 @@ void CPU<BusType>::handleInterrupts() {
 template<typename BusType>
 void CPU<BusType>::handleHaltBug() {
     if (state == STATE::BUGGED) {
-        PC--;
+        --PC;
         state = STATE::RUNNING;
     }
 }
