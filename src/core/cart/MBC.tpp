@@ -43,13 +43,17 @@ namespace Memory {
     }
 
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
+    inline constexpr bool MBC<RamType, AdditionalHardware>::isTickable(this auto&& self) {
+        return requires { self.tick(); };
+    }
+
+    template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
     inline uint8_t MBC<RamType, AdditionalHardware>::readBank0(uint16_t address) {
         return bank0[address];
     }
 
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
-    template<typename Self>
-    inline void MBC<RamType, AdditionalHardware>::writeBank0(this Self&& self, uint16_t address, uint8_t value) {
+    inline void MBC<RamType, AdditionalHardware>::writeBank0(this auto&& self, uint16_t address, uint8_t value) {
         self.handleBankWrite(address, value);
     }
 
@@ -59,30 +63,19 @@ namespace Memory {
     }
 
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
-    template<typename Self>
-    inline void MBC<RamType, AdditionalHardware>::writeBank1(this Self&& self, uint16_t address, uint8_t value) {
+    inline void MBC<RamType, AdditionalHardware>::writeBank1(this auto&& self, uint16_t address, uint8_t value) {
         self.handleBankWrite(address + ROM_BANK_SIZE, value);
     }
 
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
-    template<typename Self>
-    inline uint8_t MBC<RamType, AdditionalHardware>::readSRAM(this Self&& self, uint16_t address) {
-        if constexpr (hasMappedIO()) {
-            // redundant ram size check for roms with header mismatch
-            return (self.sram.size() == 0) ? 0xFF : self.readMappedIO(address);
-        }
-        else {
-            return 0xFF;
-        }
+    inline uint8_t MBC<RamType, AdditionalHardware>::readSRAM(this auto&& self, uint16_t address) {
+        if constexpr (hasMappedIO()) return self.readMappedIO(address);
+        else return 0xFF;
     }
 
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
-    template<typename Self>
-    inline void MBC<RamType, AdditionalHardware>::writeSRAM(this Self&& self, uint16_t address, uint8_t value) {
-        if constexpr (hasMappedIO()) {
-            // redundant ram size check for roms with header mismatch
-            return (self.sram.size() == 0) ? void() : self.writeMappedIO(address, value);
-        }
+    inline void MBC<RamType, AdditionalHardware>::writeSRAM(this auto&& self, uint16_t address, uint8_t value) {
+        if constexpr (hasMappedIO()) return self.writeMappedIO(address, value);
     }
 
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
@@ -215,7 +208,10 @@ namespace Memory {
     /* MBC3 */
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
     MBC3<RamType, AdditionalHardware>::MBC3(std::filesystem::path romFile, std::span<uint8_t> rom, uint8_t encodedRamSize)
-                                     : MBC<RamType, AdditionalHardware>(romFile, rom, encodedRamSize) {}
+                                     : MBC<RamType, AdditionalHardware>(romFile, rom, encodedRamSize)
+    {
+        rtcRegisterLatches = rtcMasks;
+    }
 
     template<SRAM_TYPE RamType, MBC_HARDWARE AdditionalHardware>
     inline constexpr bool MBC3<RamType, AdditionalHardware>::hasRTC() {
@@ -227,7 +223,7 @@ namespace Memory {
         auto& rtcDH = rtcRegisters.at(4);
         if (rtcDH & RTC_HALT_BIT) return;
 
-        static auto rtcTick = [](auto& reg, auto mask, auto period) {
+        static constexpr auto rtcTick = [](auto& reg, auto mask, auto period) {
             bool overflow = ++reg == period;
             reg &= mask;
             if (overflow) reg = 0;
@@ -239,7 +235,7 @@ namespace Memory {
             && rtcTick(rtcRegisters.at(1), rtcMasks.at(1), 60)   // minutes
             && rtcTick(rtcRegisters.at(2), rtcMasks.at(2), 24)   // hours
             && rtcTick(rtcRegisters.at(3), rtcMasks.at(3), 0)    // days lo 8 bits
-            && (++rtcDH & 1) == 0                                     // days 9th bit
+            && (++rtcDH & 0b1) == 0                                   // days 9th bit
         ) {
             // set carry bit and reset 9th bit
             rtcDH = (rtcDH | 1 << 7) & rtcMasks.at(4);

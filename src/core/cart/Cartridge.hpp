@@ -24,6 +24,8 @@ namespace Memory {
             CartridgeMetadata readRomMetadata(std::ifstream& romData);
             void setMBC(const std::filesystem::path& romFile, MBC_TYPE mbcType, uint8_t encodedRamSize);
 
+            bool tickMBC = false;
+            
             std::vector<uint8_t> rom = std::vector<uint8_t>(2 * ROM_BANK_SIZE, 0xFF);
             MemoryBankController mbc = MBC0<>("", rom, 0);
 

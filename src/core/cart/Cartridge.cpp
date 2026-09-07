@@ -7,15 +7,12 @@
 
 using namespace Memory;
 
-template<class... Ts>
-struct overloaded : Ts... { using Ts::operator()...; };
-
 void Cartridge::tick() {
-    using enum MBC_HARDWARE;
-    std::visit(overloaded {
-        []<SRAM_TYPE R> (MBC3<R, RTC>&& mbc) { mbc.tick(); },
-        [](auto&&) {}
-    }, mbc);
+    if (tickMBC) {
+        std::visit([](auto&& mbc) {
+            if constexpr (mbc.isTickable()) mbc.tick();
+        }, mbc);
+    }
 }
 
 CartridgeMetadata Cartridge::loadRom(const std::filesystem::path& romFile) {
@@ -117,6 +114,8 @@ void Cartridge::setMBC(const std::filesystem::path& romFile, MBC_TYPE mbcType, u
 
         default: break;
     }
+
+    std::visit([this](auto&& mbc) { tickMBC = mbc.isTickable(); }, mbc);
 }
 
 uint8_t Cartridge::readBank0(uint16_t address) {

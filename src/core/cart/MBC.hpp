@@ -15,16 +15,13 @@ namespace Memory {
     template<SRAM_TYPE RamType = SRAM_TYPE::NONE, MBC_HARDWARE AdditionalHardware = MBC_HARDWARE::NONE>
     class MBC {
         public:
+            constexpr bool isTickable(this auto&& self);
             uint8_t readBank0(uint16_t address);
-            template<typename Self>
-            void writeBank0(this Self&& self, uint16_t address, uint8_t value);
+            void writeBank0(this auto&& self, uint16_t address, uint8_t value);
             uint8_t readBank1(uint16_t address);
-            template<typename Self>
-            void writeBank1(this Self&& self, uint16_t address, uint8_t value);
-            template<typename Self>
-            uint8_t readSRAM(this Self&& self, uint16_t address);
-            template<typename Self>
-            void writeSRAM(this Self&& self, uint16_t address, uint8_t value);
+            void writeBank1(this auto&& self, uint16_t address, uint8_t value);
+            uint8_t readSRAM(this auto&& self, uint16_t address);
+            void writeSRAM(this auto&& self, uint16_t address, uint8_t value);
 
         protected:
             MBC(std::filesystem::path romFile, std::span<uint8_t> rom, uint8_t encodedRamSize);
@@ -130,7 +127,8 @@ namespace Memory {
             uint32_t cycleCount = 0;
             bool latchPrimed = false;
             uint8_t selectedRegister = 0;
-            std::array<uint8_t, 5> rtcRegisters{}, rtcRegisterLatches{}; // rtcS, rtcM, rtcH, rtcDL, rtcDH
+            /* rtcS, rtcM, rtcH, rtcDL, rtcDH */
+            std::array<uint8_t, 5> rtcRegisters{}, rtcRegisterLatches{};
             static constexpr std::array<uint8_t, 5> rtcMasks = {0x3F, 0x3F, 0x1F, 0xFF, 0xC1};
     };
 
